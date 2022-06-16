@@ -12,7 +12,6 @@ source("AAJC_theme.R") # for titles_upper() - applies capitalization to all titl
 #           of total pop (2000, 2010, 2020)
 
 
-
 # Setting up THEME, COLORS, & API 
 # -------------------------------
 
@@ -22,51 +21,65 @@ census_api_key("0d3f6eaad6d4d9ffb24d6b420e4deccd7fe7f780")
 # Import theme created for AAJC Analysis in "AAJC Code/AAJC_theme.R"
 theme_AAJC <- readRDS('theme_AAJC.rds')
 
-# Defining color variables (see AAJC_them.R for info on these colors)
-red <- '#EF6D59'
-orange <- '#E37232'
-orange_80t <- '#f9e3d6'
-orange_10t <- "#e68047"
-orange_50t <- "#f1b999"
-purple <- '#3F3875'
-
-
-#################
-## ASIAN ALONE ##
-#################
-
-# Pulling data  
-# ------------
-
-# 2000
-# ----
 
 # Loading all vars and searching for the needed ones
 # d2000 <- load_variables(2000, 'sf1', cache = T)
 
 options(tigris_use_cache = TRUE)
 
-totPop <- "P007001"
-asian_alone <- "P007005" 
-# total races tallied!!Asian alone or in combination with one or more other races
-asian_alone_or_combination <- "P009005" 
+# ------------
+# GETTING DATA
+# ------------
 
-# Total!!Native Hawaiian and Other Pacific Islander alone
-nhpi_alone <- "P007006"
-
-AA_alone_2000 <- 
+# function to get data
+get_census_data <- function (vars, totalPop, year) {
   get_decennial(
     geography = "county",
-    variables = asian_alone,
+    variables = vars,
     geometry = TRUE,
     resolution = "20m",
-    summary_var = "P007001",  # total population in this instance 
-    year = 2000) %>%
-  shift_geometry()
+    summary_var = totalPop,  # total population in this instance 
+    year = year) %>%
+    shift_geometry()
+}
 
-head(AA_alone_2000)
+# 2000 + 2010 vars: 
+# Asian Alone pop., Asian alone or in combination pop., NHPI pop.
+vars_2000 <- c(AA_alone = "P007005",
+               AA_alone_combination = "P009005",
+               NHPI_alone = "P007006")
+totalPop_2000 <- "P007001"
 
-# STATE boundary overlapy data (makes it look cleaner)
+vars_2010 <- c(AA_alone = "P003005",
+               AA_alone_combination = "P006005",
+               NHPI_alone = "P003006")
+totalPop_2010 <- "P003001"
+
+# 2020 vars: 
+# Asian Alone pop., NHPI pop.   (could not find AA alone or in combination for 2020)
+vars_2020 <- c(AA_alone = "P1_006N",
+               NHPI_alone = "P1_007N")
+totalPop_2020 <- "P1_001N"
+
+# Possible solution - We can use the ACS 2020 estimates
+#   From the ACS 2020 ESTIMATES:
+#   ASIAN ALONE OR IN COMBINATION WITH ONE OR MORE GROUPS
+vars_2020_acs <- c(AA_alone_combination = "B02011_001")
+estimate_totalPop_2020 <- "B01001_001"
+
+
+# GETTING DATA 
+d2000 <- get_census_data(vars_2000, totalPop_2000, 2000)
+d2010 <- get_census_data(vars_2010, totalPop_2010, 2010)
+d2020 <- get_census_data(vars_2020, totalPop_2020, 2020)
+
+# Dropping Puerto Rico 
+d2000 <- d2000[!grepl("Puerto Rico", d2000$NAME), ]
+d2010 <- d2010[!grepl("Puerto Rico", d2010$NAME), ]
+d2020 <- d2020[!grepl("Puerto Rico", d2020$NAME), ]
+
+
+# STATE boundary overlap data (makes it look cleaner)
 state_overlay <- states(
   cb = TRUE,
   resolution = "20m",
@@ -74,194 +87,139 @@ state_overlay <- states(
 ) %>%
   shift_geometry()
 
-# MAP 1 - Continuous Color Scale
-#         using R builtin colors
-# ------------------------------
-AA_alone_2000_MAP <- AA_alone_2000 %>% 
-  mutate(percent = 100 * (value/summary_value)) %>%
+# Drop Puerto Rico from state overlay 
+state_overlay <- state_overlay[!state_overlay$STATE == 72, ]
+
+
+# Shifting Alaska & Hawaii on US Map 
+#   Link - geometric operations on vector data 
+#   https://geocompr.robinlovelace.net/geometric-operations.html
+
+# Isolating Alaska & Hawaii geospatial data 
+alaska <- state_overlay$geometry[state_overlay$NAME == "Alaska"]
+hawaii <- state_overlay$geometry[state_overlay$NAME == "Hawaii"]
+
+# Shifting alaska and hawaii to the right and down
+alaska.mod = alaska +c(600000, -100000)
+hawaii.mod = hawaii + c(1700000, -199000)
+
+# updating state_overlay data with our new geometry of alaska & hawaii
+state_overlay$geometry[state_overlay$NAME == "Alaska"] <- alaska.mod
+state_overlay$geometry[state_overlay$NAME == "Hawaii"] <- hawaii.mod
+
+# # trial and error to see what looks good 
+# plot(state_overlay$geometry)
+# plot(alaska.mod, col="lightblue", add=T)
+# plot(hawaii.mod, col="lightblue", add=T)
+
+# Doing the same for the actual decennial census data 
+d2000$geometry[grepl("Alaska", d2000$NAME) ] <- 
+  d2000$geometry[grepl("Alaska", d2000$NAME) ] + c(600000, -100000)
+d2000$geometry[grepl("Hawaii", d2000$NAME) ] <- 
+  d2000$geometry[grepl("Hawaii", d2000$NAME) ] + c(1700000, -199000)
+
+
+# ------------
+# MAPPING DATA
+# ------------
+
+# 1. Asian Alone
+# --------------
+d2000_MAP_AA <- d2000[d2000$variable == 'AA_alone', ] %>%
+  mutate(percent = 100 * (value/summary_value)) %>% 
+  mutate(percent_fctr = case_when(
+    percent == 0.0 ~ "0%",
+    percent > 0.0 & percent < 1.0 ~ "Less than 1%",
+    percent >= 1.0 & percent < 25.0 ~ "1 to 25%",
+    percent >= 25.0 & percent < 50.0 ~ "25 to 50%",
+    percent >= 50.0 ~ "Greater than 50%"
+  )) %>%
   
-  ggplot(aes(fill = percent)) + 
+  ggplot(aes(fill = percent_fctr)) +
   geom_sf(color = "black", size = 0.01) +
   geom_sf(data = state_overlay, fill = NA, color = "black", size = 0.1) +
-  theme_AAJC +    # Custom theme for AAJC
-  # scale_fill_distiller(palette = "PuOr", direction = 1, end = .85) +
-  scale_fill_viridis_c(end = .90, direction = -1, option = "magma") +
-  labs(fill = "% of Asian     \npopulation     ",
-       title ="     Percentage of Asian Alone Population",
-       subtitle = "       2000 Decennial Census") +
-  titles_upper()
-
-ggsave("../AAJC Vis/AA_alone_2000_COUNTY_MAP.png",
-       plot = AA_alone_2000_MAP, bg = "white")
-
-
-# MAP 2 - Continuous Color Scale
-#         using aajc colors
-# ------------------------------
-AA_alone_2000_MAP <- AA_alone_2000 %>% 
-  mutate(percent = 100 * (value/summary_value)) %>%
-  
-  ggplot(aes(fill = percent)) + 
-  geom_sf(color = NA) +
-  theme_AAJC +    # Custom theme for AAJC
-  scale_fill_gradient(low = orange_80t, high = purple) + 
-  labs(fill = "% of Asian     \npopulation     ",
-       title ="     Percentage of Asian Alone Population",
-       subtitle = "       2000 Decennial Census") +
-  titles_upper()
-
-ggsave("../AAJC Vis/AA_alone_2000_COUNTY_MAP_aajc_colors.png",
-       plot = AA_alone_2000_MAP, bg = "white")
-
-
-# MAPS with discrete color scale (binning): 
-# -----------------------------------------
-
-# PERCENTS CALCs
-# --------------
-AA_alone_2000_percents <- AA_alone_2000 %>% 
-  mutate(percent = 100 * (value/summary_value))
-
-summary(AA_alone_2000_percents$percent)
-
-totCounties <- nrow(AA_alone_2000_percents) 
-
-# Number of US counties with AA alone populations = 0% 
-zero <- nrow(AA_alone_2000_percents[AA_alone_2000_percents$percent == 0.0, ]) #37
-# percent of ALL counties w/ AA alone pops = 0%
-zero/totCounties # 0.01149425
-
-# AA Alone or in Combo - 0.008387698
-# NHPI - 13.7%
-
-# Number of US counties with AA alone populations < 1% 
-less_than_1 <- nrow(AA_alone_2000_percents[AA_alone_2000_percents$percent > 0.0 &
-                                             AA_alone_2000_percents$percent < 1.0, ]) # 2666
-
-# percent of ALL counties w/ AA alone pops < 1%
-less_than_1/totCounties # 82%
-
-# AA Alone or in Combo - 77%
-# NHPI - 99% but NHPI > 0 and < 1 - 86%
-
-
-# Number of US counties with AA alone populations between 1 - 25%
-betw_1_and_25 <- nrow(AA_alone_2000_percents[AA_alone_2000_percents$percent >= 1.0 & 
-                                               AA_alone_2000_percents$percent < 25.0 , ])
-
-betw_1_and_25/totCounties # 17%
-
-# AA Alone or in Combo - 22%
-# NHPI - 0.002174588
-
-# Number of US counties with AA alone populations between 25 - 50%
-# betw_25_and_50 <- nrow(AA_alone_2000_percents[AA_alone_2000_percents$percent >= 25.0 & 
-#                                                AA_alone_2000_percents$percent < 50.0 , ])
-# 
-# betw_25_and_50/totCounties # 0.001863933
-
-# Number of US counties with AA alone populations > 25%
-grtr_than_25 <- nrow(AA_alone_2000_percents[AA_alone_2000_percents$percent >= 25.0, ])
-# grtr_than_50 <- nrow(AA_alone_2000_percents[AA_alone_2000_percents$percent >= 50.0, ])
-
-grtr_than_25/totCounties # 0.002174588
-# AA Alone or in Combo - 0.000621311
-# NHPI - 0.0003106555
-
-# Max % of AA Alone pop - Honolulu county 
-max(AA_alone_2000_percents$percent)
-
-#                       |      % of counties 
-# -----------------------------------------------
-# AA pop = 0%           |         0.01149425
-# AA pop. < 1%          |         82%
-# 1% < AA pop. < 25%    |         16.9%
-# AA pop. > 25%         |         0.0022%
-
-# Creating new column for factor data 
-AA_alone_2000_percents$percent_fctr <- NA
-AA_alone_2000_percents$percent_fctr[AA_alone_2000_percents$percent == 0.0] <- "0%"
-AA_alone_2000_percents$percent_fctr[AA_alone_2000_percents$percent > 0.0 &
-                                      AA_alone_2000_percents$percent < 1.0] <- "Less than 1%"
-AA_alone_2000_percents$percent_fctr[AA_alone_2000_percents$percent >= 1.0 & 
-                                      AA_alone_2000_percents$percent < 25.0 ] <- "1 to 25%"
-AA_alone_2000_percents$percent_fctr[AA_alone_2000_percents$percent >= 25.0] <- "Greater than 25%"
-# AA_alone_2000_percents$percent_fctr[AA_alone_2000_percents$percent >= 25.0 & 
-#                                       AA_alone_2000_percents$percent < 50.0] <- "25 to 50%"
-# AA_alone_2000_percents$percent_fctr[AA_alone_2000_percents$percent >= 50.0] <- "Greater than 50%"
-
-
-# MAP 3 - based off MAP 2 in AAJC Report
-# --------------------------------------
-# these colors were taken from the sample report MAP 2
-# https://www.advancingjustice-aajc.org/sites/default/files/2019-07/1153_AAJC_Immigration_Final_0.pdf
-lt1_color <- "#fffae5"
-betw_1_25_color <- "#efb48e"
-gt25_color <- "#e2733a"
-gt50_color <- "#884523"
-
-AA_alone_2000_MAP_factors <- AA_alone_2000_percents %>%
-  
-  ggplot(aes(fill = percent_fctr)) + 
-  geom_sf(color = "black", size = 0.01) +
-  geom_sf(data = state_overlay, fill = NA, color = "black", size = 0.1) + 
-  theme_AAJC +    # Custom theme for AAJC
-  scale_fill_manual(values = c("Less than 1%" = lt1_color,
-                                "1 to 25%" = betw_1_25_color,
-                                "Greater than 25%" = gt25_color),
-                    na.value = lt1_color) +
-  labs(fill = "% of Asian     \npopulation     ",
-       title ="     Asian Alone Population",
-       subtitle = "       2000 Decennial Census") +
-  titles_upper()
-
-ggsave("../AAJC Vis/NHPI_alone_2000_COUNTY_MAP_factored_colors.png",
-       plot = AA_alone_2000_MAP_factors, bg = "white")
-
-
-# MAP 4 - exact match of MAP 2 in AAJC Report
-# -------------------------------------------
-AA_alone_2000_MAP_factors_exact_match <- AA_alone_2000_percents %>%
-  
-  ggplot(aes(fill = percent_fctr)) + 
-  geom_sf(color = "black", size = 0.01) +
-  geom_sf(data = state_overlay, fill = NA, color = "black", size = 0.1) + 
-  theme_AAJC +    # Custom theme for AAJC
-  scale_fill_manual(values = c("Less than 1%" = lt1_color,
-                               "1 to 25%" = betw_1_25_color,
-                               "Greater than 25%" = gt25_color),
-                    na.value = lt1_color) +
-  labs(fill = "% of Asian     \npopulation     ",
-       title ="     Percentage of Asian Alone Population",
-       subtitle = "       2000 Decennial Census") +
-  titles_upper()
-
-ggsave("../AAJC Vis/AA_alone_2000_COUNTY_MAP_factored_colors_exact_match.png",
-       plot = AA_alone_2000_MAP_factors_exact_match, bg = "#cbe0f5")
-
-
-# MAP 5 - exact match with AAJC
-#         With 0% data shown in map 
-#         (counties with no AA pop. are white)
-# --------------------------------------
-
-AA_alone_2000_MAP_factors_exact_match_zero <- AA_alone_2000_percents %>%
-  
-  ggplot(aes(fill = percent_fctr)) + 
-  geom_sf(color = "black", size = 0.01) +
-  geom_sf(data = state_overlay, fill = NA, color = "black", size = 0.1) + 
-  theme_AAJC +    # Custom theme for AAJC
+  theme_AAJC +
+  # scale_fill_viridis_c(end = .95, direction = -1, option = "magma") +
   scale_fill_manual(values = c("0%" = "white",
-                               "Less than 1%" = lt1_color,
-                               "1 to 25%" = betw_1_25_color,
-                               "Greater than 25%" = gt25_color),
-                    na.value = lt1_color) +
+                               "Less than 1%" = "#FFF9F2",
+                               "1 to 25%" = "#FAC687",
+                               "25 to 50%" = "#BD6D62",
+                               "Greater than 50%" = "#6D1162")) +
   labs(fill = "% of Asian     \npopulation     ",
-       title ="     Asian Alone Population",
+       title ="     Asian American US Population",
        subtitle = "       2000 Decennial Census") +
   titles_upper()
 
-ggsave("../AAJC Vis/AA_alone_2000_COUNTY_MAP_factored_colors_exact_match_zeroPercent.png",
-       plot = AA_alone_2000_MAP_factors_exact_match_zero, bg = "#cbe0f5")
+# change margins to fit alaska and hawaii changes
+d2000_MAP_AA <- d2000_MAP_AA + theme(plot.margin = margin(1,1,1,1, "cm"))
 
+ggsave("../AAJC Vis/AA_alone_2000_COUNTY_MAP_v2.png",
+       plot = d2000_MAP_AA, bg = "white")
+
+# 2. Asian Alone or in combination
+# --------------------------------
+d2000_MAP_AAC <- d2000[d2000$variable == 'AA_alone_combination', ] %>%
+  mutate(percent = 100 * (value/summary_value)) %>% 
+  mutate(percent_fctr = case_when(
+    percent == 0.0 ~ "0%",
+    percent > 0.0 & percent < 1.0 ~ "Less than 1%",
+    percent >= 1.0 & percent < 25.0 ~ "1 to 25%",
+    percent >= 25.0 & percent < 50.0 ~ "25 to 50%",
+    percent >= 50.0 ~ "Greater than 50%"
+  )) %>%
+  
+  ggplot(aes(fill = percent_fctr)) +
+  geom_sf(color = "black", size = 0.01) +
+  geom_sf(data = state_overlay, fill = NA, color = "black", size = 0.1) +
+  theme_AAJC +
+  # scale_fill_viridis_c(end = .95, direction = -1, option = "magma") +
+  scale_fill_manual(values = c("0%" = "white",
+                               "Less than 1%" = "#FFF9F2",
+                               "1 to 25%" = "#FAC687",
+                               "25 to 50%" = "#BD6D62",
+                               "Greater than 50%" = "#6D1162")) +
+  labs(fill = "% of Asian     \npopulation     ",
+       title ="     Asian American (alone or in combination) US Population",
+       subtitle = "       2000 Decennial Census") +
+  titles_upper()
+
+# change margins to fit alaska and hawaii changes
+d2000_MAP_AAC <- d2000_MAP_AAC + theme(plot.margin = margin(1,1,1,1, "cm"))
+
+ggsave("../AAJC Vis/AA_alone_combination_2000_COUNTY_MAP_v2.png",
+       plot = d2000_MAP_AAC, bg = "white")
+  
+# 3. NHPI 
+# -------
+d2000_MAP_NHPI <- d2000[d2000$variable == 'NHPI_alone', ] %>%
+  mutate(percent = 100 * (value/summary_value)) %>%
+  mutate(percent_fctr = case_when(
+    percent == 0.0 ~ "0%",
+    percent > 0.0 & percent < 1.0 ~ "Less than 1%",
+    percent >= 1.0 & percent < 25.0 ~ "1 to 25%",
+    percent >= 25.0 & percent < 50.0 ~ "25 to 50%",
+    percent >= 50.0 ~ "Greater than 50%"
+  )) %>%
+  
+  ggplot(aes(fill = percent_fctr)) +
+  geom_sf(color = "black", size = 0.01) +
+  geom_sf(data = state_overlay, fill = NA, color = "black", size = 0.1) +
+  theme_AAJC +
+  # scale_fill_viridis_c(end = .95, direction = -1, option = "magma") +
+  scale_fill_manual(values = c("0%" = "white",
+                               "Less than 1%" = "#FFF9F2",
+                               "1 to 25%" = "#FAC687",
+                               "25 to 50%" = "#BD6D62",
+                               "Greater than 50%" = "#6D1162")) +
+  labs(fill = "% of Asian     \npopulation     ",
+       title ="     NHPI US Population",
+       subtitle = "       2000 Decennial Census") +
+  titles_upper()
+
+# change margins to fit alaska and hawaii changes
+d2000_MAP_NHPI <- d2000_MAP_NHPI + theme(plot.margin = margin(1,1,1,1, "cm"))
+
+
+ggsave("../AAJC Vis/NHPI_2000_COUNTY_MAP_v2.png",
+       plot = d2000_MAP_NHPI, bg = "white")
 
