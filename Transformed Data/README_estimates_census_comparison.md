@@ -12,10 +12,10 @@ This file contains both the 2010 Population Estimates data and the 2010 Decennia
 | `ESTIMATE` | Estimated population per county (num residents) | 
 | `CENSUS` | Census population per county (num residents) | 
 | `NUMERIC_DIFF` | The numeric difference between census population and estimates for a county. Calculated as: <br><br> `ESTIMATE` - `CENSUS` <br><br> *estimates were ___ residents higher(or lower) than census results for County X* | 
-| `NUMERIC_DIFF_AS_PERC` | The percent difference between census population and estimates for a county. Calculated as: <br><br> ((`ESTIMATE` - `CENSUS`) / `CENSUS`) * 100 <br><br> *estimates were ___ \% higher(or lower) than census results for County X* |
+| `PERCENT_DIFF` | The percent difference between census population and estimates for a county. Calculated as: <br><br> ((`ESTIMATE` - `CENSUS`) / (`ESTIMATE` + `CENSUS`)/2) * 100 <br><br> *estimates were ___ \% higher(or lower) than census results for County X* |
 | `ESTIMATE_PERC` | Estimated percent of county population. Calculated as: <br><br> `ESTIMATE`/`estim_TOT_POP` <br><br>| 
 | `CENSUS_PERC` |  Census percent of county population. Calculated as: <br><br> `CENSUS`/`census_TOT_POP` <br><br> | 
-| `PERCENT_DIFF` | The difference between estimated and census percent of county population. Calculates as: <br><br> `ESTIMATE_PERC` - `CENSUS_PERC` <br><br> *estimates show that County X was expected to have ___ \% more(or less) AAC pop. than it actually did in census results* | 
+| `PERCENT_OF_COUNTY_DIFF` | The difference between estimated and census percent of county population. Calculates as: <br><br> `ESTIMATE_PERC` - `CENSUS_PERC` <br><br> *estimates show that County X was expected to have ___ \% more(or less) AAC pop. than it actually did in census results* | 
 | `estim_TOT_POP` | Total Population of a county from estimates | 
 | `census_TOT_POP` | Total Population of a county from census | 
 | `flag` | A non-zero value indicates a flag. As per Chris email - flag to see how many times we have an issue | 
