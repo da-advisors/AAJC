@@ -220,8 +220,7 @@ analytical <- analytical %>%
 
 
 # export table to "Transformed Data" folder
-# write.csv(analytical, "../Transformed Data/estimates_census_comparison_2010.csv", row.names = F)
-st_write(analytical, "../Transformed Data/estimates_census_comparison_2010.csv", layer_options = "GEOMETRY=AS_WKT")
+# st_write(analytical, "../Transformed Data/estimates_census_comparison_2010.csv", layer_options = "GEOMETRY=AS_WKT")
 
 
 
