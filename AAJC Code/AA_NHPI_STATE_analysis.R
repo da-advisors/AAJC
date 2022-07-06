@@ -94,6 +94,9 @@ AA_alone_2000_MAP <- AA_alone_2000 %>%
 # Loading all vars and searching for the needed ones
 d2010 <- load_variables(2010, 'sf1', cache = T)
 
+# Asian alone 
+# "P003005"
+
 # total races tallied!!Asian alone or in combination with one or more other races
 asian_alone_or_combination <- "P006005"
 

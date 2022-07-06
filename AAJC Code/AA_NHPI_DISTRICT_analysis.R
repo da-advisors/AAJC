@@ -118,6 +118,12 @@ d2000$geometry[grepl("Alaska", d2000$NAME) ] <-
 d2000$geometry[grepl("Hawaii", d2000$NAME) ] <- 
   d2000$geometry[grepl("Hawaii", d2000$NAME) ] + c(1700000, -199000)
 
+# Doing the same for the actual decennial census data 
+d2010$geometry[grepl("Alaska", d2010$NAME) ] <- 
+  d2010$geometry[grepl("Alaska", d2010$NAME) ] + c(600000, -100000)
+d2010$geometry[grepl("Hawaii", d2010$NAME) ] <- 
+  d2010$geometry[grepl("Hawaii", d2010$NAME) ] + c(1700000, -199000)
+
 
 # ------------
 # MAPPING DATA
@@ -223,3 +229,36 @@ d2000_MAP_NHPI <- d2000_MAP_NHPI + theme(plot.margin = margin(1,1,1,1, "cm"))
 ggsave("../AAJC Vis/NHPI_2000_COUNTY_MAP_v2.png",
        plot = d2000_MAP_NHPI, bg = "white")
 
+
+
+# 2010 
+d2010_MAP_AA <- d2010[d2010$variable == 'AA_alone', ] %>%
+  mutate(percent = 100 * (value/summary_value)) %>% 
+  mutate(percent_fctr = case_when(
+    percent == 0.0 ~ "0%",
+    percent > 0.0 & percent < 1.0 ~ "Less than 1%",
+    percent >= 1.0 & percent < 25.0 ~ "1 to 25%",
+    percent >= 25.0 & percent < 50.0 ~ "25 to 50%",
+    percent >= 50.0 ~ "Greater than 50%"
+  )) %>%
+  
+  ggplot(aes(fill = percent_fctr)) +
+  geom_sf(color = "black", size = 0.01) +
+  geom_sf(data = state_overlay, fill = NA, color = "black", size = 0.1) +
+  theme_AAJC +
+  # scale_fill_viridis_c(end = .95, direction = -1, option = "magma") +
+  scale_fill_manual(values = c("0%" = "white",
+                               "Less than 1%" = "#FFF9F2",
+                               "1 to 25%" = "#FAC687",
+                               "25 to 50%" = "#BD6D62",
+                               "Greater than 50%" = "#6D1162")) +
+  labs(fill = "% of Asian     \npopulation     ",
+       title ="     Asian American US Population",
+       subtitle = "       2000 Decennial Census") +
+  titles_upper()
+
+# change margins to fit alaska and hawaii changes
+d2010_MAP_AA <- d2010_MAP_AA + theme(plot.margin = margin(1,1,1,1, "cm"))
+
+ggsave("../AAJC Vis/AA_alone_2010_COUNTY_MAP_v2.png",
+       plot = d2010_MAP_AA, bg = "white")
