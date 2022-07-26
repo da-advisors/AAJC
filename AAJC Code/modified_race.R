@@ -984,3 +984,51 @@ analytical <- left_join(num_diff, perc_diff, by = c('STNAME' = 'STNAME', 'CTYNAM
 
 # write to csv
 st_write(analytical, "../Transformed Data/PES_DC_MR_comparison_2020.csv", layer_options = "GEOMETRY=AS_WKT")
+
+
+# ==========
+# Simple EDA
+# ==========
+
+
+# 1. % Diff boxplots by comparison 
+analytical %>%
+  ggplot(aes(x = COMPARISON, y = PERCENT_DIFF, fill = COMPARISON)) + 
+  geom_boxplot()
+
+# 2. See all % differences distributions for each comparison 
+ggplot(analytical, aes(x=PERCENT_DIFF)) + 
+  geom_histogram(data = analytical %>% filter(COMPARISON == "PES_DC"),
+                 aes(color = "green"), fill =NA, alpha = .05,binwidth = 2) +
+  geom_histogram(data = analytical %>% filter(COMPARISON == "PES_DC"),
+                 color="green", fill =NA, alpha = .05,binwidth = 2) + 
+  geom_histogram(data = analytical %>% filter(COMPARISON == "MR_DC"),
+                 col = "red" , fill = NA, alpha = .05, binwidth = 2) +
+  geom_histogram(data = analytical %>% filter(COMPARISON == "PES_MR"),
+                 color = "blue", fill = NA, alpha = .05, binwidth = 2) +
+  theme_minimal()  +
+  scale_color_manual(values = c("PES vs DC" = "green", "MR vs. DC" = "red", "PES vs. MR" = "blue"), name = "Comparisons") +
+  ggtitle("Percent Difference Distribution for all Comparisons") 
+
+
+# 3. Get % difference distributions for EACH comparison BY race group
+analytical %>%
+  filter(COMPARISON == "PES_DC") %>%
+  ggplot(aes(x = PERCENT_DIFF, fill=RACE_GROUP)) + 
+  geom_histogram(binwidth = 3) + 
+  theme_minimal() + 
+  ggtitle("PES vs DC % difference by race group")
+
+analytical %>%
+  filter(COMPARISON == "MR_DC") %>%
+  ggplot(aes(x = PERCENT_DIFF, fill=RACE_GROUP)) + 
+  geom_histogram(binwidth = 3) + 
+  theme_minimal() + 
+  ggtitle("Modified Race vs DC % difference by race group")
+
+analytical %>%
+  filter(COMPARISON == "PES_MR") %>%
+  ggplot(aes(x = PERCENT_DIFF, fill=RACE_GROUP)) + 
+  geom_histogram(binwidth = 3) + 
+  theme_minimal() + 
+  ggtitle("PES vs Modified Race % difference by race group")
