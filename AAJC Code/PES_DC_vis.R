@@ -10,13 +10,27 @@ source("aajc_tools.R")
 # Import theme created for AAJC Analysis in "AAJC Code/AAJC_theme.R"
 theme_AAJC <- readRDS('theme_AAJC.rds')
 
+# Anam's Key: 
+census_api_key("0d3f6eaad6d4d9ffb24d6b420e4deccd7fe7f780")
+
+options(tigris_use_cache = TRUE)
+
 
 # ========
 # get data 
 # ========
 
-analytical <- read.csv("../Transformed Data/estimates_census_comparison_2010.csv")
+# analytical <- read.csv("../Transformed Data/PES_DC_MR_comparison_2010.csv")
+analytical <- read.csv("../Transformed Data/PES_DC_MR_comparison_2000.csv")
 
+geo <- read.csv("../Transformed Data/PES_DC_comparison_2000.csv")
+
+geo <- geo %>% select(WKT, STNAME, CTYNAME)
+
+analytical <- analytical %>%
+  select(-geometry) %>%
+  left_join(geo, by = c("STNAME", "CTYNAME")) %>%
+  rename(geometry = WKT)
 
 
 #############################
@@ -31,7 +45,7 @@ analytical <- read.csv("../Transformed Data/estimates_census_comparison_2010.csv
 state_overlay <- states(
   cb = TRUE,
   resolution = "20m",
-  year = 2010
+  year = 2000
 ) %>%
   shift_geometry()
 
@@ -61,10 +75,11 @@ state_overlay$geometry[state_overlay$NAME == "Hawaii"] <- hawaii.mod
 # plot(hawaii.mod, col="lightblue", add=T)
 
 # Doing the same for the actual data 
-analytical$geometry[grepl("Alaska", analytical$STNAME)] <- 
-  analytical$geometry[grepl("Alaska", analytical$STNAME)] + c(675000, -400000)
-analytical$geometry[grepl("Hawaii", analytical$STNAME) ] <- 
-  analytical$geometry[grepl("Hawaii", analytical$STNAME) ]+ c(1700000, -500000)
+# analytical$geometry[grepl("Alaska", analytical$STNAME)] <- 
+#   as.numeric(analytical$geometry[grepl("Alaska", analytical$STNAME)]) + c(675000, -400000)
+# analytical$geometry[grepl("Hawaii", analytical$STNAME) ] <- 
+#   as.numeric(analytical$geometry[grepl("Hawaii", analytical$STNAME) ])+ c(1700000, -500000)
+
 
 
 
@@ -79,12 +94,12 @@ county_map <- function(data){
     geom_sf(color = "black", size = 0.04) +
     geom_sf(data = state_overlay, fill = NA, color = "black", size = 0.15) +
     theme_AAJC +
-    scale_fill_manual(values = c("Less than 0%" = "white",
-                                 "0 to 1%" = "#FFF9F2",
-                                 "1 to 25%" = "#FAC687",
-                                 "25 to 50%" = "#BD6D62",
-                                 "50 to 100%" = "#6D1162",
-                                 "Greater than 100%" = "#4C061D"))
+    scale_fill_manual(values = c("-200 to -125%" = "#FCB03E",
+                                 "-125 to -50%" = "#FCDCB6",
+                                 "-50 to 0%" = "#FFF9F2",
+                                 "0 to 50%" = "#D9998F",
+                                 "50 to 125%" = "#BD6D62",
+                                 "125 - 200%" = "#6D1162"))
   
   # change margins to fit alaska and hawaii changes
   map <- map + theme(plot.margin = margin(1,1,1,1, "cm"))
@@ -93,9 +108,180 @@ county_map <- function(data){
 
 
 # ==============================
-# Create Map for each Race Group
+# Create Map for each Race Group - API Alone & API AIC 
 # ==============================
 
+# --------------------
+# Fixing Alaska values
+# --------------------
+
+# Making sure the comparisons are PES and MR and not PES and DC
+analytical$NUMERIC_DIFF[analytical$STNAME == "Alaska"] <-
+  analytical$ESTIMATE[analytical$STNAME == "Alaska"] - analytical$MR[analytical$STNAME == "Alaska"]
+
+analytical <- analytical %>%
+  mutate(lag_estim = ESTIMATE)  %>%
+  fill(lag_estim)
+  
+analytical$PERCENT_DIFF[analytical$STNAME == "Alaska"] <-
+  ( (analytical$lag_estim[analytical$STNAME == "Alaska"] - analytical$MR[analytical$STNAME == "Alaska"]) / ( (analytical$lag_estim[analytical$STNAME == "Alaska"] + analytical$MR[analytical$STNAME == "Alaska"]) / 2) ) * 100 
+
+# changing COMPARISON values for Alaska 
+analytical$COMPARISON[analytical$STNAME == "Alaska" & analytical$COMPARISON == "PES_alone_DC_alone"] <- "PES_alone_MR_alone"
+analytical$COMPARISON[analytical$STNAME == "Alaska" & analytical$COMPARISON == "PES_alone_DC_combo"] <- "PES_alone_MR_combo"
+
+
+# multiplying percent_diff & numeric_diff by -1 to fix calculation 8/22
+analytical$PERCENT_DIFF <- analytical$PERCENT_DIFF * -1
+analytical$NUMERIC_DIFF <- analytical$NUMERIC_DIFF * -1
+
+
+# --------------------
+# Subsetting relevant data
+# -------------------- 
+# change out COMPARISON == to "PES_alone_MR_alone" or "PES_alone_MR_combo" depending on what is needed 
+dummy <-  analytical %>%
+  # get each race group
+  filter(COMPARISON == "PES_alone_MR_combo") %>%
+  # create groups column for discrete color scale
+  mutate(percent_fctr = case_when(
+    PERCENT_DIFF <= -125 ~ "-200 to -125%",
+    PERCENT_DIFF > -125 & PERCENT_DIFF <= -50 ~ "-125 to -50%",
+    PERCENT_DIFF > -50 & PERCENT_DIFF <= 0 ~ "-50 to 0%",
+    PERCENT_DIFF > 0 & PERCENT_DIFF <= 50 ~ "0 to 50%",
+    PERCENT_DIFF > 50 & PERCENT_DIFF < 125 ~ "50 to 125%",
+    PERCENT_DIFF >= 125 ~ "125 - 200%",)) %>%
+  select(STNAME, CTYNAME, percent_fctr, -geometry)
+
+# ------------
+# Getting geospatial data 
+# ------------
+
+# Get 2000 geospatial data 
+geo <- get_decennial(
+  geography = "county",
+    geometry = TRUE,
+    resolution = "20m",
+    variables = "P007006",  # total population in this instance 
+    year = 2000) %>%
+    shift_geometry()
+
+geo <- geo %>% extract(NAME, c('CTYNAME', 'STNAME'), "([^,]+), ([^)]+)")
+
+geo <- geo[, 1:6]
+geo <- geo %>% select(STNAME, CTYNAME, geometry)
+
+# fix positioning of alaska and hawaii 
+geo$geometry[grepl("Alaska", geo$STNAME)] <- 
+  geo$geometry[grepl("Alaska", geo$STNAME)] + c(675000, -400000)
+geo$geometry[grepl("Hawaii", geo$STNAME) ] <- 
+  geo$geometry[grepl("Hawaii", geo$STNAME) ]+ c(1700000, -500000)
+
+
+dummy$CTYNAME[dummy$STNAME == "Alaska"] <- geo$CTYNAME[geo$STNAME == "Alaska"]
+
+dummy <- left_join(dummy, geo, by = c("STNAME", "CTYNAME"))
+
+# --------------------
+# MAPPING
+# --------------------
+
+# API COMBO 
+API_combo_2000_county <- county_map(dummy)
+API_combo_2000_county +  
+  labs(fill = "% difference between Census\n Results and Population Estimates     ",
+       title ="      Population Estimates and Census Comparison for API\n      (Alone or in Combination) Populations",
+       subtitle = "         Resident Population By County",
+       caption = "A percentage difference value of less than 0% indicates \na potential undercount ie. the population estimates for API\n(alone or in combination) were greater than the census results.") +
+  titles_upper()
+
+# API ALONE
+API_alone_2000_county <- county_map(dummy)
+API_alone_2000_county +  
+  labs(fill = "% difference between Census\n Results and Population Estimates     ",
+                              title ="      Population Estimates and Census Comparison for API Alone Populations",
+                              subtitle = "         Resident Population By County",
+                              caption = "A percentage difference value of less than 0% indicates \na potential undercount ie. the population estimate for API\n(alone) was less than the census results.") +
+  titles_upper()
+
+
+
+
+#########
+# STATE #
+#########
+
+analytical_state <- read.csv("../Transformed Data/state_level_comparisons_2000.csv")
+
+
+# multiplying percent_diff & numeric_diff by -1 to fix calculation 8/22
+analytical_state$PERCENT_DIFF <- analytical_state$PERCENT_DIFF * -1
+analytical_state$NUMERIC_DIFF <- analytical_state$NUMERIC_DIFF * -1
+
+# --------------------
+# Subsetting relevant data
+# -------------------- 
+# change out COMPARISON == to "PES_alone_MR_alone" or "PES_alone_MR_combo" depending on what is needed 
+dummy <-  analytical_state %>%
+  # get each race group
+  filter(COMPARISON == "PES_alone_MR_alone") %>%
+  # create groups column for discrete color scale
+  mutate(percent_fctr = case_when(
+    PERCENT_DIFF <= -125 ~ "-200 to -125%",
+    PERCENT_DIFF > -125 & PERCENT_DIFF <= -50 ~ "-125 to -50%",
+    PERCENT_DIFF > -50 & PERCENT_DIFF <= 0 ~ "-50 to 0%",
+    PERCENT_DIFF > 0 & PERCENT_DIFF <= 50 ~ "0 to 50%",
+    PERCENT_DIFF > 50 & PERCENT_DIFF < 125 ~ "50 to 125%",
+    PERCENT_DIFF >= 125 ~ "125 - 200%",)) %>%
+  select(STNAME, percent_fctr)
+
+
+# ------------
+# Getting geospatial data 
+# ------------
+
+# can use state overlay here 
+state_overlay_geo <- state_overlay %>% select(STNAME = NAME, geometry)
+
+dummy <- left_join(dummy, state_overlay_geo, by = "STNAME")
+
+
+# --------------------
+# MAPPING
+# --------------------
+
+# API COMBO 
+API_combo_2000_state <- county_map(dummy)
+API_combo_2000_state +  
+  labs(fill = "% difference between Census\n Results and Population Estimates     ",
+       title ="      Population Estimates and Census Comparison for API\n      (Alone or in Combination) Populations",
+       subtitle = "         Resident Population By State",
+       caption = "A percentage difference value of less than 0% indicates \na potential undercount ie. the population estimates for API\n(alone or in combination) were greater than the census results.") +
+  titles_upper()
+
+# API ALONE
+API_alone_2000_state <- county_map(dummy)
+API_alone_2000_state +  
+  labs(fill = "% difference between Census\n Results and Population Estimates     ",
+       title ="      Population Estimates and Census Comparison for API Alone Populations",
+       subtitle = "         Resident Population By State",
+       caption = "A percentage difference value of less than 0% indicates \na potential undercount ie. the population estimate for API\n(alone) was less than the census results.") +
+  titles_upper()
+
+
+
+
+
+
+
+
+
+
+
+
+################
+# OLD VIS CODE #
+################
 # A list of our race values (AA, AAC, NHPI, NHPIC)
 variables <- unique(analytical$variable)
 

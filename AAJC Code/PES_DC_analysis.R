@@ -167,3 +167,103 @@ for (i in variables){
 # analytical[is.na(analytical$PERCENT_DIFF), ]
 
 
+# =====================================
+# CALCULATIONS
+# =====================================
+
+# At the national-level, the 2000 Census came in [x] below the population estimates for the API race group
+# =====================================
+
+analytical <- read.csv("../Transformed Data/PES_DC_MR_comparison_2000.csv")
+
+analytical[, c(4,5,6)] <- sapply(analytical[, c(4,5,6)], as.numeric)
+# get total populations on a national level - ESTIMATES - API alone
+estim_val <- analytical %>%
+  filter(COMPARISON == 'PES_alone_DC_alone') %>%
+  # group_by(CTYNAME) %>%
+  summarise(ESTIMATE = sum(ESTIMATE), CENSUS = sum(as.integer(CENSUS)), MR = sum(as.integer(MR)))
+
+
+# get total populations on a national level - CENSUS & MR - API alone or combo
+cen_mr_val <- analytical %>%
+  filter(COMPARISON == 'MR_combo_DC_combo') %>%
+  summarise(CENSUS_combo = sum(CENSUS), MR_combo = sum(MR))
+
+national_totals <- cbind(estim_val, cen_mr_val)
+
+# percent difference Alone and in combo
+(national_totals$ESTIMATE - national_totals$MR)/ ((national_totals$ESTIMATE + national_totals$MR)/2)
+(national_totals$ESTIMATE - national_totals$MR_combo)/ ((national_totals$ESTIMATE + national_totals$MR_combo)/2)
+
+
+
+# State level comparisons - [Top 10 and bottom 10 table]
+# =====================================
+
+# get relevant data and aggregate by state 
+analytical_states <- analytical %>% 
+  filter(COMPARISON == 'PES_alone_DC_alone' | COMPARISON == 'PES_alone_DC_combo') %>%
+  select(STNAME, CTYNAME, RACE_GROUP, ESTIMATE, MR, COMPARISON)
+
+mr_combo = rep(analytical_states$MR[analytical_states$COMPARISON == 'PES_alone_DC_combo'], each = 2)
+
+analytical_states$MR_COMBO = mr_combo
+
+analytical_states[, c(4,5,7)] <- sapply(analytical_states[, c(4,5,7)], as.numeric)
+
+# aggregate by state 
+analytical_states <- analytical_states[!is.na(analytical_states$ESTIMATE), ] %>%
+  group_by(STNAME) %>% 
+  summarise(ESTIMATE = sum(ESTIMATE), MR = sum(MR), MR_COMBO = sum(MR_COMBO))
+
+# Calculate differences 
+t10_alone_pdiff <- analytical_states %>%
+  mutate(P_DIFF_alone = (ESTIMATE - MR)/ ((ESTIMATE + MR)/2),
+         N_DIFF_alone = ESTIMATE - MR,
+         P_DIFF_combo = (ESTIMATE - MR_COMBO)/ ((ESTIMATE + MR_COMBO)/2),
+         N_DIFF_combo = ESTIMATE - MR_COMBO) %>%
+  top_n(-10, abs(P_DIFF_alone)) %>%
+  arrange(abs(P_DIFF_alone))
+
+# Bottom 10 states by % DIFF (PES alone vs MR alone )
+t10_states_alone <- data.frame(State = t10_alone_pdiff$STNAME,
+                               percent_difference = t10_alone_pdiff$P_DIFF_alone*100,
+                               numeric_difference = t10_alone_pdiff$N_DIFF_alone)
+
+print(formattable(t10_states_alone, align = c("l", rep("r", NCOL(t10_states_alone) - 1)),
+                  caption = "Bottom 10 States by Percent Difference - API Alone (estimates) and API Alone (MR)"))
+
+
+# State level comparisons - [Map of differences at state level]
+# =====================================
+
+# 1. Clean Data 
+# --------------
+state_differences_percent <- analytical_states %>%
+  mutate(P_DIFF_alone = (ESTIMATE - MR)/ ((ESTIMATE + MR)/2)*100,
+         P_DIFF_combo = (ESTIMATE - MR_COMBO)/ ((ESTIMATE + MR_COMBO)/2)*100) %>%
+  pivot_longer(cols = c(P_DIFF_alone, P_DIFF_combo), names_to = 'COMPARISON', values_to = 'PERCENT_DIFF') %>%
+  mutate(COMPARISON = case_when(
+    COMPARISON == "P_DIFF_alone" ~ "PES_alone_MR_alone",
+    COMPARISON == "P_DIFF_combo" ~ "PES_alone_MR_combo",
+  ))
+
+state_differences_numeric <- analytical_states %>%
+  mutate(N_DIFF_alone = ESTIMATE - MR,
+         N_DIFF_combo = ESTIMATE - MR_COMBO) %>%
+  pivot_longer(cols = c(N_DIFF_alone, N_DIFF_combo), names_to = 'COMPARISON', values_to = 'NUMERIC_DIFF') %>%
+  mutate(COMPARISON = case_when(
+    COMPARISON == "N_DIFF_alone" ~ "PES_alone_MR_alone",
+    COMPARISON == "N_DIFF_combo" ~ "PES_alone_MR_combo",
+  ))
+
+# join
+state_differences <- left_join(state_differences_percent,state_differences_numeric, by = c("STNAME","ESTIMATE", "MR", "MR_COMBO", "COMPARISON") )
+
+write.csv(state_differences, "../Transformed Data/state_level_comparisons_2000.csv")
+
+# 1. Mapping 
+# --------------
+
+# Mapping in PES_DC_vis.R
+
