@@ -6,6 +6,7 @@ library(tigris)
 library(sf)
 source("AAJC_theme.R")
 source("aajc_tools.R")
+library(rcartocolor) # "PurpOr" color pallete 
 
 # Import theme created for AAJC Analysis in "AAJC Code/AAJC_theme.R"
 theme_AAJC <- readRDS('theme_AAJC.rds')
@@ -15,6 +16,9 @@ census_api_key("0d3f6eaad6d4d9ffb24d6b420e4deccd7fe7f780")
 
 options(tigris_use_cache = TRUE)
 
+############
+##  2000  ##
+############
 
 # ========
 # get data 
@@ -224,16 +228,16 @@ analytical_state$NUMERIC_DIFF <- analytical_state$NUMERIC_DIFF * -1
 # change out COMPARISON == to "PES_alone_MR_alone" or "PES_alone_MR_combo" depending on what is needed 
 dummy <-  analytical_state %>%
   # get each race group
-  filter(COMPARISON == "PES_alone_MR_alone") %>%
+  filter(COMPARISON == "PES_alone_MR_combo") %>%
   # create groups column for discrete color scale
   mutate(percent_fctr = case_when(
-    PERCENT_DIFF <= -125 ~ "-200 to -125%",
-    PERCENT_DIFF > -125 & PERCENT_DIFF <= -50 ~ "-125 to -50%",
-    PERCENT_DIFF > -50 & PERCENT_DIFF <= 0 ~ "-50 to 0%",
-    PERCENT_DIFF > 0 & PERCENT_DIFF <= 50 ~ "0 to 50%",
-    PERCENT_DIFF > 50 & PERCENT_DIFF < 125 ~ "50 to 125%",
-    PERCENT_DIFF >= 125 ~ "125 - 200%",)) %>%
+    PERCENT_DIFF < -25 ~ "Less than -25%",
+    PERCENT_DIFF >= -25 & PERCENT_DIFF < 0 ~ "-25 to 0%",
+    PERCENT_DIFF >= 0 & PERCENT_DIFF < 25 ~ "0 to 25%",
+    PERCENT_DIFF >= 25 & PERCENT_DIFF <= 50 ~ "25 to 50%",
+    PERCENT_DIFF > 50 ~ "Greater than 50%")) %>%
   select(STNAME, percent_fctr)
+
 
 
 # ------------
@@ -250,22 +254,55 @@ dummy <- left_join(dummy, state_overlay_geo, by = "STNAME")
 # MAPPING
 # --------------------
 
+# Color Paletted 
+display_carto_pal(7, "PurpOr") #state maps
+display_carto_pal(7, "SunsetDark") #county maps / tables
+display_carto_pal(7, "Sunset") #county maps
+display_carto_pal(7, "OrYel") #state maps, option 2
+
+PurpOr7 <- carto_pal(7, "PurpOr")
+
+
+# ================
+# Mapping Function - STATE 
+# ================
+
+state_map <- function(data){
+  
+  map <- data %>%
+    ggplot(aes(fill = percent_fctr, geometry = geometry)) +
+    geom_sf(color = "black", size = 0.04) +
+    geom_sf(data = state_overlay, fill = NA, color = "black", size = 0.15) +
+    theme_AAJC +
+    scale_fill_manual(values = c("Less than -25%" = PurpOr7[1],
+                                 "-25 to 0%" = PurpOr7[2],
+                                 "0 to 25%" = PurpOr7[3],
+                                 "25 to 50%" = PurpOr7[4],
+                                 "Greater than 50%" = PurpOr7[5]))
+  
+  # change margins to fit alaska and hawaii changes
+  map <- map + theme(plot.margin = margin(1,1,1,1, "cm"))
+  map
+}
+
+
+
 # API COMBO 
-API_combo_2000_state <- county_map(dummy)
+API_combo_2000_state <- state_map(dummy)
 API_combo_2000_state +  
-  labs(fill = "% difference between Census\n Results and Population Estimates     ",
+  labs(fill = "Error of Closure (%)     ",
        title ="      Population Estimates and Census Comparison for API\n      (Alone or in Combination) Populations",
        subtitle = "         Resident Population By State",
-       caption = "A percentage difference value of less than 0% indicates \na potential undercount ie. the population estimates for API\n(alone or in combination) were greater than the census results.") +
+       caption = "An error of closure value less than 0% indicates a potential\nundercount ie. the population estimates for API (alone or\nin combination) were greater than the census results.") +
   titles_upper()
 
 # API ALONE
-API_alone_2000_state <- county_map(dummy)
+API_alone_2000_state <- state_map(dummy)
 API_alone_2000_state +  
-  labs(fill = "% difference between Census\n Results and Population Estimates     ",
-       title ="      Population Estimates and Census Comparison for API Alone Populations",
+  labs(fill = "Error of Closure (%)     ",
+       title ="      Population Estimates and Census Comparison for\n      API Alone Populations",
        subtitle = "         Resident Population By State",
-       caption = "A percentage difference value of less than 0% indicates \na potential undercount ie. the population estimate for API\n(alone) was less than the census results.") +
+       caption = "An error of closure value less than 0% indicates \na potential undercount ie. the population estimate\nfor API (alone) was less than the census results.") +
   titles_upper()
 
 
