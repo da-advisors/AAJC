@@ -11,7 +11,7 @@ library(plotly)
 # Population Estimates for Counties:
 # Race By Hispanic Origin Annual Time Series
 # July 1, 1990 to July 1, 1999
-    # Column names were removed from data file in order to read it in 
+    # Column names were removed from raw txt data file in order to read it in 
 
 # Good article for Pacific Islander information: 
     # https://www.census.gov/library/publications/2001/dec/c2kbr01-14.html#:~:text=The%20term%20%E2%80%9CNative%20Hawaiian%20and,differ%20in%20language%20and%20culture.
@@ -57,7 +57,7 @@ dat <- left_join(dat, fips, by = "FIPS") %>%
 # new DF for only Asian & Pacific Islander data 
 
 dat_api <- dat %>%
-  mutate(api = api + api_nh) %>%
+  mutate(api = api + api_nh) %>% # adding api non hispanic and api
   select(year, CTYNAME, STNAME, api)
 
 # Kalawao County did not get read in from FIPS - manually fixing NAs
@@ -68,15 +68,17 @@ dat_api$STNAME[is.na(dat_api$STNAME)] <- "Hawaii"
 
 # Explore data for linear interpolation - linear regression model 
 # ---------------------------------------------------------------
+# non hispanic API
 dat %>% 
   group_by(year) %>%
-  summarise(total = sum(api_nh)) %>%
+  summarise(total = sum(api_nh)) %>%    # get total API population per year 
   ggplot(aes(x=as.factor(year), y=total))+ 
   geom_point() +
   ggtitle("Total US API (non-hispanic) population by year") +
   xlab("Year") + 
   ylab("population")
 
+# total api
 dat_api %>% 
   group_by(year) %>%
   summarise(total = sum(api)) %>%
@@ -138,10 +140,17 @@ for (st in unique(dat_api$STNAME)) {
 
 
 # checking different counties
+state = "California"
+county = "Sacramento"
 test <- dat_api %>%
-  filter(STNAME == "Florida", CTYNAME == "Broward")
-plot(test$year, test$api, xlim = c(1990,2000), ylim = c(16000, 36000))
-points(missing_2000[323,1], missing_2000[323,4], col = "red")
+  filter(STNAME == state, CTYNAME == county)
+plot(test$year, test$api, xlim = c(1990,2000), ylim = c(100000, 160000))
+points(2000, missing_2000$api[missing_2000$STNAME == state & missing_2000$CTYNAME == county], col = "red")
+
+missing_2000$api <- as.integer(missing_2000$api)
+
+write.csv(missing_2000,"../Transformed Data/county_estimates_2000_interpolated.csv", row.names = F)
+
 
 
 # ================================================================

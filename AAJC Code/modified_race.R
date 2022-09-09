@@ -32,6 +32,8 @@ theme_AAJC <- readRDS('theme_AAJC.rds')
 # =====================
 
 # read csv with column name information (done in Excel)
+# documentation used to make column width csv file: (p. 15)
+#   https://www2.census.gov/programs-surveys/popest/technical-documentation/methodology/modified-race-summary-file-method/mrsf2000.pdf
 col_info <- read.csv("../Raw Data/mr-co-column-info.csv")
 
 # Define column widths 
@@ -67,12 +69,26 @@ mr_2000 <- mr_2000 %>%
          FIPS_ST = `FIPS state code `, FIPS_CTY = `FIPS county code `) %>%
   select(FIPS_ST,FIPS_CTY,STNAME,CTYNAME,five_yr_age_grp,RACE_GROUP, population)
 
+# DOUBLE COUNTING ISSUE !! #
+# --------------------------
+# State records can be identified by blanks in the county or municipio code field.
+
+# sanity check 
+mr_2000 %>% filter(STNAME == "CA", CTYNAME == "California") 
+
+mr_2000 %>% filter(STNAME == "CA", CTYNAME != "California") %>%
+  group_by(five_yr_age_grp, RACE_GROUP) %>%
+  summarise(pop = sum(population))
+
+# remove state records where county is blank/NA to get ONLY county totals 
+mr_2000 <- mr_2000 %>% drop_na(FIPS_CTY)
+
+
 # create a copy
-mr_2000_tidy <- mr_2000 %>%
-  select(-c(FIPS_ST,FIPS_CTY))
+mr_2000_tidy <- mr_2000
 
 
-
+# (takes a while to run)
 mr_2000_tidy <- mr_2000_tidy %>%
   # Add 3 columns - ORIGIN, SEX, RACES
   mutate(ORIGIN = NA,
@@ -85,229 +101,337 @@ mr_2000_tidy <- mr_2000_tidy %>%
   select(STNAME, CTYNAME, AGEGRP = five_yr_age_grp, ORIGIN, SEX, RACE, population) %>%
   group_by(STNAME, CTYNAME, SEX, ORIGIN, AGEGRP,RACE)
 
+# ** save mr_2000_tidy now to preserve race groups, origin, age, and gender 
 
-mr_2000_tidy$RACE[mr_2000_tidy$RACE == "AA"] <- "A"
-mr_2000_tidy$RACE[mr_2000_tidy$RACE == "NHPIA"] <- "NHPI"
-
-
-# ======================
-# export cleaned MR data 
-# ======================
-
-# Because this dataset is very large we need to save into a few (10) different csv's
-# Each csv will have about roughly 500K rows
-
-# split the data into seperate DFs by state 
-mr_2000_split <- split(mr_2000_tidy, f = mr_2000_tidy$STNAME)
-
-# remove Puerto Rico
-mr_2000_split <- mr_2000_split[-40]
-
-# rbind some states together 
-AK_CO <- bind_rows(mr_2000_split[1:6])
-CT_IA <- bind_rows(mr_2000_split[7:13])
-ID_KS <- bind_rows(mr_2000_split[14:17])
-KY_MI <- bind_rows(mr_2000_split[18:23])
-MN_MS <- bind_rows(mr_2000_split[24:26])
-MT_NM <- bind_rows(mr_2000_split[27:33])
-NV_OR <- bind_rows(mr_2000_split[34:38])
-PA_TN <- bind_rows(mr_2000_split[39:43])
-TX_UT <- bind_rows(mr_2000_split[44:45])
-VA_WY <- bind_rows(mr_2000_split[46:51])
-
-# put the DFs back into a list
-DF_list <- list(AK_CO, CT_IA, ID_KS, KY_MI, MN_MS, MT_NM, NV_OR, PA_TN, TX_UT, VA_WY)
-DF_names <- list("AK_CO", "CT_IA", "ID_KS", "KY_MI", "MN_MS", "MT_NM", "NV_OR", "PA_TN", "TX_UT", "VA_WY")
-
-# loop through list of DFs and export as csv 
-for (i in 1:length(DF_names)) {
-  write_csv( DF_list[[i]], paste0("../Transformed Data/mr_county_2000/", DF_names[i], "_mr_2000.csv") )
-}
-
-# zip our new mr_county_2000 folder with all the csvs
-zip(zipfile = '../Transformed Data/mr_county_2000', files = "../Transformed Data/mr_county_2000")
-
-
-# ===============================================================
-# Transform Data for merge with PES & DC numeric & perc diff data
-# ===============================================================
-
-# Replace AINA values with IN
-mr_2000_tidy$RACE <- str_replace_all(mr_2000_tidy$RACE, "AINA", "IN")
-
-# Create a new RACE_GROUP column with our desired race groups --> API_alone API_combo 
-# TAKES VERY LONG TO RUN 
-mr_2000_tidy <- mr_2000_tidy %>%
-  mutate(RACE_GROUP = case_when(
-    RACE == "A" | RACE == "NHPI" ~ "API_alone",
-    RACE != "A" | RACE != "NHPI" ~ "API_combo"
-  )) %>%
-  # Get the TOTAL populations by RACE GROUP - we are adding people of all SEX, ORIGIN, & AGEGRP together here 
-  group_by(STNAME,CTYNAME, RACE_GROUP) %>%
+# consolidate origin, sex, age
+mr_2000_tidy <- mr_2000_tidy %>% group_by(STNAME, CTYNAME, RACE) %>%
   summarise(MR = sum(population))
 
-copy_mr_2000_tidy <- mr_2000_tidy
 
-# get all combination values in a sep DF
-combos <- copy_mr_2000_tidy %>%
-  group_by(STNAME, CTYNAME) %>%
-  summarise(combo = sum(MR))
+# -----------------------
+# consolidate race groups into --> AA, A_AIC, NHPIa, NHPI_AIC
+# -----------------------
 
-# Join combo values to mr_2000_tidy
-copy_mr_2000_tidy <- copy_mr_2000_tidy %>%
-  left_join(combos, by = c("STNAME", "CTYNAME")) %>% 
-  # insert combination values where RACE_GROUP = API_combo
-  mutate(MR = case_when(
-    RACE_GROUP == "API_alone" ~ MR,
-    RACE_GROUP == "API_combo" ~ combo
-  )) %>%
-  select(STNAME, CTYNAME, RACE_GROUP, MR)
+# AA - asian alone 
+# NHPIA - NHPI alone 
 
-# export as csv
-write_csv(copy_mr_2000_tidy, "../Transformed Data/MR_county_2000.csv")
+# lowercase capital "A"s so it does not interfere with A (asian alone) race category  
+mr_2000_tidy$RACE <- str_replace_all(mr_2000_tidy$RACE, "AINA", "aINa")
+mr_2000_tidy$RACE <- str_replace_all(mr_2000_tidy$RACE, "NHPIA", "NHPIa")
 
-# state populations are stored in  ctyname = state name 
-# mr_2000_tidy %>%
-#   filter(STNAME == "WY" & CTYNAME != "Wyoming") %>%
-#   group_by(RACE_GROUP) %>%
-#   summarise(n = sum(MR))
+# sanity check 
+grepl("A", mr_2000_tidy$RACE[12])
 
 
-# ===============================================
-# Merging modified race data with PES & DC Data
-# ===============================================
+# create 2 new columns - 1 if RACE contians A (asian) and 1 if RACE contains NHPI
+mr_2000_tidy <- mr_2000_tidy %>% mutate(Asian = case_when(
+  grepl("A", RACE) ~ T
+),
+NHPI = case_when(
+  grepl("NHPI", RACE) ~ T
+))
 
-analytical <- read.csv("../Transformed Data/PES_DC_comparison_2000.csv")
 
-# edited the STNAMES in MR_county_2000.csv in excel
-mr_2000_tidy <- read.csv("../Transformed Data/MR_county_2000.csv")
+# rename race categories as needed 
+mr_2000_tidy <- mr_2000_tidy %>% mutate(RACE = case_when(
+  RACE == "AA" ~ "AA",
+  RACE == "NHPIa" ~ "NHPIa",
+  # choosing a random race group to set as our (alone or in combination race groups) 
+  RACE == "A_NHPI" ~ "A_AIC",
+  RACE == "aINa_A" ~ "NHPI_AIC"
+))
+  
 
-analytical <- analytical %>%
-  left_join(mr_2000_tidy, by = c("STNAME", "CTYNAME", "RACE_GROUP")) %>%
-  select(STNAME, CTYNAME, RACE_GROUP, ESTIMATE, CENSUS, MR, COMPARISON, NUMERIC_DIFF, PERCENT_DIFF, CENSUS_tot_pop, geometry = WKT)
-
-# =====================
-# Adding MR comparisons
-# =====================
-
-# pivot wider the COMPARISONS column so we can add our MR comparisons 
-analytical$comparison2 <- analytical$COMPARISON
-analytical <- analytical %>% mutate(comparison2 = paste(comparison2, " mr")) %>% distinct()
-
-analytical <-  analytical %>%
+# sum populations of all race groups for each county
+# (takes a long time to run)
+for (st in unique(mr_2000_tidy$STNAME)) {
+  
+  for (cty in unique(mr_2000_tidy$CTYNAME)){
     
-    pivot_wider(names_from = COMPARISON, values_from = NUMERIC_DIFF) %>%
-    rename(PES_alone_DC_alone__N = `PES (alone) - DC (alone)`, PES_alone_DC_combo__N = `PES (alone) - DC (combo)`) %>%
-    pivot_wider(names_from = comparison2, values_from = PERCENT_DIFF) %>%
-    rename(PES_alone_DC_alone__P = `PES (alone) - DC (alone)  mr`, PES_alone_DC_combo__P = `PES (alone) - DC (combo)  mr`) %>%
+    # 1. 
+    # dummy DF so we can sum all values that contain Asian race 
+    test <- mr_2000_tidy %>% filter(STNAME == st, CTYNAME == cty, Asian == T)
+    asian_aic <- sum(test$MR)
     
-    # because estimates col has NAs, we need a dummy col. for calculations
-    mutate(lag_estim = ESTIMATE) %>%
-    fill(lag_estim) %>%
+    # dummy DF so we can sum all values that contain NHPI race 
+    test <- mr_2000_tidy %>% filter(STNAME == st, CTYNAME == cty, NHPI == T)
+    nhpi_aic <- sum(test$MR)
+    
+    # 2.
+    # get the alone or in combo values back into original DF
+    mr_2000_tidy$MR[mr_2000_tidy$STNAME == st & mr_2000_tidy$CTYNAME == cty & mr_2000_tidy$RACE == "A_AIC"] <- asian_aic
+    
+    mr_2000_tidy$MR[mr_2000_tidy$STNAME == st & mr_2000_tidy$CTYNAME == cty & mr_2000_tidy$RACE == "NHPI_AIC"] <- nhpi_aic
+  }
   
-    # Compute numeric & percent diffs
-    mutate(
-      PES_alone_MR_alone__N = case_when(
-        RACE_GROUP == "API_alone" ~ round(lag_estim - MR, 2)),
-      PES_alone_MR_combo__N = case_when(
-        RACE_GROUP == "API_combo" ~round(lag_estim - MR, 2)),
-      MR_alone_DC_alone__N = case_when(
-        RACE_GROUP == "API_alone" ~ round(MR - CENSUS, 2)),
-      MR_combo_DC_combo__N = case_when(
-        RACE_GROUP == "API_combo" ~round(MR - CENSUS, 2)),
-      PES_alone_MR_alone__P = case_when(
-        RACE_GROUP == "API_alone" ~ round(((lag_estim - MR) / ((lag_estim + MR) / 2)) * 100 ,2)),
-      PES_alone_MR_combo__P = case_when(
-        RACE_GROUP == "API_combo" ~ round(((lag_estim - MR) / ((lag_estim + MR) / 2)) * 100 ,2)),
-      MR_alone_DC_alone__P = case_when(
-        RACE_GROUP == "API_alone" ~ round(((MR - CENSUS) / ((MR + CENSUS) / 2)) * 100 ,2)),
-      MR_combo_DC_combo__P = case_when(
-        RACE_GROUP == "API_combo" ~ round(((MR - CENSUS) / ((MR + CENSUS) / 2)) * 100 ,2))) %>%
+}
+
+# drop rows where RACE is NA
+mr_2000_tidy <- mr_2000_tidy %>% drop_na(RACE) %>%
+  select(-Asian, -NHPI)
+
+# fix race column values 
+mr_2000_tidy <- mr_2000_tidy %>% mutate(RACE = case_when(
+  RACE == "A_AIC" ~ "A_AIC",
+  RACE == "AA" ~ "A_A",
+  RACE == "NHPIa" ~ "NHPI_A",
+  RACE == "NHPI_AIC" ~"NHPI_AIC"
   
-  select(STNAME, CTYNAME, RACE_GROUP, ESTIMATE, CENSUS, MR, PES_alone_DC_alone__N, PES_alone_DC_combo__N, PES_alone_MR_alone__N, PES_alone_MR_combo__N,
-         MR_alone_DC_alone__N, MR_combo_DC_combo__N,
-         PES_alone_DC_alone__P, PES_alone_DC_combo__P, PES_alone_MR_alone__P, PES_alone_MR_combo__P,
-         MR_alone_DC_alone__P, MR_combo_DC_combo__P, CENSUS_tot_pop, geometry) %>%
-  
-  pivot_longer(PES_alone_DC_alone__N:MR_combo_DC_combo__P, names_to = c("COMPARISON", ".value"), names_sep = "__") %>%
-  select(STNAME, CTYNAME, RACE_GROUP, ESTIMATE, CENSUS, MR, COMPARISON, NUMERIC_DIFF = N, PERCENT_DIFF = P, CENSUS_tot_pop, geometry) %>%
-  filter(!if_all(c(NUMERIC_DIFF, PERCENT_DIFF), is.na))
-  
+))
 
-# ==================
-# Handling NA values
-# ==================
+# ------------
+# writing to csv - 
+#   all four race categories {A alone, A AIC, NHPI alone, NHPI AIC}
+#-------------
 
-# ISSUES: 
-# 1. Cases in which both populations reported 0, should indicate a 0% change but is instead NA
-# 2. There are undefined percentages (ie. cases where there were non-zero estimated population values for
-#    a county but the census reported 0 population)
-
-analytical <- analytical %>% 
-  mutate(
-    # If MR & census/estimate or census/MR both = 0, then PERCENT_DIFF should be 0
-    PERCENT_DIFF = replace(PERCENT_DIFF, MR == 0 & CENSUS == 0, 0),
-    PERCENT_DIFF = replace(PERCENT_DIFF, ESTIMATE == 0 & CENSUS == 0, 0) ) %>%
-  select(STNAME, CTYNAME, RACE_GROUP, ESTIMATE, CENSUS, MR,COMPARISON, NUMERIC_DIFF, PERCENT_DIFF, CENSUS_tot_pop, geometry)
-
-# check for NAs
-analytical[is.na(analytical$PERCENT_DIFF),]
-
-st_write(analytical, "../Transformed Data/PES_DC_MR_comparison_2000.csv", layer_options = "GEOMETRY=AS_WKT")
-
-# change comparison values
-analytical <- analytical %>%
-  mutate(COMPARISON2 = case_when(
-    COMPARISON == "PES_alone_DC_alone" ~ "PES (alone) - DC (alone)",
-    COMPARISON == "PES_alone_MR_alone" ~ "PES (alone) - MR (alone)",
-    COMPARISON == "MR_alone_DC_alone" ~ "MR (alone) - DC (alone)",
-    COMPARISON == "PES_alone_DC_combo" ~ "PES (alone) - DC (combo)",
-    COMPARISON == "PES_alone_MR_combo" ~ "PES (alone) - MR (combo)",
-    COMPARISON == "MR_combo_DC_combo" ~ "MR (combo) - DC (combo)"
-  )) %>%
-  select(STNAME, CTYNAME, RACE_GROUP, ESTIMATE, CENSUS, MR, COMPARISON, COMPARISON2, NUMERIC_DIFF, PERCENT_DIFF, CENSUS_tot_pop, geometry)
+write.csv(mr_2000_tidy, "../Transformed Data/MR_county_2000_4_race_categories.csv")
 
 
-# ==========
-# Simple EDA
-# ==========
+# combining race into API alone or API combo 
+
+mr_2000_api <- mr_2000_tidy
+
+mr_2000_api <- mr_2000_api %>% mutate( RACE = case_when(
+  RACE == "A_AIC" ~ "API_combo",
+  RACE == "A_A" ~ "API_alone",
+  RACE == "NHPI_A" ~ "API_alone",
+  RACE == "NHPI_AIC" ~"API_combo"
+))  %>%
+  group_by(STNAME, CTYNAME, RACE) %>%
+  summarise(MR = sum(MR))
+
+# ------------
+# writing to csv - 
+#   API alone and API combo only 
+#-------------
+
+write.csv(mr_2000_api, "../Transformed Data/MR_county_2000_API.csv")
 
 
-# 1. % Diff boxplots by comparison 
-analytical %>%
-  ggplot(aes(x = COMPARISON2, y = PERCENT_DIFF, fill = COMPARISON2)) + 
-  geom_boxplot() +
-  theme(axis.text.x = element_text(angle = 90))
+# Old 2000's code below 
 
-# 2. See all % differences distributions for each comparison 
-ggplot(analytical, aes(x=PERCENT_DIFF)) + 
-  geom_histogram(data = analytical %>% filter(COMPARISON == "PES_alone_DC_combo"),
-                 aes(color = "green"), fill =NA, alpha = .05,binwidth = 2) +
-  geom_histogram(data = analytical %>% filter(COMPARISON == "PES_alone_DC_combo"),
-                 color="green", fill =NA, alpha = .05,binwidth = 2) + 
-  geom_histogram(data = analytical %>% filter(COMPARISON == "PES_alone_MR_combo"),
-                 col = "red" , fill = NA, alpha = .05, binwidth = 2) +
-  geom_histogram(data = analytical %>% filter(COMPARISON == "MR_combo_DC_combo"),
-                 color = "blue", fill = NA, alpha = .05, binwidth = 2) +
-  theme_minimal()  +
-  scale_color_manual(values = c("PES vs DC" = "green", "PES vs. MR" = "red", "MR vs. DC" = "blue"), name = "Comparisons") +
-  ggtitle("Percent Difference Distribution for all Comparisons (API alone AND in combo populations)") 
+# . 
+# .
+# .
 
-
-# 3. Get % difference distributions for EACH comparison BY race group
-a1 <- analytical %>%
-  filter(COMPARISON == "MR_combo_DC_combo") %>%
-  ggplot(aes(x = PERCENT_DIFF, fill=RACE_GROUP)) + 
-  geom_histogram(binwidth = 3) + 
-  theme_minimal() + 
-  ggtitle("PES alone vs DC alone - % difference by race group")
-
-analytical %>%
-  filter(RACE_GROUP == "API_alone") %>%
-  ggplot(aes(x = PERCENT_DIFF, fill=RACE_GROUP)) + 
-  geom_histogram(binwidth=3) + 
-  theme_minimal() + 
-  ggtitle("PES alone vs DC alone - % difference by race group")
+# # ======================
+# # export cleaned MR data 
+# # ======================
+# 
+# # Because this dataset is very large we need to save into a few (10) different csv's
+# # Each csv will have about roughly 500K rows
+# 
+# # split the data into seperate DFs by state 
+# mr_2000_split <- split(mr_2000_tidy, f = mr_2000_tidy$STNAME)
+# 
+# # remove Puerto Rico
+# mr_2000_split <- mr_2000_split[-40]
+# 
+# # rbind some states together 
+# AK_CO <- bind_rows(mr_2000_split[1:6])
+# CT_IA <- bind_rows(mr_2000_split[7:13])
+# ID_KS <- bind_rows(mr_2000_split[14:17])
+# KY_MI <- bind_rows(mr_2000_split[18:23])
+# MN_MS <- bind_rows(mr_2000_split[24:26])
+# MT_NM <- bind_rows(mr_2000_split[27:33])
+# NV_OR <- bind_rows(mr_2000_split[34:38])
+# PA_TN <- bind_rows(mr_2000_split[39:43])
+# TX_UT <- bind_rows(mr_2000_split[44:45])
+# VA_WY <- bind_rows(mr_2000_split[46:51])
+# 
+# # put the DFs back into a list
+# DF_list <- list(AK_CO, CT_IA, ID_KS, KY_MI, MN_MS, MT_NM, NV_OR, PA_TN, TX_UT, VA_WY)
+# DF_names <- list("AK_CO", "CT_IA", "ID_KS", "KY_MI", "MN_MS", "MT_NM", "NV_OR", "PA_TN", "TX_UT", "VA_WY")
+# 
+# # loop through list of DFs and export as csv 
+# for (i in 1:length(DF_names)) {
+#   write_csv( DF_list[[i]], paste0("../Transformed Data/mr_county_2000/", DF_names[i], "_mr_2000.csv") )
+# }
+# 
+# # zip our new mr_county_2000 folder with all the csvs
+# zip(zipfile = '../Transformed Data/mr_county_2000', files = "../Transformed Data/mr_county_2000")
+# 
+# 
+# # ===============================================================
+# # Transform Data for merge with PES & DC numeric & perc diff data
+# # ===============================================================
+# 
+# # Replace AINA values with IN
+# mr_2000_tidy$RACE <- str_replace_all(mr_2000_tidy$RACE, "AINA", "IN")
+# 
+# # Create a new RACE_GROUP column with our desired race groups --> API_alone API_combo 
+# # TAKES VERY LONG TO RUN 
+# mr_2000_tidy <- mr_2000_tidy %>%
+#   mutate(RACE_GROUP = case_when(
+#     RACE == "A" | RACE == "NHPI" ~ "API_alone",
+#     RACE != "A" | RACE != "NHPI" ~ "API_combo"
+#   )) %>%
+#   # Get the TOTAL populations by RACE GROUP - we are adding people of all SEX, ORIGIN, & AGEGRP together here 
+#   group_by(STNAME,CTYNAME, RACE_GROUP) %>%
+#   summarise(MR = sum(population))
+# 
+# copy_mr_2000_tidy <- mr_2000_tidy
+# 
+# # get all combination values in a sep DF
+# combos <- copy_mr_2000_tidy %>%
+#   group_by(STNAME, CTYNAME) %>%
+#   summarise(combo = sum(MR))
+# 
+# # Join combo values to mr_2000_tidy
+# copy_mr_2000_tidy <- copy_mr_2000_tidy %>%
+#   left_join(combos, by = c("STNAME", "CTYNAME")) %>% 
+#   # insert combination values where RACE_GROUP = API_combo
+#   mutate(MR = case_when(
+#     RACE_GROUP == "API_alone" ~ MR,
+#     RACE_GROUP == "API_combo" ~ combo
+#   )) %>%
+#   select(STNAME, CTYNAME, RACE_GROUP, MR)
+# 
+# # export as csv
+# write_csv(copy_mr_2000_tidy, "../Transformed Data/MR_county_2000.csv")
+# 
+# # state populations are stored in  ctyname = state name 
+# # mr_2000_tidy %>%
+# #   filter(STNAME == "WY" & CTYNAME != "Wyoming") %>%
+# #   group_by(RACE_GROUP) %>%
+# #   summarise(n = sum(MR))
+# 
+# 
+# # ===============================================
+# # Merging modified race data with PES & DC Data
+# # ===============================================
+# 
+# analytical <- read.csv("../Transformed Data/PES_DC_comparison_2000.csv")
+# 
+# # edited the STNAMES in MR_county_2000.csv in excel
+# mr_2000_tidy <- read.csv("../Transformed Data/MR_county_2000.csv")
+# 
+# analytical <- analytical %>%
+#   left_join(mr_2000_tidy, by = c("STNAME", "CTYNAME", "RACE_GROUP")) %>%
+#   select(STNAME, CTYNAME, RACE_GROUP, ESTIMATE, CENSUS, MR, COMPARISON, NUMERIC_DIFF, PERCENT_DIFF, CENSUS_tot_pop, geometry = WKT)
+# 
+# # =====================
+# # Adding MR comparisons
+# # =====================
+# 
+# # pivot wider the COMPARISONS column so we can add our MR comparisons 
+# analytical$comparison2 <- analytical$COMPARISON
+# analytical <- analytical %>% mutate(comparison2 = paste(comparison2, " mr")) %>% distinct()
+# 
+# analytical <-  analytical %>%
+#     
+#     pivot_wider(names_from = COMPARISON, values_from = NUMERIC_DIFF) %>%
+#     rename(PES_alone_DC_alone__N = `PES (alone) - DC (alone)`, PES_alone_DC_combo__N = `PES (alone) - DC (combo)`) %>%
+#     pivot_wider(names_from = comparison2, values_from = PERCENT_DIFF) %>%
+#     rename(PES_alone_DC_alone__P = `PES (alone) - DC (alone)  mr`, PES_alone_DC_combo__P = `PES (alone) - DC (combo)  mr`) %>%
+#     
+#     # because estimates col has NAs, we need a dummy col. for calculations
+#     mutate(lag_estim = ESTIMATE) %>%
+#     fill(lag_estim) %>%
+#   
+#     # Compute numeric & percent diffs
+#     mutate(
+#       PES_alone_MR_alone__N = case_when(
+#         RACE_GROUP == "API_alone" ~ round(lag_estim - MR, 2)),
+#       PES_alone_MR_combo__N = case_when(
+#         RACE_GROUP == "API_combo" ~round(lag_estim - MR, 2)),
+#       MR_alone_DC_alone__N = case_when(
+#         RACE_GROUP == "API_alone" ~ round(MR - CENSUS, 2)),
+#       MR_combo_DC_combo__N = case_when(
+#         RACE_GROUP == "API_combo" ~round(MR - CENSUS, 2)),
+#       PES_alone_MR_alone__P = case_when(
+#         RACE_GROUP == "API_alone" ~ round(((lag_estim - MR) / ((lag_estim + MR) / 2)) * 100 ,2)),
+#       PES_alone_MR_combo__P = case_when(
+#         RACE_GROUP == "API_combo" ~ round(((lag_estim - MR) / ((lag_estim + MR) / 2)) * 100 ,2)),
+#       MR_alone_DC_alone__P = case_when(
+#         RACE_GROUP == "API_alone" ~ round(((MR - CENSUS) / ((MR + CENSUS) / 2)) * 100 ,2)),
+#       MR_combo_DC_combo__P = case_when(
+#         RACE_GROUP == "API_combo" ~ round(((MR - CENSUS) / ((MR + CENSUS) / 2)) * 100 ,2))) %>%
+#   
+#   select(STNAME, CTYNAME, RACE_GROUP, ESTIMATE, CENSUS, MR, PES_alone_DC_alone__N, PES_alone_DC_combo__N, PES_alone_MR_alone__N, PES_alone_MR_combo__N,
+#          MR_alone_DC_alone__N, MR_combo_DC_combo__N,
+#          PES_alone_DC_alone__P, PES_alone_DC_combo__P, PES_alone_MR_alone__P, PES_alone_MR_combo__P,
+#          MR_alone_DC_alone__P, MR_combo_DC_combo__P, CENSUS_tot_pop, geometry) %>%
+#   
+#   pivot_longer(PES_alone_DC_alone__N:MR_combo_DC_combo__P, names_to = c("COMPARISON", ".value"), names_sep = "__") %>%
+#   select(STNAME, CTYNAME, RACE_GROUP, ESTIMATE, CENSUS, MR, COMPARISON, NUMERIC_DIFF = N, PERCENT_DIFF = P, CENSUS_tot_pop, geometry) %>%
+#   filter(!if_all(c(NUMERIC_DIFF, PERCENT_DIFF), is.na))
+#   
+# 
+# # ==================
+# # Handling NA values
+# # ==================
+# 
+# # ISSUES: 
+# # 1. Cases in which both populations reported 0, should indicate a 0% change but is instead NA
+# # 2. There are undefined percentages (ie. cases where there were non-zero estimated population values for
+# #    a county but the census reported 0 population)
+# 
+# analytical <- analytical %>% 
+#   mutate(
+#     # If MR & census/estimate or census/MR both = 0, then PERCENT_DIFF should be 0
+#     PERCENT_DIFF = replace(PERCENT_DIFF, MR == 0 & CENSUS == 0, 0),
+#     PERCENT_DIFF = replace(PERCENT_DIFF, ESTIMATE == 0 & CENSUS == 0, 0) ) %>%
+#   select(STNAME, CTYNAME, RACE_GROUP, ESTIMATE, CENSUS, MR,COMPARISON, NUMERIC_DIFF, PERCENT_DIFF, CENSUS_tot_pop, geometry)
+# 
+# # check for NAs
+# analytical[is.na(analytical$PERCENT_DIFF),]
+# 
+# st_write(analytical, "../Transformed Data/PES_DC_MR_comparison_2000.csv", layer_options = "GEOMETRY=AS_WKT")
+# 
+# # change comparison values
+# analytical <- analytical %>%
+#   mutate(COMPARISON2 = case_when(
+#     COMPARISON == "PES_alone_DC_alone" ~ "PES (alone) - DC (alone)",
+#     COMPARISON == "PES_alone_MR_alone" ~ "PES (alone) - MR (alone)",
+#     COMPARISON == "MR_alone_DC_alone" ~ "MR (alone) - DC (alone)",
+#     COMPARISON == "PES_alone_DC_combo" ~ "PES (alone) - DC (combo)",
+#     COMPARISON == "PES_alone_MR_combo" ~ "PES (alone) - MR (combo)",
+#     COMPARISON == "MR_combo_DC_combo" ~ "MR (combo) - DC (combo)"
+#   )) %>%
+#   select(STNAME, CTYNAME, RACE_GROUP, ESTIMATE, CENSUS, MR, COMPARISON, COMPARISON2, NUMERIC_DIFF, PERCENT_DIFF, CENSUS_tot_pop, geometry)
+# 
+# 
+# # ==========
+# # Simple EDA
+# # ==========
+# 
+# 
+# # 1. % Diff boxplots by comparison 
+# analytical %>%
+#   ggplot(aes(x = COMPARISON2, y = PERCENT_DIFF, fill = COMPARISON2)) + 
+#   geom_boxplot() +
+#   theme(axis.text.x = element_text(angle = 90))
+# 
+# # 2. See all % differences distributions for each comparison 
+# ggplot(analytical, aes(x=PERCENT_DIFF)) + 
+#   geom_histogram(data = analytical %>% filter(COMPARISON == "PES_alone_DC_combo"),
+#                  aes(color = "green"), fill =NA, alpha = .05,binwidth = 2) +
+#   geom_histogram(data = analytical %>% filter(COMPARISON == "PES_alone_DC_combo"),
+#                  color="green", fill =NA, alpha = .05,binwidth = 2) + 
+#   geom_histogram(data = analytical %>% filter(COMPARISON == "PES_alone_MR_combo"),
+#                  col = "red" , fill = NA, alpha = .05, binwidth = 2) +
+#   geom_histogram(data = analytical %>% filter(COMPARISON == "MR_combo_DC_combo"),
+#                  color = "blue", fill = NA, alpha = .05, binwidth = 2) +
+#   theme_minimal()  +
+#   scale_color_manual(values = c("PES vs DC" = "green", "PES vs. MR" = "red", "MR vs. DC" = "blue"), name = "Comparisons") +
+#   ggtitle("Percent Difference Distribution for all Comparisons (API alone AND in combo populations)") 
+# 
+# 
+# # 3. Get % difference distributions for EACH comparison BY race group
+# a1 <- analytical %>%
+#   filter(COMPARISON == "MR_combo_DC_combo") %>%
+#   ggplot(aes(x = PERCENT_DIFF, fill=RACE_GROUP)) + 
+#   geom_histogram(binwidth = 3) + 
+#   theme_minimal() + 
+#   ggtitle("PES alone vs DC alone - % difference by race group")
+# 
+# analytical %>%
+#   filter(RACE_GROUP == "API_alone") %>%
+#   ggplot(aes(x = PERCENT_DIFF, fill=RACE_GROUP)) + 
+#   geom_histogram(binwidth=3) + 
+#   theme_minimal() + 
+#   ggtitle("PES alone vs DC alone - % difference by race group")
 
 
 # ===================================================================================================================================================
@@ -868,9 +992,10 @@ mr_2020 <- mr_2020 %>%
   group_by(STNAME, CTYNAME, race_group) %>%
   summarise(population = sum(MR))
 
+# Create new DF that contains ONLY AIC populations
 combo_pop <- mr_2020 %>%
   mutate(race_group = case_when(
-    race_group == "AA" ~ "AAC",
+    race_group == "AA" ~ "AAC", # if alone, set to AAC (alone + AIC = AIC)
     race_group == "AAC" ~ "AAC",
     race_group == "NA" ~ "NAC",
     race_group == "NAC" ~ "NAC"
@@ -892,6 +1017,8 @@ mr_2020$population[mr_2020$race_group == "AAC" | mr_2020$race_group == "NAC" ] <
 
 # drop combo_pop column
 mr_2020 <- mr_2020[-5]
+
+write.csv(mr_2020, "../Transformed Data/mr_county_2020.csv")
 
 
 # ===============================================
