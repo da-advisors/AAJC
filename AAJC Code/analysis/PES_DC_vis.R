@@ -215,6 +215,9 @@ API_alone_2000_county +
 # STATE #
 #########
 
+# ------
+#  2000
+# ------
 analytical_state <- read.csv("../Transformed Data/state_level_comparisons_2000.csv")
 
 
@@ -267,18 +270,20 @@ PurpOr7 <- carto_pal(7, "PurpOr")
 # Mapping Function - STATE 
 # ================
 
-state_map <- function(data){
+api2010_breaks <- c("Less than -25%" = PurpOr7[1],
+                    "-25 to 0%" = PurpOr7[2],
+                    "0 to 25%" = PurpOr7[3],
+                    "25 to 50%" = PurpOr7[4],
+                    "Greater than 50%" = PurpOr7[5])
+
+state_map <- function(data, breaks){
   
   map <- data %>%
     ggplot(aes(fill = percent_fctr, geometry = geometry)) +
     geom_sf(color = "black", size = 0.04) +
     geom_sf(data = state_overlay, fill = NA, color = "black", size = 0.15) +
     theme_AAJC +
-    scale_fill_manual(values = c("Less than -25%" = PurpOr7[1],
-                                 "-25 to 0%" = PurpOr7[2],
-                                 "0 to 25%" = PurpOr7[3],
-                                 "25 to 50%" = PurpOr7[4],
-                                 "Greater than 50%" = PurpOr7[5]))
+    scale_fill_manual(values = breaks) # pass in a list of breaks like above 
   
   # change margins to fit alaska and hawaii changes
   map <- map + theme(plot.margin = margin(1,1,1,1, "cm"))
@@ -308,10 +313,91 @@ API_alone_2000_state +
 
 
 
+# ------
+#  2010
+# ------
+
+analytical_state_10 <- read.csv("../Transformed Data/state_level_comparisons_2010.csv")
+
+# --------------------
+# Subsetting relevant data
+# -------------------- 
+# change out RACE == to "A" or "AIC" depending on what is needed 
+dummy <-  analytical_state_10 %>%
+  # get each race group
+  filter(RACE == "AIC") %>%
+  # create groups column for discrete color scale
+  mutate(percent_fctr = case_when(
+    EOC < -125 ~ "Less than -125%",
+    EOC >= -125 & EOC < -120 ~ "-125 to -120%",
+    EOC >= -120 & EOC < -115 ~ "-120 to -115%",
+    EOC >= -115 & EOC <= -110 ~ "-115 to -110%",
+    EOC > -110 ~ "Greater than -110%")) %>%
+  select(STNAME, percent_fctr, EOC)
 
 
+# ------------
+# Getting geospatial data 
+# ------------
+
+# can use state overlay here 
+state_overlay_geo <- state_overlay %>% select(STNAME = NAME, geometry)
+
+dummy <- left_join(dummy, state_overlay_geo, by = "STNAME")
 
 
+# --------------------
+# MAPPING
+# --------------------
+
+# breaks 
+a2010_breaks <- c("Less than -125%" = PurpOr7[1],
+                  "-125 to -120%" = PurpOr7[2],
+                  "-120 to -115%" = PurpOr7[3],
+                  "-115 to -110%" = PurpOr7[4],
+                  "Greater than -110%" = PurpOr7[5])
+
+# Asian Alone - A 
+A_2010_state <- state_map(dummy, a2010_breaks)
+A_2010_state +  
+  labs(fill = "Error of Closure (%)     ",
+       title ="      Population Estimates and Census Comparison\n      for Asian (Alone) Populations - 2010",
+       subtitle = "         Resident Population By State",
+       caption = "An error of closure value less than 0% indicates a potential\nundercount ie. the estimates for Asian (alone) populations\nwere greater than the census results.") +
+  titles_upper()
+
+# Asian Alone or in Combination - AIC
+AIC_2010_state <- state_map(dummy, a2010_breaks)
+AIC_2010_state +  
+  labs(fill = "Error of Closure (%)     ",
+       title ="      Population Estimates and Census Comparison for\n      Asian (Alone or in Combination) Populations - 2010",
+       subtitle = "         Resident Population By State",
+       caption = "An error of closure value less than 0% indicates a potential\nundercount ie. the population estimate for API (alone or in\ncombination) was less than the census results.") +
+  titles_upper()
+
+
+# --------------------
+# HISTOGRAM
+# --------------------
+analytical_county_2010 <- read.csv("../Transformed Data/PES_DC_MR_comparison_2010.csv")
+
+dummy <- analytical_county_2010 %>% filter(COMPARISON == "PES_MR") %>% 
+  filter(RACE_GROUP == "AA" | RACE_GROUP == "AAC") %>%
+  select(STNAME, CTYNAME, RACE_GROUP, NUMERIC_DIFF, PERCENT_DIFF)
+
+# convert char to numeric
+dummy$PERCENT_DIFF <- as.numeric(dummy$PERCENT_DIFF)
+
+dummy %>% filter(RACE_GROUP == "AA") %>%
+    ggplot(aes(x = PERCENT_DIFF)) +
+    geom_histogram(fill = "#f4c78d", binwidth = 10) +
+    theme_minimal() +
+    labs(fill = "Population was greater\nthan estimated?\n(Census results > estimated results)",
+         title = "Percent Difference between 2010 Census Modified Race and\nPopulation Estimates, of Counties: Asian Alone",
+         x = "% Difference",
+         y = "Counties") +
+    scale_x_continuous(breaks=seq(-200, max(dummy$PERCENT_DIFF), 50))+
+    theme(axis.text.x = element_text(angle = 45))
 
 
 
