@@ -4,12 +4,17 @@ library(ggplot2)
 library(dplyr)
 library(tigris)
 library(sf)
-source("AAJC_theme.R")
-source("aajc_tools.R")
+source("../AAJC_theme.R")
+source("../aajc_tools.R")
 library(rcartocolor) # "PurpOr" color pallete 
+library(png)
+library(grid)
+library(gridExtra)
+library(imager)
+library(OpenImageR)
 
 # Import theme created for AAJC Analysis in "AAJC Code/AAJC_theme.R"
-theme_AAJC <- readRDS('theme_AAJC.rds')
+theme_AAJC <- readRDS('../theme_AAJC.rds')
 
 # Anam's Key: 
 census_api_key("0d3f6eaad6d4d9ffb24d6b420e4deccd7fe7f780")
@@ -317,24 +322,23 @@ API_alone_2000_state +
 #  2010
 # ------
 
-analytical_state_10 <- read.csv("../Transformed Data/state_level_comparisons_2010.csv")
+# analytical_state_10 <- read.csv("../Transformed Data/state_level_comparisons_2010.csv")
+analytical_state_10_age <- read.csv("../../Transformed Data/2010/state_level_comparisons_2010_by_agegrp.csv")
 
 # --------------------
 # Subsetting relevant data
 # -------------------- 
 # change out RACE == to "A" or "AIC" depending on what is needed 
-dummy <-  analytical_state_10 %>%
+dummy <-  analytical_state_10_age %>%
   # get each race group
-  filter(RACE == "AIC") %>%
+  filter(RACE == "A") %>%
   # create groups column for discrete color scale
   mutate(percent_fctr = case_when(
     EOC < -125 ~ "Less than -125%",
     EOC >= -125 & EOC < -120 ~ "-125 to -120%",
     EOC >= -120 & EOC < -115 ~ "-120 to -115%",
     EOC >= -115 & EOC <= -110 ~ "-115 to -110%",
-    EOC > -110 ~ "Greater than -110%")) %>%
-  select(STNAME, percent_fctr, EOC)
-
+    EOC > -110 ~ "Greater than -110%"))
 
 # ------------
 # Getting geospatial data 
@@ -375,6 +379,81 @@ AIC_2010_state +
        caption = "An error of closure value less than 0% indicates a potential\nundercount ie. the population estimate for API (alone or in\ncombination) was less than the census results.") +
   titles_upper()
 
+
+
+
+# ==============================
+# AGE GROUP DIFFERENTIATION MAPS 
+# ==============================
+
+state_overlay_geo <- state_overlay %>% select(STNAME = NAME, geometry)
+
+agegrp_labels <- c("0 to 4", "5 to 9", "10 to 14", "15 to 19", "20 to 24", "25 to 29", "30 to 34", "35 to 39", "40 to 44", "45 to 49",
+                   "50 to 54", "55 to 59", "60 to 64", "65 to 69", "70 to 74", "75 to 79", "80 to 84", "85 or older")
+
+
+state_agegrp_imgs <- c()
+
+# for each age group
+for (i in unique(analytical_state_10_age$AGEGRP)){
+  # --------------------
+  # Subsetting relevant data
+  # -------------------- 
+  dummy_age <- analytical_state_10_age %>% filter(RACE == "AIC") %>% filter(AGEGRP == i)
+  
+  min_i <- min(dummy_age$EOC)
+  max_i <- max(dummy_age$EOC)
+  
+  splits <- as.integer(seq(min_i, max_i, length.out = 4))
+  
+  dummy_age <- dummy_age %>% 
+    mutate(percent_fctr = case_when(
+      EOC < splits[1] ~ paste0("Less than ",splits[1],"%"),
+      EOC >= splits[1] & EOC < splits[2] ~ paste0(splits[1], " to ", splits[2], "%"),
+      EOC >= splits[2] & EOC < splits[3] ~ paste0(splits[2], " to ", splits[3], "%"),
+      EOC >= splits[3] & EOC <= splits[4] ~ paste0(splits[3], " to ", splits[4], "%"),
+      EOC > splits[4] ~ paste0("Greater than ", splits[4], "%")))
+  
+  dummy_age$percent_fctr <- as.factor(dummy_age$percent_fctr)
+  
+  # ------------
+  # Getting geospatial data 
+  # ------------
+  
+  dummy_age <- left_join(dummy_age, state_overlay_geo, by = "STNAME")
+  
+  # --------------------
+  # MAPPING
+  # --------------------
+  a2010_breaks <- c(PurpOr7[1], PurpOr7[2], PurpOr7[3], PurpOr7[4], PurpOr7[5])
+  
+  names(a2010_breaks) <- c(paste0("Less than ",splits[1],"%"), paste0(splits[1], " to ", splits[2], "%"), paste0(splits[2], " to ", splits[3], "%"),
+                            paste0(splits[3], " to ", splits[4], "%"), paste0("Greater than ", splits[4], "%"))
+  
+  # Asian Alone - A 
+  A_2010_state <- state_map(dummy_age, a2010_breaks)
+  A_2010_state <- A_2010_state +  
+    labs(fill = "Error of Closure (%)     ",
+         title =paste0("      Population Estimates and Census Comparison\n      Asian (Alone or in Combination) Populations - Ages ", agegrp_labels[i]),
+         subtitle = "         Resident Population By State - 2010",
+         caption = "An error of closure value less than 0% indicates a potential\nundercount ie. the estimates for Asian (alone or in combinaton)\npopulations were greater than the census results.") +
+    titles_upper()
+  
+  state_agegrp_imgs <- append(state_agegrp_imgs, A_2010_state)
+  # save
+  ggsave(filename = paste("../../AAJC Vis/diff_state_agegrp_2010/asian_aic/diff_by_agegrp_",i,"_AIC_2010_state_map.png",sep=""),
+         plot = A_2010_state, bg = "white")
+}
+
+
+filenames <- list.files(path = "../../AAJC Vis/diff_state_agegrp_2010/asian_alone", pattern = "*.png", full.names = T)
+foo <- list()
+for (j in  1:18) foo[[j]] <- readPNG(filenames[j])
+
+
+
+layout(matrix(1:9,nr=3,byr=T))
+for (j in 1:9) plot(foo[[j]])
 
 # --------------------
 # HISTOGRAM
