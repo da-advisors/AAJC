@@ -1,0 +1,147 @@
+1-2 FIPS state code
+3-5 FIPS county code
+6 Blank
+7-8 Five-year age groups
+
+9-16 Hispanic or Latino, Male, White alone
+
+17-24 Hispanic or Latino, Male, Black or African American alone 
+
+25-32 Hispanic or Latino, Male, American Indian and Alaska Native alone
+
+33-40 Hispanic or Latino, Male, Asian alone
+
+41-48 Hispanic or Latino, Male, Native Hawaiian and Other Pacific Islander alone
+
+49-56 Hispanic or Latino, Male, White and Black or African American
+
+57-64 Hispanic or Latino, Male, White and American Indian and Alaska Native
+
+65-72 Hispanic or Latino, Male, White and Asian 
+
+73-80 Hispanic or Latino, Male, White and Native Hawaiian and Other Pacific Islander
+
+81-88 Hispanic or Latino, Male, Black or African American and American Indian and Alaska Native
+
+89-96 Hispanic or Latino, Male, Black or African American and Asian
+
+97-104 Hispanic or Latino, Male, Black or African American and Native Hawaiian and Other Pacific Islander
+
+105-112 Hispanic or Latino, Male, American Indian and Alaska Native and Asian 
+
+113-120 Hispanic or Latino, Male, American Indian and Alaska Native and Native Hawaiian and Other Pacific Islander
+
+121-128 Hispanic or Latino, Male, Asian and Native Hawaiian and Other Pacific Islander
+129-136 Hispanic or Latino, Male, White and Black or African American and American Indian and Alaska
+137-144 Hispanic or Latino, Male, White and Black or African American and Asian
+145-152	 Hispanic or Latino, Male, White and Black or African American and Native Hawaiian and Other Pacific Islander
+
+153-160 Hispanic or Latino, Male, White and American Indian and Alaska Native and Asian
+161-168	 Hispanic or Latino, Male, White and American Indian and Alaska Native and Native Hawaiian and Other Pacific Islander
+
+169-176 Hispanic or Latino, Male, White and Asian and Native Hawaiian and Other Pacific Islander
+177-184	 Hispanic or Latino, Male, Black or African American and American Indian and Alaska Native and Asian
+185-192	 Hispanic or Latino, Male, Black or African American and American Indian and Alaska Native and Native Hawaiian and Other Pacific Islander
+193-200	 Hispanic or Latino, Male, Black or African American and Asian and Native Hawaiian and Other Pacific Islander
+201-208	 Hispanic or Latino, Male, American Indian and Alaska Native and Asian and Native Hawaiian and Other Pacific Islander
+209-216	 Hispanic or Latino, Male, White and Black or African American and American Indian and Alaska Native and Asian
+217-224	 Hispanic or Latino, Male, White and Black or African American and American Indian and Alaska Native and Native Hawaiian and Other Pacific Islander
+225-232	 Hispanic or Latino, Male, White and Black or African American and Asian and Native Hawaiian and Other Pacific Islander
+233-240	 Hispanic or Latino, Male, White and American Indian and Alaska Native and Asian and Native Hawaiian and Other Pacific Islander
+241-248	 Hispanic or Latino, Male, Black or African American and American Indian and Alaska Native and Asian and Native Hawaiian and Other Pacific Islander
+249-256	 Hispanic or Latino, Male, White and Black or African American and American Indian and Alaska Native and Asian and Native Hawaiian and Other Pacific Islander
+257-264 Hispanic or Latino, Female, White alone
+265-272 Hispanic or Latino, Female, Black or African American alone
+273-280 Hispanic or Latino, Female, American Indian and Alaska Native alone
+281-288 Hispanic or Latino, Female, Asian alone
+289-296 Hispanic or Latino, Female, Native Hawaiian and Other Pacific Islander alone
+297-304 Hispanic or Latino, Female, White and Black or African American
+305-312 Hispanic or Latino, Female, White and American Indian and Alaska Native
+313-320 Hispanic or Latino, Female, White and Asian
+321-328 Hispanic or Latino, Female, White and Native Hawaiian and Other Pacific Islander
+329-336 Hispanic or Latino, Female, Black or African American and American Indian and Alaska Native
+337-344 Hispanic or Latino, Female, Black or African American and Asian
+345-352	 Hispanic or Latino, Female, Black or African American and Native Hawaiian and Other Pacific Islander
+353-360 Hispanic or Latino, Female, American Indian and Alaska Native and Asian
+361-368	 Hispanic or Latino, Female, American Indian and Alaska Native and Native Hawaiian and Other Pacific Islander
+369-376 Hispanic or Latino, Female, Asian and Native Hawaiian and Other Pacific Islander
+377-384	 Hispanic or Latino, Female, White and Black or African American and American Indian and Alaska Native
+385-392 Hispanic or Latino, Female, White and Black or African American and Asian
+393-400	 Hispanic or Latino, Female, White and Black or African American and Native Hawaiian and Other Pacific Islander
+401-408 Hispanic or Latino, Female, White and American Indian and Alaska Native and Asian
+409-416 Hispanic or Latino, Female, White and American Indian and Alaska Native and Native Hawaiian and
+417-424 Hispanic or Latino, Female, White and Asian and Native Hawaiian and Other Pacific Islander
+425-432	 Hispanic or Latino, Female, Black or African American and American Indian and Alaska Native and Asian
+433-440	 Hispanic or Latino, Female, Black or African American and American Indian and Alaska Native and Native Hawaiian and Other Pacific Islander
+441-448	 Hispanic or Latino, Female, Black or African American and Asian and Native Hawaiian and Other Pacific Islander
+449-456	 Hispanic or Latino, Female, American Indian and Alaska Native and Asian and Native Hawaiian and Other Pacific Islander
+457-464	 Hispanic or Latino, Female, White and Black or African American and American Indian and Alaska Native and Asian
+465-472	 Hispanic or Latino, Female, White and Black or African American and American Indian and Alaska Native and Native Hawaiian and Other Pacific Islander
+473-480	 Hispanic or Latino, Female, White and Black or African American and Asian and Native Hawaiian and Other Pacific Islander
+481-488	 Hispanic or Latino, Female, White and American Indian and Alaska Native and Asian and Native Hawaiian and Other Pacific Islander
+489-496	 Hispanic or Latino, Female, Black or African American and American Indian and Alaska Native and Asian and Native Hawaiian and Other Pacific Islander
+497-504	 Hispanic or Latino, Female, White and Black or African American and American Indian and Alaska Native and Asian and Native Hawaiian and Other Pacific Islander
+505-512 Not Hispanic or Latino, Male, White alone
+513-520 Not Hispanic or Latino, Male, Black or African American alone
+521-528 Not Hispanic or Latino, Male, American Indian and Alaska Native alone
+529-536 Not Hispanic or Latino, Male, Asian alone
+537-544 Not Hispanic or Latino, Male, Native Hawaiian and Other Pacific Islander alone
+545-552 Not Hispanic or Latino, Male, White and Black or African American
+553-560 Not Hispanic or Latino, Male, White and American Indian and Alaska Native
+561-568 Not Hispanic or Latino, Male, White and Asian
+569-576 Not Hispanic or Latino, Male, White and Native Hawaiian and Other Pacific Islander
+577-584 Not Hispanic or Latino, Male, Black or African American and American Indian and Alaska Native
+585-592 Not Hispanic or Latino, Male, Black or African American and Asian
+593-600	 Not Hispanic or Latino, Male, Black or African American and Native Hawaiian and Other Pacific Islander
+601-608 Not Hispanic or Latino, Male, American Indian and Alaska Native and Asian
+609-616	 Not Hispanic or Latino, Male, American Indian and Alaska Native and Native Hawaiian and Other Pacific Islander
+617-624 Not Hispanic or Latino, Male, Asian and Native Hawaiian and Other Pacific Islander
+625-632	 Not Hispanic or Latino, Male, White and Black or African American and American Indian and Alaska Native
+633-640 Not Hispanic or Latino, Male, White and Black or African American and Asian
+641-648	 Not Hispanic or Latino, Male, White and Black or African American and Native Hawaiian and Other Pacific Islander
+649-656 Not Hispanic or Latino, Male, White and American Indian and Alaska Native and Asian
+657-664	 Not Hispanic or Latino, Male, White and American Indian and Alaska Native and Native Hawaiian and Other Pacific Islander
+665-672 Not Hispanic or Latino, Male, White and Asian and Native Hawaiian and Other Pacific Islander
+673-680	 Not Hispanic or Latino, Male, Black or African American and American Indian and Alaska Native and Asian
+681-688	 Not Hispanic or Latino, Male, Black or African American and American Indian and Alaska Native and Native Hawaiian and Other Pacific Islander
+689-696 Not Hispanic or Latino, Male, Black or African American and Asian and Native Hawaiian and Other
+697-704	 Not Hispanic or Latino, Male, American Indian and Alaska Native and Asian and Native Hawaiian and Other Pacific Islander
+705-712	 Not Hispanic or Latino, Male, White and Black or African American and American Indian and Alaska Native and Asian
+713-720	 Not Hispanic or Latino, Male, White and Black or African American and American Indian and Alaska Native and Native Hawaiian and Other Pacific Islander
+721-728	 Not Hispanic or Latino, Male, White and Black or African American and Asian and Native Hawaiian and Other Pacific Islander
+729-736	 Not Hispanic or Latino, Male, White and American Indian and Alaska Native and Asian and Native Hawaiian and Other Pacific Islander
+737-744	 Not Hispanic or Latino, Male, Black or African American and American Indian and Alaska Native and Asian and Native Hawaiian and Other Pacific Islander
+745-752	 Not Hispanic or Latino, Male, White and Black or African American and American Indian and Alaska Native and Asian and Native Hawaiian and Other Pacific 
+753-760 Not Hispanic or Latino, Female, White alone
+761-768 Not Hispanic or Latino, Female, Black or African American alone
+769-776 Not Hispanic or Latino, Female, American Indian and Alaska Native alone
+777-784 Not Hispanic or Latino, Female, Asian alone
+785-792 Not Hispanic or Latino, Female, Native Hawaiian and Other Pacific Islander alone
+793-800 Not Hispanic or Latino, Female, White and Black or African American
+801-808 Not Hispanic or Latino, Female, White and American Indian and Alaska Native
+809-816 Not Hispanic or Latino, Female, White and Asian
+817-824 Not Hispanic or Latino, Female, White and Native Hawaiian and Other Pacific Islander
+825-832 Not Hispanic or Latino, Female, Black or African American and American Indian and Alaska Native
+833-840 Not Hispanic or Latino, Female, Black or African American and Asian
+841-848	 Not Hispanic or Latino, Female, Black or African American and Native Hawaiian and Other Pacific Islander
+849-856 Not Hispanic or Latino, Female, American Indian and Alaska Native and Asian
+857-864	 Not Hispanic or Latino, Female, American Indian and Alaska Native and Native Hawaiian and Other Pacific Islander
+865-872 Not Hispanic or Latino, Female, Asian and Native Hawaiian and Other Pacific Islander
+873-880	 Not Hispanic or Latino, Female, White and Black or African American and American Indian and Alaska Native
+881-888 Not Hispanic or Latino, Female, White and Black or African American and Asian
+889-896	 Not Hispanic or Latino, Female, White and Black or African American and Native Hawaiian and Other Pacific Islander
+897-904 Not Hispanic or Latino, Female, White and American Indian and Alaska Native and Asian
+905-912	 Not Hispanic or Latino, Female, White and American Indian and Alaska Native and Native Hawaiian and Other Pacific Islander
+913-920 Not Hispanic or Latino, Female, White and Asian and Native Hawaiian and Other Pacific Islander
+921-928	 Not Hispanic or Latino, Female, Black or African American and American Indian and Alaska Native and Asian
+929-936	 Not Hispanic or Latino, Female, Black or African American and American Indian and Alaska Native and Native Hawaiian and Other Pacific Islander
+937-944	 Not Hispanic or Latino, Female, Black or African American and Asian and Native Hawaiian and Other Pacific Islander
+945-952	 Not Hispanic or Latino, Female, American Indian and Alaska Native and Asian and Native Hawaiian and Other Pacific Islander
+953-960	 Not Hispanic or Latino, Female, White and Black or African American and American Indian and Alaska Native and Asian
+961-968	 Not Hispanic or Latino, Female, White and Black or African American and American Indian and Alaska Native and Native Hawaiian and Other Pacific Islander
+969-976	 Not Hispanic or Latino, Female, White and Black or African American and Asian and Native Hawaiian and Other Pacific Islander
+977-984	 Not Hispanic or Latino, Female, White and American Indian and Alaska Native and Asian and Native Hawaiian and Other Pacific Islander
+985-992	 Not Hispanic or Latino, Female, Black or African American and American Indian and Alaska Native and Asian and Native Hawaiian and Other Pacific Islander
+993-1000	 Not Hispanic or Latino, Female, White and Black or African American and American Indian and Alaska Native and Asian and Native Hawaiian and Other Pacific Islander
+1001-1002 State postal abbreviation
+1003-1046 County or county equivalent name
