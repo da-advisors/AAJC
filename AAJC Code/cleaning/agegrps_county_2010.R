@@ -135,23 +135,22 @@ mr_al_mo_2010_asian[mr_al_mo_2010_asian$RACE_GROUP != "A_A" & is.na(mr_al_mo_201
 mr_al_mo_2010_nhpi[mr_al_mo_2010_nhpi$RACE_GROUP != "NHPI_A" & is.na(mr_al_mo_2010_nhpi$aic), ]
 
 # replace MR values where RACE = alone or in combo with the aic value 
-mr_al_mo_2010_asian <- mr_al_mo_2010_asian %>% mutate(MR = case_when(RACE_GROUP == "A_A" ~ MR, RACE_GROUP == "A_AIC" ~ aic)) %>%
-  select(-aic)
+mr_al_mo_2010_asian <- mr_al_mo_2010_asian %>% mutate(MR2 = case_when(RACE_GROUP == "A_A" ~ MR, RACE_GROUP == "A_AIC" ~ aic)) %>%
+  select(-aic, -MR, MR = MR2)
 
-mr_al_mo_2010_nhpi <- mr_al_mo_2010_nhpi %>% mutate(MR = case_when(RACE_GROUP == "NHPI_A" ~ MR, RACE_GROUP == "NHPI_AIC" ~ aic)) %>%
-  select(-aic)
+mr_al_mo_2010_nhpi <- mr_al_mo_2010_nhpi %>% mutate(MR2 = case_when(RACE_GROUP == "NHPI_A" ~ MR, RACE_GROUP == "NHPI_AIC" ~ aic)) %>%
+  select(-aic, -MR, MR = MR2)
 
 
 # 4. 
 # combine nhpi and asian data 
-mr_al_mo_2010_combined <- mr_al_mo_2010_nhpi %>% left_join(mr_al_mo_2010_asian,  by = c("STATE", "COUNTY",
-                                                                                        "STNAME", "CTYNAME", 
-                                                                                        "AGEGRP")) %>%
+mr_al_mo_2010_combined <- merge(mr_al_mo_2010_asian, mr_al_mo_2010_nhpi, by=c("STATE", "COUNTY", "STNAME", "CTYNAME", "AGEGRP"), all=T) %>%
   pivot_wider(names_from = RACE_GROUP.x, values_from = MR.x) %>%
+  select(-`NA`) %>%
   pivot_wider(names_from = RACE_GROUP.y, values_from = MR.y) %>%
   # NAs introduced because NHPI does not have residents in ALL age groups neither does Asian for some counties
-  select(STATE, COUNTY, STNAME, CTYNAME, AGEGRP, A_A, A_AIC, NHPI_A, NHPI_AIC) %>%
-  pivot_longer(cols = 'A_A':'NHPI_AIC', names_to = "RACE", values_to = "MR")
+  select(-`NA`, STATE, COUNTY, STNAME, CTYNAME, AGEGRP, A_A, A_AIC, NHPI_A, NHPI_AIC) %>%
+  pivot_longer(cols = c('A_A', 'A_AIC', 'NHPI_A', 'NHPI_AIC'), names_to = "RACE", values_to = "MR")
 
 
 # 5.
@@ -207,22 +206,21 @@ mr_mt_wy_2010_asian[mr_mt_wy_2010_asian$RACE_GROUP != "A_A" & is.na(mr_mt_wy_201
 mr_mt_wy_2010_nhpi[mr_mt_wy_2010_nhpi$RACE_GROUP != "NHPI_A" & is.na(mr_mt_wy_2010_nhpi$aic), ]
 
 # replace MR values where RACE = alone or in combo with the aic value 
-mr_mt_wy_2010_asian <- mr_mt_wy_2010_asian %>% mutate(MR = case_when(RACE_GROUP == "A_A" ~ MR, RACE_GROUP == "A_AIC" ~ aic)) %>%
-  select(-aic)
+mr_mt_wy_2010_asian <- mr_mt_wy_2010_asian %>% mutate(MR2 = case_when(RACE_GROUP == "A_A" ~ MR, RACE_GROUP == "A_AIC" ~ aic)) %>%
+  select(-aic, -MR, MR = MR2)
 
-mr_mt_wy_2010_nhpi <- mr_mt_wy_2010_nhpi %>% mutate(MR = case_when(RACE_GROUP == "NHPI_A" ~ MR, RACE_GROUP == "NHPI_AIC" ~ aic)) %>%
-  select(-aic)
+mr_mt_wy_2010_nhpi <- mr_mt_wy_2010_nhpi %>% mutate(MR2 = case_when(RACE_GROUP == "NHPI_A" ~ MR, RACE_GROUP == "NHPI_AIC" ~ aic)) %>%
+  select(-aic, -MR, MR = MR2)
 
 
 # combine nhpi and asian data 
-mr_mt_wy_2010_combined <- mr_mt_wy_2010_nhpi %>% left_join(mr_mt_wy_2010_asian,  by = c("STATE", "COUNTY",
-                                                                                        "STNAME", "CTYNAME", 
-                                                                                        "AGEGRP")) %>%
+mr_mt_wy_2010_combined <- merge(mr_mt_wy_2010_asian, mr_mt_wy_2010_nhpi, by=c("STATE", "COUNTY", "STNAME", "CTYNAME", "AGEGRP"), all=T) %>%
   pivot_wider(names_from = RACE_GROUP.x, values_from = MR.x) %>%
+  select(-`NA`) %>%
   pivot_wider(names_from = RACE_GROUP.y, values_from = MR.y) %>%
   # NAs introduced because NHPI does not have residents in ALL age groups neither does Asian for some counties
-  select(STATE, COUNTY, STNAME, CTYNAME, AGEGRP, A_A, A_AIC, NHPI_A, NHPI_AIC) %>%
-  pivot_longer(cols = 'A_A':'NHPI_AIC', names_to = "RACE", values_to = "MR")
+  select(-`NA`, STATE, COUNTY, STNAME, CTYNAME, AGEGRP, A_A, A_AIC, NHPI_A, NHPI_AIC) %>%
+  pivot_longer(cols = c('A_A', 'A_AIC', 'NHPI_A', 'NHPI_AIC'), names_to = "RACE", values_to = "MR")
 
 # 2b. 
 # MERGE ALABAMA-MISSOURI DATA AND MONTANA-WYOMING DATA
