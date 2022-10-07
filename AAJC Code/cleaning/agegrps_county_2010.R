@@ -113,6 +113,36 @@ mr_al_mo_2010_asian <- mr_al_mo_2010 %>%
   group_by(STATE, COUNTY,STNAME, CTYNAME, AGEGRP, RACE_GROUP) %>%
   summarise(MR = sum(RESPOP))
 
+
+# 3.
+# Add alone and AIC values to get alone or in combination 
+aic <- mr_al_mo_2010_asian %>% group_by(STATE, COUNTY,STNAME, CTYNAME,AGEGRP) %>% summarise(aic = sum(MR))
+aic$RACE_GROUP <- "A_AIC"
+
+# nhpi
+aic2 <- mr_al_mo_2010_nhpi %>% group_by(STATE, COUNTY,STNAME, CTYNAME,AGEGRP) %>% summarise(aic = sum(MR))
+aic2$RACE_GROUP <- "NHPI_AIC"
+
+# join the AIC values DF to the mr_al_mo_2010_ASIAN DF
+mr_al_mo_2010_asian <- mr_al_mo_2010_asian %>% group_by(STNAME, CTYNAME, AGEGRP, RACE_GROUP) %>%
+  left_join(aic, by = c("STATE", "COUNTY", "STNAME", "CTYNAME", "AGEGRP","RACE_GROUP"))
+
+mr_al_mo_2010_nhpi <- mr_al_mo_2010_nhpi %>% group_by(STNAME, CTYNAME, AGEGRP, RACE_GROUP) %>%
+  left_join(aic2, by = c("STATE", "COUNTY", "STNAME", "CTYNAME", "AGEGRP","RACE_GROUP"))
+
+# check for NAs
+mr_al_mo_2010_asian[mr_al_mo_2010_asian$RACE_GROUP != "A_A" & is.na(mr_al_mo_2010_asian$aic), ]
+mr_al_mo_2010_nhpi[mr_al_mo_2010_nhpi$RACE_GROUP != "NHPI_A" & is.na(mr_al_mo_2010_nhpi$aic), ]
+
+# replace MR values where RACE = alone or in combo with the aic value 
+mr_al_mo_2010_asian <- mr_al_mo_2010_asian %>% mutate(MR = case_when(RACE_GROUP == "A_A" ~ MR, RACE_GROUP == "A_AIC" ~ aic)) %>%
+  select(-aic)
+
+mr_al_mo_2010_nhpi <- mr_al_mo_2010_nhpi %>% mutate(MR = case_when(RACE_GROUP == "NHPI_A" ~ MR, RACE_GROUP == "NHPI_AIC" ~ aic)) %>%
+  select(-aic)
+
+
+# 4. 
 # combine nhpi and asian data 
 mr_al_mo_2010_combined <- mr_al_mo_2010_nhpi %>% left_join(mr_al_mo_2010_asian,  by = c("STATE", "COUNTY",
                                                                                         "STNAME", "CTYNAME", 
@@ -123,7 +153,10 @@ mr_al_mo_2010_combined <- mr_al_mo_2010_nhpi %>% left_join(mr_al_mo_2010_asian, 
   select(STATE, COUNTY, STNAME, CTYNAME, AGEGRP, A_A, A_AIC, NHPI_A, NHPI_AIC) %>%
   pivot_longer(cols = 'A_A':'NHPI_AIC', names_to = "RACE", values_to = "MR")
 
+
+# 5.
 # OTHER SET OF STATES
+# -------------------
 # NHPI SEPERATE DF  
 mr_mt_wy_2010_nhpi <- mr_mt_wy_2010 %>%
   filter(IMPRACE == 5 | IMPRACE %in% keep_imprace_nhpi) %>% 
@@ -152,6 +185,35 @@ mr_mt_wy_2010_asian <- mr_mt_wy_2010 %>%
   group_by(STATE, COUNTY,STNAME, CTYNAME, AGEGRP, RACE_GROUP) %>%
   summarise(MR = sum(RESPOP))
 
+
+# 6.
+# Add alone and AIC values to get alone or in combination 
+aic <- mr_mt_wy_2010_asian %>% group_by(STATE, COUNTY,STNAME, CTYNAME,AGEGRP) %>% summarise(aic = sum(MR))
+aic$RACE_GROUP <- "A_AIC"
+
+# nhpi
+aic2 <- mr_mt_wy_2010_nhpi %>% group_by(STATE, COUNTY,STNAME, CTYNAME,AGEGRP) %>% summarise(aic = sum(MR))
+aic2$RACE_GROUP <- "NHPI_AIC"
+
+# join the AIC values DF to the mr_al_mo_2010_ASIAN DF
+mr_mt_wy_2010_asian <- mr_mt_wy_2010_asian %>% group_by(STNAME, CTYNAME, AGEGRP, RACE_GROUP) %>%
+  left_join(aic, by = c("STATE", "COUNTY", "STNAME", "CTYNAME", "AGEGRP","RACE_GROUP"))
+
+mr_mt_wy_2010_nhpi <- mr_mt_wy_2010_nhpi %>% group_by(STNAME, CTYNAME, AGEGRP, RACE_GROUP) %>%
+  left_join(aic2, by = c("STATE", "COUNTY", "STNAME", "CTYNAME", "AGEGRP","RACE_GROUP"))
+
+# check for NAs
+mr_mt_wy_2010_asian[mr_mt_wy_2010_asian$RACE_GROUP != "A_A" & is.na(mr_mt_wy_2010_asian$aic), ]
+mr_mt_wy_2010_nhpi[mr_mt_wy_2010_nhpi$RACE_GROUP != "NHPI_A" & is.na(mr_mt_wy_2010_nhpi$aic), ]
+
+# replace MR values where RACE = alone or in combo with the aic value 
+mr_mt_wy_2010_asian <- mr_mt_wy_2010_asian %>% mutate(MR = case_when(RACE_GROUP == "A_A" ~ MR, RACE_GROUP == "A_AIC" ~ aic)) %>%
+  select(-aic)
+
+mr_mt_wy_2010_nhpi <- mr_mt_wy_2010_nhpi %>% mutate(MR = case_when(RACE_GROUP == "NHPI_A" ~ MR, RACE_GROUP == "NHPI_AIC" ~ aic)) %>%
+  select(-aic)
+
+
 # combine nhpi and asian data 
 mr_mt_wy_2010_combined <- mr_mt_wy_2010_nhpi %>% left_join(mr_mt_wy_2010_asian,  by = c("STATE", "COUNTY",
                                                                                         "STNAME", "CTYNAME", 
@@ -164,9 +226,7 @@ mr_mt_wy_2010_combined <- mr_mt_wy_2010_nhpi %>% left_join(mr_mt_wy_2010_asian, 
 
 # 2b. 
 # MERGE ALABAMA-MISSOURI DATA AND MONTANA-WYOMING DATA
-mr_county_agegrp <- mr_al_mo_2010_combined %>% left_join(mr_mt_wy_2010_combined, by=c("STATE", "COUNTY","STNAME", "CTYNAME", 
-                                                                  "AGEGRP", "RACE")) %>%
-  select(STATE, COUNTY, STNAME, CTYNAME, AGEGRP, RACE, MR = MR.x)
+mr_county_agegrp <- rbind(mr_al_mo_2010_combined, mr_mt_wy_2010_combined)
 
 
 # 3. 
