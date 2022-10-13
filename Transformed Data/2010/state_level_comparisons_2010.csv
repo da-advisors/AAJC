@@ -1,103 +1,205 @@
-"","STATE","STNAME","RACE","ESTIMATE","MR","EOC"
-"1",1,"Alabama","AIC",64053,68357,6.5
-"2",1,"Alabama","A",50769,55240,8.44
-"3",2,"Alaska","AIC",45415,50943,11.47
-"4",2,"Alaska","A",35904,38882,7.96
-"5",4,"Arizona","AIC",218984,241989,9.98
-"6",4,"Arizona","A",175991,188456,6.84
-"7",5,"Arkansas","AIC",43459,46059,5.81
-"8",5,"Arkansas","A",34756,37537,7.69
-"9",6,"California","AIC",5284379,5707070,7.69
-"10",6,"California","A",4778030,5038123,5.3
-"11",8,"Colorado","AIC",176527,190738,7.74
-"12",8,"Colorado","A",140275,144819,3.19
-"13",9,"Connecticut","AIC",145600,160290,9.6
-"14",9,"Connecticut","A",130910,140516,7.08
-"15",10,"Delaware","AIC",30974,34074,9.53
-"16",10,"Delaware","A",27335,29342,7.08
-"17",11,"District of Columbia","AIC",23932,27369,13.4
-"18",11,"District of Columbia","A",20472,21705,5.85
-"19",12,"Florida","AIC",556384,583371,4.74
-"20",12,"Florida","A",456287,474199,3.85
-"21",13,"Georgia","AIC",344113,370850,7.48
-"22",13,"Georgia","A",299290,323459,7.76
-"23",15,"Hawaii","AIC",699107,785488,11.64
-"24",15,"Hawaii","A",501789,531633,5.78
-"25",16,"Idaho","AIC",28521,30625,7.11
-"26",16,"Idaho","A",18779,20034,6.47
-"27",17,"Illinois","AIC",636328,677988,6.34
-"28",17,"Illinois","A",574819,604399,5.02
-"29",18,"Indiana","AIC",115587,128724,10.75
-"30",18,"Indiana","A",96255,105535,9.2
-"31",19,"Iowa","AIC",61336,65154,6.04
-"32",19,"Iowa","A",52058,54232,4.09
-"33",20,"Kansas","AIC",77562,85333,9.54
-"34",20,"Kansas","A",65900,69628,5.5
-"35",21,"Kentucky","AIC",58005,62861,8.04
-"36",21,"Kentucky","A",47337,50177,5.82
-"37",22,"Louisiana","AIC",83306,85574,2.69
-"38",22,"Louisiana","A",68187,71829,5.2
-"39",23,"Maine","AIC",17193,18445,7.03
-"40",23,"Maine","A",13167,13783,4.57
-"41",24,"Maryland","AIC",342282,374792,9.07
-"42",24,"Maryland","A",306587,326655,6.34
-"43",25,"Massachusetts","AIC",376256,401116,6.4
-"44",25,"Massachusetts","A",344307,359673,4.37
-"45",26,"Michigan","AIC",281060,291771,3.74
-"46",26,"Michigan","A",243574,243062,-0.21
-"47",27,"Minnesota","AIC",228460,249091,8.64
-"48",27,"Minnesota","A",203095,217792,6.98
-"49",28,"Mississippi","AIC",35153,33135,-5.91
-"50",28,"Mississippi","A",26388,26477,0.34
-"51",29,"Missouri","AIC",113639,124855,9.41
-"52",29,"Missouri","A",92722,100213,7.77
-"53",30,"Montana","AIC",10744,10604,-1.31
-"54",30,"Montana","A",6915,6379,-8.06
-"55",31,"Nebraska","AIC",38327,41512,7.98
-"56",31,"Nebraska","A",31235,33322,6.47
-"57",32,"Nevada","AIC",215346,250269,15
-"58",32,"Nevada","A",180300,203478,12.08
-"59",33,"New Hampshire","AIC",31141,34804,11.11
-"60",33,"New Hampshire","A",26307,28933,9.51
-"61",34,"New Jersey","AIC",751053,805067,6.94
-"62",34,"New Jersey","A",701541,746212,6.17
-"63",35,"New Mexico","AIC",40385,43068,6.43
-"64",35,"New Mexico","A",29747,31253,4.94
-"65",36,"New York","AIC",1532911,1619081,5.47
-"66",36,"New York","A",1415068,1481555,4.59
-"67",37,"North Carolina","AIC",234261,258205,9.72
-"68",37,"North Carolina","A",198414,215952,8.46
-"69",38,"North Dakota","AIC",7820,9281,17.09
-"70",38,"North Dakota","A",5660,7032,21.62
-"71",39,"Ohio","AIC",222542,240440,7.73
-"72",39,"Ohio","A",188257,196693,4.38
-"73",40,"Oklahoma","AIC",80208,85943,6.9
-"74",40,"Oklahoma","A",63986,67126,4.79
-"75",41,"Oregon","AIC",181700,190238,4.59
-"76",41,"Oregon","A",146709,145009,-1.17
-"77",42,"Pennsylvania","AIC",365193,408061,11.09
-"78",42,"Pennsylvania","A",327782,358195,8.87
-"79",44,"Rhode Island","AIC",34916,37799,7.93
-"80",44,"Rhode Island","A",30185,31768,5.11
-"81",45,"South Carolina","AIC",77677,77232,-0.57
-"82",45,"South Carolina","A",62252,61247,-1.63
-"83",46,"South Dakota","AIC",10244,10323,0.77
-"84",46,"South Dakota","A",7527,7775,3.24
-"85",47,"Tennessee","AIC",110078,115280,4.62
-"86",47,"Tennessee","A",90297,93897,3.91
-"87",48,"Texas","AIC",1037308,1134631,8.96
-"88",48,"Texas","A",913280,1000473,9.11
-"89",49,"Utah","AIC",79410,80037,0.79
-"90",49,"Utah","A",59070,57800,-2.17
-"91",50,"Vermont","AIC",9307,10530,12.33
-"92",50,"Vermont","A",7427,8069,8.29
-"93",51,"Virginia","AIC",470846,527994,11.44
-"94",51,"Virginia","A",410755,449149,8.93
-"95",53,"Washington","AIC",572889,613537,6.85
-"96",53,"Washington","A",478665,491685,2.68
-"97",54,"West Virginia","AIC",16203,16556,2.16
-"98",54,"West Virginia","A",12666,12637,-0.23
-"99",55,"Wisconsin","AIC",142862,153050,6.89
-"100",55,"Wisconsin","A",124263,131828,5.91
-"101",56,"Wyoming","AIC",7012,6903,-1.57
-"102",56,"Wyoming","A",4819,4649,-3.59
+"","STNAME","RACE","ESTIM","MR","NUM_DIFF","PERC_DIFF","COVERAGE"
+"1","Alabama","A_A",50769,55240,4471,8.44,"overcount"
+"2","Alabama","A_AIC",64053,68357,4304,6.5,"overcount"
+"3","Alabama","NHPI_A",2413,5208,2795,73.35,"overcount"
+"4","Alabama","NHPI_AIC",5207,7984,2777,42.1,"overcount"
+"5","Alaska","A_A",35904,38882,2978,7.96,"overcount"
+"6","Alaska","A_AIC",45415,50943,5528,11.47,"overcount"
+"7","Alaska","NHPI_A",4936,7662,2726,43.28,"overcount"
+"8","Alaska","NHPI_AIC",7692,11360,3668,38.51,"overcount"
+"9","Arizona","A_A",175991,188456,12465,6.84,"overcount"
+"10","Arizona","A_AIC",218984,241989,23005,9.98,"overcount"
+"11","Arizona","NHPI_A",13351,16112,2761,18.74,"overcount"
+"12","Arizona","NHPI_AIC",24085,28431,4346,16.55,"overcount"
+"13","Arkansas","A_A",34756,37537,2781,7.69,"overcount"
+"14","Arkansas","A_AIC",43459,46059,2600,5.81,"overcount"
+"15","Arkansas","NHPI_A",3793,6685,2892,55.2,"overcount"
+"16","Arkansas","NHPI_AIC",5940,8594,2654,36.52,"overcount"
+"17","California","A_A",4778030,5038123,260093,5.3,"overcount"
+"18","California","A_AIC",5284379,5707070,422691,7.69,"overcount"
+"19","California","NHPI_A",161357,181431,20074,11.71,"overcount"
+"20","California","NHPI_AIC",285780,320036,34256,11.31,"overcount"
+"21","Colorado","A_A",140275,144819,4544,3.19,"overcount"
+"22","Colorado","A_AIC",176527,190727,14200,7.73,"overcount"
+"23","Colorado","NHPI_A",7823,8420,597,7.35,"overcount"
+"24","Colorado","NHPI_AIC",15674,16805,1131,6.96,"overcount"
+"25","Connecticut","A_A",130910,140516,9606,7.08,"overcount"
+"26","Connecticut","A_AIC",145600,160290,14690,9.6,"overcount"
+"27","Connecticut","NHPI_A",2984,3491,507,15.66,"overcount"
+"28","Connecticut","NHPI_AIC",6185,6864,679,10.41,"overcount"
+"29","Delaware","A_A",27335,29342,2007,7.08,"overcount"
+"30","Delaware","A_AIC",30974,34074,3100,9.53,"overcount"
+"31","Delaware","NHPI_A",686,690,4,0.58,"overcount"
+"32","Delaware","NHPI_AIC",1218,1423,205,15.52,"overcount"
+"33","District of Columbia","A_A",20472,21705,1233,5.85,"overcount"
+"34","District of Columbia","A_AIC",23932,27369,3437,13.4,"overcount"
+"35","District of Columbia","NHPI_A",829,770,-59,-7.38,"undercount"
+"36","District of Columbia","NHPI_AIC",1381,1514,133,9.19,"overcount"
+"37","Florida","A_A",456287,474199,17912,3.85,"overcount"
+"38","Florida","A_AIC",556384,583371,26987,4.74,"overcount"
+"39","Florida","NHPI_A",18542,18790,248,1.33,"overcount"
+"40","Florida","NHPI_AIC",41265,43416,2151,5.08,"overcount"
+"41","Georgia","A_A",299290,323459,24169,7.76,"overcount"
+"42","Georgia","A_AIC",344113,370850,26737,7.48,"overcount"
+"43","Georgia","NHPI_A",9350,10454,1104,11.15,"overcount"
+"44","Georgia","NHPI_AIC",18311,18586,275,1.49,"overcount"
+"45","Hawaii","A_A",501789,531633,29844,5.78,"overcount"
+"46","Hawaii","A_AIC",699107,785488,86381,11.64,"overcount"
+"47","Hawaii","NHPI_A",120469,138292,17823,13.78,"overcount"
+"48","Hawaii","NHPI_AIC",289888,358951,69063,21.29,"overcount"
+"49","Idaho","A_A",18779,20034,1255,6.47,"overcount"
+"50","Idaho","A_AIC",28521,30625,2104,7.11,"overcount"
+"51","Idaho","NHPI_A",2227,2786,559,22.3,"overcount"
+"52","Idaho","NHPI_AIC",4813,5508,695,13.47,"overcount"
+"53","Illinois","A_A",574819,604399,29580,5.02,"overcount"
+"54","Illinois","A_AIC",636328,677988,41660,6.34,"overcount"
+"55","Illinois","NHPI_A",9121,7436,-1685,-20.35,"undercount"
+"56","Illinois","NHPI_AIC",17403,15872,-1531,-9.2,"undercount"
+"57","Indiana","A_A",96255,105535,9280,9.2,"overcount"
+"58","Indiana","A_AIC",115587,128724,13137,10.75,"overcount"
+"59","Indiana","NHPI_A",3403,3532,129,3.72,"overcount"
+"60","Indiana","NHPI_AIC",6769,7389,620,8.76,"overcount"
+"61","Iowa","A_A",52058,54232,2174,4.09,"overcount"
+"62","Iowa","A_AIC",61336,65154,3818,6.04,"overcount"
+"63","Iowa","NHPI_A",1749,2419,670,32.15,"overcount"
+"64","Iowa","NHPI_AIC",3469,4162,693,18.16,"overcount"
+"65","Kansas","A_A",65900,69628,3728,5.5,"overcount"
+"66","Kansas","A_AIC",77562,85333,7771,9.54,"overcount"
+"67","Kansas","NHPI_A",2419,2864,445,16.85,"overcount"
+"68","Kansas","NHPI_AIC",4757,5431,674,13.23,"overcount"
+"69","Kentucky","A_A",47337,50177,2840,5.82,"overcount"
+"70","Kentucky","A_AIC",58005,62861,4856,8.04,"overcount"
+"71","Kentucky","NHPI_A",2645,3199,554,18.96,"overcount"
+"72","Kentucky","NHPI_AIC",5024,5694,670,12.5,"overcount"
+"73","Louisiana","A_A",68187,71829,3642,5.2,"overcount"
+"74","Louisiana","A_AIC",83306,85574,2268,2.69,"overcount"
+"75","Louisiana","NHPI_A",2202,2588,386,16.12,"overcount"
+"76","Louisiana","NHPI_AIC",5161,5333,172,3.28,"overcount"
+"77","Maine","A_A",13167,13783,616,4.57,"overcount"
+"78","Maine","A_AIC",17193,18445,1252,7.03,"overcount"
+"79","Maine","NHPI_A",591,377,-214,-44.21,"undercount"
+"80","Maine","NHPI_AIC",1206,1008,-198,-17.89,"undercount"
+"81","Maryland","A_A",306587,326655,20068,6.34,"overcount"
+"82","Maryland","A_AIC",342282,374792,32510,9.07,"overcount"
+"83","Maryland","NHPI_A",5012,5391,379,7.29,"overcount"
+"84","Maryland","NHPI_AIC",10155,11553,1398,12.88,"overcount"
+"85","Massachusetts","A_A",344307,359673,15366,4.37,"overcount"
+"86","Massachusetts","A_AIC",376256,401116,24860,6.4,"overcount"
+"87","Massachusetts","NHPI_A",5821,5971,150,2.54,"overcount"
+"88","Massachusetts","NHPI_AIC",12579,12369,-210,-1.68,"undercount"
+"89","Michigan","A_A",243574,243062,-512,-0.21,"undercount"
+"90","Michigan","A_AIC",281060,291771,10711,3.74,"overcount"
+"91","Michigan","NHPI_A",4580,3442,-1138,-28.37,"undercount"
+"92","Michigan","NHPI_AIC",10245,10010,-235,-2.32,"undercount"
+"93","Minnesota","A_A",203095,217792,14697,6.98,"overcount"
+"94","Minnesota","A_AIC",228460,249091,20631,8.64,"overcount"
+"95","Minnesota","NHPI_A",3687,2958,-729,-21.94,"undercount"
+"96","Minnesota","NHPI_AIC",9150,6813,-2337,-29.28,"undercount"
+"97","Mississippi","A_A",26388,26477,89,0.34,"overcount"
+"98","Mississippi","A_AIC",35153,33135,-2018,-5.91,"undercount"
+"99","Mississippi","NHPI_A",1304,1700,396,26.36,"overcount"
+"100","Mississippi","NHPI_AIC",3405,3222,-183,-5.52,"undercount"
+"101","Missouri","A_A",92722,100213,7491,7.77,"overcount"
+"102","Missouri","A_AIC",113639,124855,11216,9.41,"overcount"
+"103","Missouri","NHPI_A",5263,7178,1915,30.79,"overcount"
+"104","Missouri","NHPI_AIC",10192,12131,1939,17.37,"overcount"
+"105","Montana","A_A",6915,6379,-536,-8.06,"undercount"
+"106","Montana","A_AIC",10744,10596,-148,-1.39,"undercount"
+"107","Montana","NHPI_A",809,734,-75,-9.72,"undercount"
+"108","Montana","NHPI_AIC",1739,1790,51,2.89,"overcount"
+"109","Nebraska","A_A",31235,33322,2087,6.47,"overcount"
+"110","Nebraska","A_AIC",38327,41499,3172,7.95,"overcount"
+"111","Nebraska","NHPI_A",1833,2061,228,11.71,"overcount"
+"112","Nebraska","NHPI_AIC",3105,3548,443,13.32,"overcount"
+"113","Nevada","A_A",180300,203478,23178,12.08,"overcount"
+"114","Nevada","A_AIC",215346,250269,34923,15,"overcount"
+"115","Nevada","NHPI_A",14797,19307,4510,26.45,"overcount"
+"116","Nevada","NHPI_AIC",27717,35435,7718,24.44,"overcount"
+"117","New Hampshire","A_A",26307,28933,2626,9.51,"overcount"
+"118","New Hampshire","A_AIC",31141,34804,3663,11.11,"overcount"
+"119","New Hampshire","NHPI_A",659,532,-127,-21.33,"undercount"
+"120","New Hampshire","NHPI_AIC",1255,1236,-19,-1.53,"undercount"
+"121","New Jersey","A_A",701541,746212,44671,6.17,"overcount"
+"122","New Jersey","A_AIC",751053,805067,54014,6.94,"overcount"
+"123","New Jersey","NHPI_A",8064,7731,-333,-4.22,"undercount"
+"124","New Jersey","NHPI_AIC",15600,15777,177,1.13,"overcount"
+"125","New Mexico","A_A",29747,28690,-1057,-3.62,"undercount"
+"126","New Mexico","A_AIC",40385,39503,-882,-2.21,"undercount"
+"127","New Mexico","NHPI_A",2822,2824,2,0.07,"overcount"
+"128","New Mexico","NHPI_AIC",5011,5203,192,3.76,"overcount"
+"129","New York","A_A",1415068,1481555,66487,4.59,"overcount"
+"130","New York","A_AIC",1532911,1619081,86170,5.47,"overcount"
+"131","New York","NHPI_A",20668,24000,3332,14.92,"overcount"
+"132","New York","NHPI_AIC",41152,45797,4645,10.68,"overcount"
+"133","North Carolina","A_A",198414,215952,17538,8.46,"overcount"
+"134","North Carolina","A_AIC",234261,258205,23944,9.72,"overcount"
+"135","North Carolina","NHPI_A",7442,10309,2867,32.3,"overcount"
+"136","North Carolina","NHPI_AIC",14855,17891,3036,18.54,"overcount"
+"137","North Dakota","A_A",5660,7032,1372,21.62,"overcount"
+"138","North Dakota","A_AIC",7820,9275,1455,17.02,"overcount"
+"139","North Dakota","NHPI_A",418,334,-84,-22.34,"undercount"
+"140","North Dakota","NHPI_AIC",816,794,-22,-2.73,"undercount"
+"141","Ohio","A_A",188257,196693,8436,4.38,"overcount"
+"142","Ohio","A_AIC",222542,240440,17898,7.73,"overcount"
+"143","Ohio","NHPI_A",4775,5336,561,11.1,"overcount"
+"144","Ohio","NHPI_AIC",10213,11379,1166,10.8,"overcount"
+"145","Oklahoma","A_A",63986,67126,3140,4.79,"overcount"
+"146","Oklahoma","A_AIC",80208,85943,5735,6.9,"overcount"
+"147","Oklahoma","NHPI_A",4103,5354,1251,26.46,"overcount"
+"148","Oklahoma","NHPI_AIC",8035,9052,1017,11.9,"overcount"
+"149","Oregon","A_A",146709,145009,-1700,-1.17,"undercount"
+"150","Oregon","A_AIC",181700,190238,8538,4.59,"overcount"
+"151","Oregon","NHPI_A",11605,14649,3044,23.19,"overcount"
+"152","Oregon","NHPI_AIC",22458,26935,4477,18.13,"overcount"
+"153","Pennsylvania","A_A",327782,358195,30413,8.87,"overcount"
+"154","Pennsylvania","A_AIC",365193,408061,42868,11.09,"overcount"
+"155","Pennsylvania","NHPI_A",6573,7115,542,7.92,"overcount"
+"156","Pennsylvania","NHPI_AIC",13562,14662,1100,7.79,"overcount"
+"157","Rhode Island","A_A",30185,31768,1583,5.11,"overcount"
+"158","Rhode Island","A_AIC",34916,37799,2883,7.93,"overcount"
+"159","Rhode Island","NHPI_A",1554,1602,48,3.04,"overcount"
+"160","Rhode Island","NHPI_AIC",2740,2803,63,2.27,"overcount"
+"161","South Carolina","A_A",62252,61247,-1005,-1.63,"undercount"
+"162","South Carolina","A_AIC",77677,77232,-445,-0.57,"undercount"
+"163","South Carolina","NHPI_A",3136,3957,821,23.15,"overcount"
+"164","South Carolina","NHPI_AIC",6868,6988,120,1.73,"overcount"
+"165","South Dakota","A_A",7527,7775,248,3.24,"overcount"
+"166","South Dakota","A_AIC",10244,10316,72,0.7,"overcount"
+"167","South Dakota","NHPI_A",563,517,-46,-8.52,"undercount"
+"168","South Dakota","NHPI_AIC",1042,1030,-12,-1.16,"undercount"
+"169","Tennessee","A_A",90297,93897,3600,3.91,"overcount"
+"170","Tennessee","A_AIC",110078,115280,5202,4.62,"overcount"
+"171","Tennessee","NHPI_A",4356,5426,1070,21.88,"overcount"
+"172","Tennessee","NHPI_AIC",8072,9359,1287,14.77,"overcount"
+"173","Texas","A_A",913280,1000473,87193,9.11,"overcount"
+"174","Texas","A_AIC",1037308,1134629,97321,8.96,"overcount"
+"175","Texas","NHPI_A",30698,31242,544,1.76,"overcount"
+"176","Texas","NHPI_AIC",52776,54797,2021,3.76,"overcount"
+"177","Utah","A_A",59070,57800,-1270,-2.17,"undercount"
+"178","Utah","A_AIC",79410,80037,627,0.79,"overcount"
+"179","Utah","NHPI_A",22195,26049,3854,15.98,"overcount"
+"180","Utah","NHPI_AIC",32376,37994,5618,15.97,"overcount"
+"181","Vermont","A_A",7427,8069,642,8.29,"overcount"
+"182","Vermont","A_AIC",9307,10530,1223,12.33,"overcount"
+"183","Vermont","NHPI_A",273,175,-98,-43.75,"undercount"
+"184","Vermont","NHPI_AIC",482,476,-6,-1.25,"undercount"
+"185","Virginia","A_A",410755,449149,38394,8.93,"overcount"
+"186","Virginia","A_AIC",470846,527990,57144,11.44,"overcount"
+"187","Virginia","NHPI_A",7583,8201,618,7.83,"overcount"
+"188","Virginia","NHPI_AIC",16267,17229,962,5.74,"overcount"
+"189","Washington","A_A",478665,491685,13020,2.68,"overcount"
+"190","Washington","A_AIC",572889,613537,40648,6.85,"overcount"
+"191","Washington","NHPI_A",34145,43505,9360,24.11,"overcount"
+"192","Washington","NHPI_AIC",58871,73213,14342,21.72,"overcount"
+"193","West Virginia","A_A",12666,12637,-29,-0.23,"undercount"
+"194","West Virginia","A_AIC",16203,16556,353,2.16,"overcount"
+"195","West Virginia","NHPI_A",630,485,-145,-26.01,"undercount"
+"196","West Virginia","NHPI_AIC",1314,1294,-20,-1.53,"undercount"
+"197","Wisconsin","A_A",124263,131828,7565,5.91,"overcount"
+"198","Wisconsin","A_AIC",142862,153050,10188,6.89,"overcount"
+"199","Wisconsin","NHPI_A",2743,2505,-238,-9.07,"undercount"
+"200","Wisconsin","NHPI_AIC",6607,5558,-1049,-17.25,"undercount"
+"201","Wyoming","A_A",4819,4649,-170,-3.59,"undercount"
+"202","Wyoming","A_AIC",7012,6903,-109,-1.57,"undercount"
+"203","Wyoming","NHPI_A",636,521,-115,-19.88,"undercount"
+"204","Wyoming","NHPI_AIC",1117,1137,20,1.77,"overcount"

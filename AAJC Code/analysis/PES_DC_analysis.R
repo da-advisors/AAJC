@@ -20,9 +20,9 @@ source("aajc_tools.R")
 # get data 
 # ========
 
-analytical10 <- read.csv("../Transformed Data/PES_DC_MR_comparison_2010.csv")
-# analytical <- read.csv("../Transformed Data/PES_DC_MR_comparison_2000.csv")
-analytical20 <- read.csv("../Transformed Data/PES_DC_MR_comparison_2020.csv")
+analytical10 <- read.csv("../../Transformed Data/2010/ES_MR_comparison_2010.csv")
+analytical00 <- read.csv("../../Transformed Data/2000/ES_MR_comparison_2000.csv")
+analytical20 <- read.csv("../../Transformed Data/2020/ES_MR_comparison_2020.csv")
 
 # ==================================
 # Cleaning step - for 2020 only
@@ -201,157 +201,164 @@ national_totals <- cbind(estim_val, cen_mr_val)
 # State level comparisons - [Top 10 and bottom 10 table]
 # =====================================
 
-# get relevant data and aggregate by state 
-analytical_states <- analytical %>% 
-  filter(COMPARISON == 'PES_alone_DC_alone' | COMPARISON == 'PES_alone_DC_combo') %>%
-  select(STNAME, CTYNAME, RACE_GROUP, ESTIMATE, MR, COMPARISON)
-
-mr_combo = rep(analytical_states$MR[analytical_states$COMPARISON == 'PES_alone_DC_combo'], each = 2)
-
-analytical_states$MR_COMBO = mr_combo
-
-analytical_states[, c(4,5,7)] <- sapply(analytical_states[, c(4,5,7)], as.numeric)
-
-# aggregate by state 
-analytical_states <- analytical_states[!is.na(analytical_states$ESTIMATE), ] %>%
-  group_by(STNAME) %>% 
-  summarise(ESTIMATE = sum(ESTIMATE), MR = sum(MR), MR_COMBO = sum(MR_COMBO))
-
-# Calculate differences 
-t10_alone_pdiff <- analytical_states %>%
-  mutate(P_DIFF_alone = (ESTIMATE - MR)/ ((ESTIMATE + MR)/2),
-         N_DIFF_alone = ESTIMATE - MR,
-         P_DIFF_combo = (ESTIMATE - MR_COMBO)/ ((ESTIMATE + MR_COMBO)/2),
-         N_DIFF_combo = ESTIMATE - MR_COMBO) %>%
-  top_n(-10, abs(P_DIFF_alone)) %>%
-  arrange(abs(P_DIFF_alone))
-
-# Bottom 10 states by % DIFF (PES alone vs MR alone )
-t10_states_alone <- data.frame(State = t10_alone_pdiff$STNAME,
-                               percent_difference = t10_alone_pdiff$P_DIFF_alone*100,
-                               numeric_difference = t10_alone_pdiff$N_DIFF_alone)
-
-print(formattable(t10_states_alone, align = c("l", rep("r", NCOL(t10_states_alone) - 1)),
-                  caption = "Bottom 10 States by Percent Difference - API Alone (estimates) and API Alone (MR)"))
-
-
-# State level comparisons - [Map of differences at state level]
-# =====================================
-
-# 1. Clean Data 
-# --------------
-state_differences_percent <- analytical_states %>%
-  mutate(P_DIFF_alone = (ESTIMATE - MR)/ ((ESTIMATE + MR)/2)*100,
-         P_DIFF_combo = (ESTIMATE - MR_COMBO)/ ((ESTIMATE + MR_COMBO)/2)*100) %>%
-  pivot_longer(cols = c(P_DIFF_alone, P_DIFF_combo), names_to = 'COMPARISON', values_to = 'PERCENT_DIFF') %>%
-  mutate(COMPARISON = case_when(
-    COMPARISON == "P_DIFF_alone" ~ "PES_alone_MR_alone",
-    COMPARISON == "P_DIFF_combo" ~ "PES_alone_MR_combo",
-  ))
-
-state_differences_numeric <- analytical_states %>%
-  mutate(N_DIFF_alone = ESTIMATE - MR,
-         N_DIFF_combo = ESTIMATE - MR_COMBO) %>%
-  pivot_longer(cols = c(N_DIFF_alone, N_DIFF_combo), names_to = 'COMPARISON', values_to = 'NUMERIC_DIFF') %>%
-  mutate(COMPARISON = case_when(
-    COMPARISON == "N_DIFF_alone" ~ "PES_alone_MR_alone",
-    COMPARISON == "N_DIFF_combo" ~ "PES_alone_MR_combo",
-  ))
-
-# join
-state_differences <- left_join(state_differences_percent,state_differences_numeric, by = c("STNAME","ESTIMATE", "MR", "MR_COMBO", "COMPARISON") )
-
-write.csv(state_differences, "../Transformed Data/state_level_comparisons_2000.csv")
-
-# 1. Mapping 
-# --------------
-
 # Mapping in PES_DC_vis.R in the analytical_state dataset for the mapping for AA alone and API and NA alone 
 
+# =====
+# 2010
+# =====
 
+# aggregate by state 
+analytical10_states <- analytical10 %>% group_by(STNAME, RACE) %>%
+  summarise(ESTIM = sum(ESTIM), MR = sum(MR)) %>% mutate(NUM_DIFF = MR - ESTIM, 
+                                                         PERC_DIFF = round(( (MR - ESTIM) / ( (MR + ESTIM)/2 ) * 100)  ,2),
+                                                         COVERAGE = case_when(
+                                                           NUM_DIFF < 0 ~ 'undercount',
+                                                           NUM_DIFF > 0 ~ 'overcount',
+                                                           NUM_DIFF == 0 ~ 'equal'
+                                                         )) 
 
+write.csv(analytical10_states, "../../Transformed Data/2010/state_level_comparisons_2010.csv")
+
+# TOP and Bottom 10 tables - tables made in word 
+analytical10_states %>% filter(RACE == "NHPI_AIC") %>% arrange(desc(abs(PERC_DIFF)))
+
+# National Coverage by Race 
+analytical10_states %>% filter(RACE %in% c('NHPI_A', 'NHPI_AIC')) %>% group_by(RACE) %>% summarise(ESTIM = sum(ESTIM), MR=sum(MR)) %>%
+  mutate(NUM_DIFF = MR - ESTIM, 
+         PERC_DIFF = round(( (MR - ESTIM) / ( (MR + ESTIM)/2 ) * 100)  ,2),
+         COVERAGE = case_when(
+           NUM_DIFF < 0 ~ 'undercount',
+           NUM_DIFF > 0 ~ 'overcount',
+           NUM_DIFF == 0 ~ 'equal'
+         ))
+
+# =====
+# 2020
+# =====
+
+# aggregate by state 
+analytical20_states <- analytical20 %>% group_by(STNAME, RACE) %>%
+  summarise(ESTIM = sum(ESTIM), MR = sum(MR)) %>% mutate(NUM_DIFF = MR - ESTIM, 
+                                                         PERC_DIFF = round(( (MR - ESTIM) / ( (MR + ESTIM)/2 ) * 100)  ,2),
+                                                         COVERAGE = case_when(
+                                                           NUM_DIFF < 0 ~ 'undercount',
+                                                           NUM_DIFF > 0 ~ 'overcount',
+                                                           NUM_DIFF == 0 ~ 'equal'
+                                                         )) 
+
+write.csv(analytical20_states, "../../Transformed Data/2020/state_level_comparisons_2020.csv")
+
+# TOP and Bottom 10 tables - tables made in word 
+# analytical10_states %>% filter(RACE == "NHPI_AIC") %>% arrange(desc(abs(PERC_DIFF)))
+
+# National Coverage by Race 
+analytical20_states %>% filter(RACE %in% c('NHPI_A', 'NHPI_AIC')) %>% group_by(RACE) %>% summarise(ESTIM = sum(ESTIM), MR=sum(MR)) %>%
+  mutate(NUM_DIFF = MR - ESTIM, 
+         PERC_DIFF = round(( (MR - ESTIM) / ( (MR + ESTIM)/2 ) * 100)  ,2),
+         COVERAGE = case_when(
+           NUM_DIFF < 0 ~ 'undercount',
+           NUM_DIFF > 0 ~ 'overcount',
+           NUM_DIFF == 0 ~ 'equal'
+         ))
+
+# =====
+# 2000
+# =====
+
+# aggregate by state 
+analytical00_states <- analytical00 %>% group_by(STNAME, RACE) %>%
+  summarise(ESTIM = sum(ESTIM), MR = sum(MR)) %>% mutate(NUM_DIFF = MR - ESTIM, 
+                                                         PERC_DIFF = round(( (MR - ESTIM) / ( (MR + ESTIM)/2 ) * 100)  ,2),
+                                                         COVERAGE = case_when(
+                                                           NUM_DIFF < 0 ~ 'undercount',
+                                                           NUM_DIFF > 0 ~ 'overcount',
+                                                           NUM_DIFF == 0 ~ 'equal'
+                                                         )) 
+
+write.csv(analytical20_states, "../../Transformed Data/2000/state_level_comparisons_2000.csv")
+  
 
 # =====================================
 # National level coverage for each category for both the 2010 and 2020 
 # Census as well as the coverage for the 2000 Census for the API category
 # =====================================
 
-# change NA to "NA" for NA populations 
-analytical10$RACE_GROUP[is.na(analytical10$RACE_GROUP)] <- "NA"
-analytical20$RACE_GROUP[is.na(analytical20$RACE_GROUP)] <- "NA"
-
-race_groups <- unique(analytical10$RACE_GROUP)
-
-# create dataframe for table
-nat_coverage <- data.frame(" " = c("AA", "AAC", "NA", "NAC", "API Alone", "API AIC"),
-                           "2000" = c("","","","",0,0),
-                           "2010" = c(0,0,0,0,"",""),
-                           "2020" = c(0,0,0,0,"",""), check.names = F)
-         
-for (i in race_groups) { 
-  # ----
-  # 2010 
-  # ----
-  
-  # loop through each race group to get over/undercounts
-  analytical <- analytical10 %>%
-    filter(RACE_GROUP == i & COMPARISON == "PES_MR") %>%
-    summarise(ESTIMATE = sum(ESTIMATE), MR = sum(MOD_RACE)) 
-  
-  # percent difference calculation
-  pdiff = ((analytical$MR - analytical$ESTIMATE) / ( (analytical$MR + analytical$ESTIMATE)/2 )) * 100
-  
-  if (pdiff < 0) {
-    # under count 
-    pdiff <- paste(as.character(round(pdiff, 2)), "% under count", sep = "")
-  }
-  else {
-    # over count 
-    pdiff <- paste(as.character(round(pdiff,2)), "% over count", sep = "")
-  }
-  
-  # append to nat_coverage DF 
-  nat_coverage$`2010`[nat_coverage$` ` == i] <- pdiff
-  
-  
-  # ----
-  # 2020 
-  # ----
-  
-  # loop through each race group to get over/undercounts
-  analytical <- analytical20 %>%
-    filter(RACE_GROUP == i & COMPARISON == "PES_MR") %>%
-    summarise(ESTIMATE = sum(ESTIMATE), MR = sum(MR)) 
-  
-  # percent difference calculation
-  pdiff = ((analytical$MR - analytical$ESTIMATE) / ( (analytical$MR + analytical$ESTIMATE)/2 )) * 100
-  
-  if (pdiff < 0) {
-    # under count 
-    pdiff <- paste(as.character(round(pdiff, 2)), "% under count", sep = "")
-  }
-  else {
-    # over count 
-    pdiff <- paste(as.character(round(pdiff,2)), "% over count", sep = "")
-  }
-  
-  # append to nat_coverage DF 
-  nat_coverage$`2020`[nat_coverage$` ` == i] <- pdiff
-
-
-}
-
-
-# Change Race categories column to something more readable 
-nat_coverage$` ` <- c("Asian Alone", "Asian AIC", "NHPI Alone", "NHPI AIC","API Alone", "API AIC")
-
-# Add API values for 2000
-nat_coverage$`2000`[nat_coverage$` `=="API Alone"] <- "1.27% under count"
-nat_coverage$`2000`[nat_coverage$` `=="API AIC"] <- "10.42% over count"
-
-print(formattable(nat_coverage, align = c("l", "c", "c", "c"), caption = "National Coverage by Category"))
-
-      
+# # change NA to "NA" for NA populations 
+# analytical10$RACE_GROUP[is.na(analytical10$RACE_GROUP)] <- "NA"
+# analytical20$RACE_GROUP[is.na(analytical20$RACE_GROUP)] <- "NA"
+# 
+# race_groups <- unique(analytical10$RACE_GROUP)
+# 
+# # create dataframe for table
+# nat_coverage <- data.frame(" " = c("AA", "AAC", "NA", "NAC", "API Alone", "API AIC"),
+#                            "2000" = c("","","","",0,0),
+#                            "2010" = c(0,0,0,0,"",""),
+#                            "2020" = c(0,0,0,0,"",""), check.names = F)
+#          
+# for (i in race_groups) { 
+#   # ----
+#   # 2010 
+#   # ----
+#   
+#   # loop through each race group to get over/undercounts
+#   analytical <- analytical10 %>%
+#     filter(RACE_GROUP == i & COMPARISON == "PES_MR") %>%
+#     summarise(ESTIMATE = sum(ESTIMATE), MR = sum(MOD_RACE)) 
+#   
+#   # percent difference calculation
+#   pdiff = ((analytical$MR - analytical$ESTIMATE) / ( (analytical$MR + analytical$ESTIMATE)/2 )) * 100
+#   
+#   if (pdiff < 0) {
+#     # under count 
+#     pdiff <- paste(as.character(round(pdiff, 2)), "% under count", sep = "")
+#   }
+#   else {
+#     # over count 
+#     pdiff <- paste(as.character(round(pdiff,2)), "% over count", sep = "")
+#   }
+#   
+#   # append to nat_coverage DF 
+#   nat_coverage$`2010`[nat_coverage$` ` == i] <- pdiff
+#   
+#   
+#   # ----
+#   # 2020 
+#   # ----
+#   
+#   # loop through each race group to get over/undercounts
+#   analytical <- analytical20 %>%
+#     filter(RACE_GROUP == i & COMPARISON == "PES_MR") %>%
+#     summarise(ESTIMATE = sum(ESTIMATE), MR = sum(MR)) 
+#   
+#   # percent difference calculation
+#   pdiff = ((analytical$MR - analytical$ESTIMATE) / ( (analytical$MR + analytical$ESTIMATE)/2 )) * 100
+#   
+#   if (pdiff < 0) {
+#     # under count 
+#     pdiff <- paste(as.character(round(pdiff, 2)), "% under count", sep = "")
+#   }
+#   else {
+#     # over count 
+#     pdiff <- paste(as.character(round(pdiff,2)), "% over count", sep = "")
+#   }
+#   
+#   # append to nat_coverage DF 
+#   nat_coverage$`2020`[nat_coverage$` ` == i] <- pdiff
+# 
+# 
+# }
+# 
+# 
+# # Change Race categories column to something more readable 
+# nat_coverage$` ` <- c("Asian Alone", "Asian AIC", "NHPI Alone", "NHPI AIC","API Alone", "API AIC")
+# 
+# # Add API values for 2000
+# nat_coverage$`2000`[nat_coverage$` `=="API Alone"] <- "1.27% under count"
+# nat_coverage$`2000`[nat_coverage$` `=="API AIC"] <- "10.42% over count"
+# 
+# print(formattable(nat_coverage, align = c("l", "c", "c", "c"), caption = "National Coverage by Category"))
+# 
+#       
 
 
 # =====================================
@@ -368,8 +375,8 @@ print(formattable(nat_coverage, align = c("l", "c", "c", "c"), caption = "Nation
 #   2) https://www2.census.gov/programs-surveys/popest/technical-documentation/file-layouts/2000-2010/sc-est2010-alldata6.pdf
 # ----------------------------------------
 
-estim_state_2010_AIC_raw <- read.csv('../Raw Data/sc-est2010-alldata5.csv') # Alone or in combination
-estim_state_2010_A_raw <- read.csv('../Raw Data/sc-est2010-alldata6.csv')   # Alone only
+estim_state_2010_AIC_raw <- read.csv('../../Raw Data/2010/sc-est2010-alldata5.csv') # Alone or in combination
+estim_state_2010_A_raw <- read.csv('../../Raw Data/2010/sc-est2010-alldata6.csv')   # Alone only
 
 
 # DATAFRAMES CREATED:
@@ -387,19 +394,19 @@ estim_state_2010_A_raw <- read.csv('../Raw Data/sc-est2010-alldata6.csv')   # Al
 # estim_state_2010
 es2010_AIC <- estim_state_2010_AIC_raw %>% 
   select(STATE, STNAME, SEX, ORIGIN, RACE, AGE, POPESTIMATE72010) %>%
-  filter(RACE == 4) %>% # 4 = Asian Alone or in Combination 
+  filter(RACE == 5) %>% # 5 = Native Hawaiian and Other Pacific Islander Alone or in Combination  
   filter(SEX == 0, ORIGIN == 0) %>% 
-  group_by(STATE, STNAME) %>%
+  group_by(STATE, STNAME, AGE) %>%
   summarise(AIC = sum(POPESTIMATE72010))
 
 es2010_A <- estim_state_2010_A_raw %>% 
   select(STATE, STNAME, SEX, ORIGIN, RACE, AGE, POPESTIMATE72010) %>%
-  filter(RACE == 4) %>% # 4 = Asian Alone
+  filter(RACE == 5) %>% # 5 = Native Hawaiian and Other Pacific Islander Alone
   filter(SEX == 0, ORIGIN == 0) %>% 
-  group_by(STATE, STNAME) %>%
+  group_by(STATE, STNAME, AGE) %>%
   summarise(A = sum(POPESTIMATE72010))
 
-estim_state_2010 <- left_join(es2010_AIC, es2010_A, by=c("STATE","STNAME")) %>%
+estim_state_2010 <- left_join(es2010_AIC, es2010_A, by=c("STATE","STNAME", "AGE")) %>%
   pivot_longer(cols = c('AIC', 'A'), names_to = "RACE", values_to = "ESTIMATE")
 
 
@@ -407,14 +414,14 @@ estim_state_2010 <- left_join(es2010_AIC, es2010_A, by=c("STATE","STNAME")) %>%
 # estim_nat_2010
 estim_state_2010_AIC <- estim_state_2010_AIC_raw %>%
   select(STATE, STNAME, SEX, ORIGIN, RACE, AGE, POPESTIMATE72010) %>%
-  filter(RACE == 4) %>% # 4 = Asian Alone or in Combination 
+  filter(RACE == 5) %>% # 5 = Native Hawaiian and Other Pacific Islander Alone or in Combination  
   filter(SEX == 0, ORIGIN == 0) %>% 
   group_by(AGE) %>%
   summarise(AIC = sum(POPESTIMATE72010)) # get the total population by each age 
 
 estim_state_2010_A <- estim_state_2010_A_raw %>%
   select(STATE, STNAME, SEX, ORIGIN, RACE, AGE, POPESTIMATE72010) %>%
-  filter(RACE == 4) %>% # 4 = Asian Alone
+  filter(RACE == 5) %>% # 5 = Native Hawaiian and Other Pacific Islander Alone
   filter(SEX == 0, ORIGIN == 0) %>% 
   group_by(AGE) %>%
   summarise(A = sum(POPESTIMATE72010)) # get the total population by each age 
@@ -430,6 +437,8 @@ estim_nat_2010 <- left_join(estim_state_2010_AIC, estim_state_2010_A) %>%
 # ---------------------------------------
 
 # Grouping AGE column based on ranges 
+# 1. 
+# National level 
 estim_nat_2010 <- estim_nat_2010 %>%
   mutate(AGEGRP = cut(AGE,
                       breaks = seq(-1,89, by = 5),
@@ -439,6 +448,17 @@ estim_nat_2010 <- estim_nat_2010 %>%
   summarise(ESTIMATE = sum(ESTIMATE))
 
 estim_nat_2010$AGEGRP <- as.factor(estim_nat_2010$AGEGRP)
+
+# 2. 
+# State level 
+estim_state_2010 <- estim_state_2010 %>%
+  mutate(AGEGRP = cut(AGE,
+                      breaks = seq(-1,89, by = 5),
+                      labels = seq(1,18))) %>%
+  # aggregate by new AGEGRP col
+  group_by(STATE, STNAME, AGEGRP, RACE) %>%
+  summarise(ESTIMATE = sum(ESTIMATE))
+
 
 # MODIFIED RACE DATA 
 # ----------------------------------------
@@ -451,13 +471,14 @@ estim_nat_2010$AGEGRP <- as.factor(estim_nat_2010$AGEGRP)
 
 # read in datasets
 # Alabama - Missouri 
-mr_al_mo_2010 <- read.csv("../Raw Data/modified_race_2010_al_mo.csv")
+mr_al_mo_2010 <- read.csv("../../Raw Data/2010/modified_race_2010_al_mo.csv")
 # Montana - Wyoming
-mr_mt_wy_2010 <- read.csv("../Raw Data/modified_race_2010_mt_wy.csv")
+mr_mt_wy_2010 <- read.csv("../../Raw Data/2010/modified_race_2010_mt_wy.csv")
 
 
 # list of race groups which contain Asian + another race
 keep_imprace_aic <- c(8,11,13,15,17,19,21,22,24,25,26,28,29,30,31)
+keep_imprace_nhpi <- c(9,12,14,15,18,20,21,23,24,25,27,28,29,30,31)
 
 # Subset Relevant data 
 # -------
@@ -465,41 +486,41 @@ keep_imprace_aic <- c(8,11,13,15,17,19,21,22,24,25,26,28,29,30,31)
 # 1. 
 # State level 
 mr_al_mo_2010_STATE <- mr_al_mo_2010 %>%
-  filter(IMPRACE == 4 | IMPRACE %in% keep_imprace_aic) %>% # get all Asian race groups 
+  filter(IMPRACE == 5 | IMPRACE %in% keep_imprace_nhpi) %>% # get all Asian/nhpi race groups 
   
   # create race group col to define A and AIC
   mutate(RACE_GROUP = case_when(
-    IMPRACE == 4 ~ 'A',
-    IMPRACE %in% keep_imprace_aic ~ 'AIC'
+    IMPRACE == 5 ~ 'A', #alone
+    IMPRACE %in% keep_imprace_nhpi ~ 'AIC' #alone or in combo
   )) %>%
   
   # get total populations by race group 
-  group_by(STATE, STNAME, RACE_GROUP) %>%
+  group_by(STATE, STNAME, AGEGRP, RACE_GROUP) %>%
   summarise(MR = sum(RESPOP))
 
 mr_mt_wy_2010_STATE <- mr_mt_wy_2010 %>%
-  filter(IMPRACE == 4 | IMPRACE %in% keep_imprace_aic) %>% # get all Asian race groups 
+  filter(IMPRACE == 5 | IMPRACE %in% keep_imprace_nhpi) %>% # get all Asian/nhpi race groups 
   
   # create race group col to define A and AIC
   mutate(RACE_GROUP = case_when(
-    IMPRACE == 4 ~ 'A',
-    IMPRACE %in% keep_imprace_aic ~ 'AIC'
+    IMPRACE == 5 ~ 'A',
+    IMPRACE %in% keep_imprace_nhpi ~ 'AIC'
   )) %>%
   
   # get total populations by race group 
-  group_by(STATE, STNAME, RACE_GROUP) %>%
+  group_by(STATE, STNAME, AGEGRP, RACE_GROUP) %>%
   summarise(MR = sum(RESPOP))
 
 
 # 2. 
 # National level 
 mr_al_mo_2010 <- mr_al_mo_2010 %>%
-  filter(IMPRACE == 4 | IMPRACE %in% keep_imprace_aic) %>% # get all Asian race groups 
+  filter(IMPRACE == 5 | IMPRACE %in% keep_imprace_nhpi) %>% # get all Asian race groups 
   
   # create race group col to define A and AIC
   mutate(RACE_GROUP = case_when(
-    IMPRACE == 4 ~ 'A',
-    IMPRACE %in% keep_imprace_aic ~ 'AIC'
+    IMPRACE == 5 ~ 'A',
+    IMPRACE %in% keep_imprace_nhpi ~ 'AIC'
   )) %>%
   
   # get total populations by race group 
@@ -507,12 +528,12 @@ mr_al_mo_2010 <- mr_al_mo_2010 %>%
   summarise(MR = sum(RESPOP))
 
 mr_mt_wy_2010 <- mr_mt_wy_2010 %>%
-  filter(IMPRACE == 4 | IMPRACE %in% keep_imprace_aic) %>% # get all Asian race groups 
+  filter(IMPRACE == 5 | IMPRACE %in% keep_imprace_nhpi) %>% # get all Asian race groups 
   
   # create race group col to define A and AIC
   mutate(RACE_GROUP = case_when(
-    IMPRACE == 4 ~ 'A',
-    IMPRACE %in% keep_imprace_aic ~ 'AIC'
+    IMPRACE == 5 ~ 'A',
+    IMPRACE %in% keep_imprace_nhpi ~ 'AIC'
   )) %>%
   
   # get total populations by race group 
@@ -548,11 +569,11 @@ combined_MR_2010$AGEGRP <- as.factor(combined_MR_2010$AGEGRP)
 # 2. 
 # State level 
 aic <- mr_al_mo_2010_STATE %>%
-  group_by(STATE,STNAME) %>%
+  group_by(STATE,STNAME,AGEGRP) %>%
   summarise(mr_aic = sum(MR))
 
 aic2 <- mr_mt_wy_2010_STATE %>%
-  group_by(STATE,STNAME) %>%
+  group_by(STATE,STNAME, AGEGRP) %>%
   summarise(mr_aic = sum(MR))
 
 # Add AIC values back into df
@@ -563,6 +584,7 @@ mr_mt_wy_2010_STATE$MR[mr_mt_wy_2010_STATE$RACE_GROUP == "AIC" ] <- aic2$mr_aic
 combined_MR_2010_STATE <- rbind(mr_al_mo_2010_STATE, mr_mt_wy_2010_STATE) %>%
   rename(RACE = RACE_GROUP)
 
+combined_MR_2010_STATE$AGEGRP <- as.factor(combined_MR_2010_STATE$AGEGRP)
 
 # JOIN estimates and modified race data 
 # -------
@@ -578,14 +600,14 @@ popBy_age_2010 <- popBy_age_2010 %>%
 
 # 1. 
 # State level
-state_EOC_2010 <- estim_state_2010 %>% left_join(combined_MR_2010_STATE, by = c("STATE", "STNAME", "RACE"))
+state_EOC_2010 <- estim_state_2010 %>% left_join(combined_MR_2010_STATE, by = c("STATE", "STNAME", "AGEGRP","RACE"))
 
 # Calculate Error of Closer (EOC) - % difference 
 state_EOC_2010 <- state_EOC_2010 %>%
   mutate(EOC = round(( (MR - ESTIMATE) / ( (MR + ESTIMATE)/2 ) * 100)  ,2))
 
 # Write to csv for use with PES_DC_vis.R
-write.csv(state_EOC_2010, "../Transformed Data/state_level_comparisons_2010.csv")
+write.csv(state_EOC_2010, "../../Transformed Data/2010/state_level_comparisons_2010_by_agegrp_NHPI.csv")
 
 # --------------
 # Visualization
@@ -599,7 +621,7 @@ popBy_age_2010 %>% ggplot(aes(x = AGEGRP, y=EOC, group = RACE)) +
   theme_minimal() + 
   xlab("Age Group") + 
   ylab("Error of Closure (%)") + 
-  ggtitle("Coverage by Age Group in 2010 for Asian Alone and Asian Alone and in\nCombination Populations")
+  ggtitle("Coverage by Age Group in 2010 for NHPI Alone and NHPI Alone and in\nCombination Populations")
 
 # 2. 
 # Age Groups with the top Error of Closure (tables)
@@ -659,7 +681,7 @@ rasterImage(tbl2, 0,0,1,1)
 # BAR CHART 
 ggplot(over_under_19, aes(x = RACE, y = EOC, fill = as.factor(over_19))) + 
   geom_bar(position = "dodge", stat = "identity") +
-  ggtitle("Coverage for Asian Populations Over and Under 19") + 
+  ggtitle("Coverage for NHPI Populations Over and Under 19") + 
   ylab("Error of Closure (%)") + 
   xlab("Race Category") +
   scale_fill_manual(labels = c("19 or under", "Over 19"), name = "Age Group", values = c("#916a92", "#f4c78d")) +
@@ -677,10 +699,23 @@ ggplot(over_under_19, aes(x = RACE, y = EOC, fill = as.factor(over_19))) +
 # Show differentiation by state (map) and county (map and histogram)
 # =====================================
 
+# Will be using 'state_EOC_2010' DF defined above
 
+head(state_EOC_2010)
 
+min(state_EOC_2010$EOC)
+max(state_EOC_2010$EOC)
 
+# sanity check - confirming what we have here is the same as what we have in the ES_MR transformed data file
+check2010 <- read.csv("../Transformed Data/2010/ES_MR_comparison_2010.csv")
 
+check2010 %>% filter(RACE %in% c("A_A", "A_AIC")) %>% group_by(STNAME, RACE) %>%
+  summarise(ES = sum(ESTIM), MR = sum(MR))
+
+state_EOC_2010 %>% group_by(STNAME, RACE) %>%
+  summarise(ES = sum(ESTIMATE), MR = sum(MR))
+
+blah <- as.integer(seq(-100, 70, length.out = 4))
 
 
 # =====================================
