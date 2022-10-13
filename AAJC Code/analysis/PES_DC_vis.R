@@ -80,17 +80,6 @@ hawaii.mod = hawaii + c(1700000, -500000)
 state_overlay$geometry[state_overlay$NAME == "Alaska"] <- alaska.mod
 state_overlay$geometry[state_overlay$NAME == "Hawaii"] <- hawaii.mod
 
-# # trial and error to see what looks good
-# plot(state_overlay$geometry[state_overlay$NAME != "Alaska"])
-# plot(alaska.mod, col="lightblue", add=T)
-# plot(hawaii.mod, col="lightblue", add=T)
-
-# Doing the same for the actual data 
-# analytical$geometry[grepl("Alaska", analytical$STNAME)] <- 
-#   as.numeric(analytical$geometry[grepl("Alaska", analytical$STNAME)]) + c(675000, -400000)
-# analytical$geometry[grepl("Hawaii", analytical$STNAME) ] <- 
-#   as.numeric(analytical$geometry[grepl("Hawaii", analytical$STNAME) ])+ c(1700000, -500000)
-
 
 
 
@@ -125,8 +114,8 @@ county_map <- function(data){
 }
 
 
-carto_pal(6, "PurpOr")
-Sunset <- c("#a44360","#e7807d","#f4b191", "#f0b2c1", "#bb69b0" ,"#8c4fa4")
+# carto_pal(6, "PurpOr")
+# Sunset <- c("#a44360","#e7807d","#f4b191", "#f0b2c1", "#bb69b0" ,"#8c4fa4")
 
 # burgyl <- carto_pal(6, "BurgYl")
 # display.brewer.pal(n = 6, name = 'PuOr')
@@ -154,6 +143,7 @@ county_map_sunset <- function(data){
   map <- map + theme(plot.margin = margin(1,1,1,1, "cm"))
   map
 }
+
 
 # ==============================
 # 2x2  maps for AA Alone and AA Alone or in combo for 2010 and 2020 Census
