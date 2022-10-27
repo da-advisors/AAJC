@@ -257,3 +257,24 @@ analytical$PERC_DIFF[rowSums(is.na(analytical)) > 0] <- 0
 # write to csv
 write.csv(analytical, "../../Transformed Data/2010/ES_MR_AGEGRP_comparison_2010.csv")
 
+
+
+
+################################
+# STATE LEVEL COMPARISON DATA  # 
+################################
+
+agegrp_2010_county <- read.csv("../../Transformed Data/2010/ES_MR_AGEGRP_comparison_2010.csv")
+
+state_agegrp_2010_county <- agegrp_2010_county %>% group_by(STATE, STNAME, AGEGRP, RACE) %>% 
+  summarise(ESTIM = sum(ESTIM), MR = sum(MR)) %>% 
+  mutate(NUM_DIFF = MR - ESTIM,   # numeric diff
+         EOC = round(( (MR - ESTIM) / ( (MR + ESTIM)/2 ) * 100)  ,2),   # percent difference/error of closure (EOC)
+         COVERAGE = case_when(
+           NUM_DIFF < 0 ~ 'undercount',
+           NUM_DIFF > 0 ~ 'overcount',
+           NUM_DIFF == 0 ~ 'equal'
+         ))
+
+write.csv(state_agegrp_2010_county, "../../Transformed Data/2010/ES_MR_AGEGRP_STATE_comparison_2010.csv")
+
