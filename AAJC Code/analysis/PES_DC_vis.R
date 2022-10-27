@@ -13,7 +13,7 @@ library(grid)
 library(gridExtra)
 library(imager)
 library(OpenImageR)
-
+library(RColorBrewer)
 
 # Import theme created for AAJC Analysis in "AAJC Code/AAJC_theme.R"
 theme_AAJC <- readRDS('../theme_AAJC.rds')
@@ -123,6 +123,7 @@ county_map <- function(data){
 # 
 # Sunset2 <- c('#704F8D', '#B15C86', '#D98790', '#E9AE85', '#E7CE8C', '#F5E1CC')
 
+prgn <- brewer.pal(6,"RdYlBu")
 
 county_map_sunset <- function(data){
   
@@ -151,32 +152,6 @@ county_map_sunset <- function(data){
 # read in data 
 comparison_2010 <- read.csv("../../Transformed Data/2010/ES_MR_comparison_2010.csv")
 comparison_2020 <- read.csv("../../Transformed Data/2020/ES_MR_comparison_2020.csv")
-  
-
-# ------------
-# Getting geospatial data 
-# ------------
-remotes::install_github("walkerke/tidycensus")
-geo <- get_decennial(
-  geography = "county",
-  geometry = TRUE,
-  resolution = "20m",
-  variables = "P1_001N",  # total population in this instance 
-  year = 2020) %>%
-  shift_geometry()
-
-geo <- geo %>% separate(NAME, sep = ', ', into = c('CTYNAME', 'STNAME'))
-# geo <- geo %>% extract(NAME, c('CTYNAME', 'STNAME'), "([^,]+), ([^)]+)")
-
-# geo <- geo %>% select(STNAME, CTYNAME, geometry)
-
-# fix positioning of alaska and hawaii 
-geo$geometry[grepl("Alaska", geo$STNAME)] <- 
-  geo$geometry[grepl("Alaska", geo$STNAME)] + c(675000, -400000)
-geo$geometry[grepl("Hawaii", geo$STNAME) ] <- 
-  geo$geometry[grepl("Hawaii", geo$STNAME) ]+ c(1700000, -500000)
-
-geo <- geo %>% select(GEOID,CTYNAME,STNAME,geometry)
 
 
 # --------------------
@@ -243,7 +218,7 @@ save_county_maps <- function(data, year) {
                             races_caps[i]," was less than the census results.")) +
       titles_upper()
     
-    ggsave(filename = paste("../../AAJC Vis/county_maps/county_map_",all_races[i],"_", year,".png",sep=""),
+    ggsave(filename = paste("../../AAJC Vis/county_maps/county_map_Sunset_",all_races[i],"_", year,".png",sep=""),
            plot = sunset_county, bg = "white", width = 9, height = 7)
   }
   
@@ -252,15 +227,6 @@ save_county_maps <- function(data, year) {
 # call function 
 save_county_maps(comparison_2010, 2010)
 save_county_maps(comparison_2020, 2020)
-
-
-
-
-comparison_2010 %>% filter(STNAME == "California", RACE == "A_A") %>% arrange(desc(PERC_DIFF))
-
-
-
-
 
 
 
@@ -413,12 +379,13 @@ dummy <- left_join(dummy, state_overlay_geo, by = "STNAME")
 # --------------------
 
 # Color Paletted 
-display_carto_pal(7, "PurpOr") #state maps
+display_carto_pal(5, "PurpOr") #state maps
 display_carto_pal(7, "SunsetDark") #county maps / tables
-display_carto_pal(7, "Sunset") #county maps
+display_carto_pal(5, "Sunset") #county maps
 display_carto_pal(7, "OrYel") #state maps, option 2
+display.brewer.pal(6,"PuOr")
 
-PurpOr7 <- carto_pal(7, "PurpOr")
+PurpOr7 <- brewer.pal(6,"PuOr")
 
 
 # ================
@@ -473,63 +440,7 @@ API_alone_2000_state +
 # ------
 
 # analytical_state_10 <- read.csv("../Transformed Data/state_level_comparisons_2010.csv")
-analytical_state_10_age <- read.csv("../../Transformed Data/2010/state_level_comparisons_2010_by_agegrp.csv")
-
-# --------------------
-# Subsetting relevant data
-# -------------------- 
-# change out RACE == to "A" or "AIC" depending on what is needed 
-# dummy <-  analytical_state_10_age %>%
-#   # get each race group
-#   filter(RACE == "A") %>%
-#   # create groups column for discrete color scale
-#   mutate(percent_fctr = case_when(
-#     EOC < -125 ~ "Less than -125%",
-#     EOC >= -125 & EOC < -120 ~ "-125 to -120%",
-#     EOC >= -120 & EOC < -115 ~ "-120 to -115%",
-#     EOC >= -115 & EOC <= -110 ~ "-115 to -110%",
-#     EOC > -110 ~ "Greater than -110%"))
-# 
-# # ------------
-# # Getting geospatial data 
-# # ------------
-# 
-# # can use state overlay here 
-# state_overlay_geo <- state_overlay %>% select(STNAME = NAME, geometry)
-# 
-# dummy <- left_join(dummy, state_overlay_geo, by = "STNAME")
-# 
-# 
-# # --------------------
-# # MAPPING
-# # --------------------
-# 
-# # breaks 
-# a2010_breaks <- c("Less than -125%" = PurpOr7[1],
-#                   "-125 to -120%" = PurpOr7[2],
-#                   "-120 to -115%" = PurpOr7[3],
-#                   "-115 to -110%" = PurpOr7[4],
-#                   "Greater than -110%" = PurpOr7[5])
-# 
-# # Asian Alone - A 
-# A_2010_state <- state_map(dummy, a2010_breaks)
-# A_2010_state +  
-#   labs(fill = "Error of Closure (%)     ",
-#        title ="      Population Estimates and Census Comparison\n      for Asian (Alone) Populations - 2010",
-#        subtitle = "         Resident Population By State",
-#        caption = "An error of closure value less than 0% indicates a potential\nundercount ie. the estimates for Asian (alone) populations\nwere greater than the census results.") +
-#   titles_upper()
-# 
-# # Asian Alone or in Combination - AIC
-# AIC_2010_state <- state_map(dummy, a2010_breaks)
-# AIC_2010_state +  
-#   labs(fill = "Error of Closure (%)     ",
-#        title ="      Population Estimates and Census Comparison for\n      Asian (Alone or in Combination) Populations - 2010",
-#        subtitle = "         Resident Population By State",
-#        caption = "An error of closure value less than 0% indicates a potential\nundercount ie. the population estimate for API (alone or in\ncombination) was less than the census results.") +
-#   titles_upper()
-# 
-
+analytical_state_10_age <- read.csv("../../Transformed Data/2010/ES_MR_AGEGRP_STATE_comparison_2010.csv")
 
 
 # ==============================
@@ -552,20 +463,43 @@ state_agegrp_imgs <- c()
 #   - Maine: No MR data for NHPI populations in age group 15 (alone)
 #   - New Hampshire: No MR data for NHPI populations in age group 16 (alone)
 
+# inspecting NAs
 analytical_state_10_age[is.na(analytical_state_10_age$EOC) & analytical_state_10_age$RACE == "AIC", ]
 analytical_state_10_age[is.na(analytical_state_10_age$EOC) & analytical_state_10_age$RACE == "A", ]
+
+# ------
+#  creating 65+ age group
+# ------
+
+# [Cut down facet maps to only ages 65+ for NHPI Alone and NHPI Alone or in combination]
+# age groups 14 - 18 --> 65+
+
+over65 <- analytical_state_10_age %>% filter(AGEGRP >= 14) %>% group_by(STATE, STNAME, RACE) %>%
+  summarise(ESTIM = sum(ESTIM), MR = sum(MR)) %>%
+  mutate(NUM_DIFF = MR - ESTIM,   # numeric diff
+         EOC = round(( (MR - ESTIM) / ( (MR + ESTIM)/2 ) * 100)  ,2),   # percent difference/error of closure (EOC)
+         COVERAGE = case_when(
+           NUM_DIFF < 0 ~ 'undercount',
+           NUM_DIFF > 0 ~ 'overcount',
+           NUM_DIFF == 0 ~ 'equal'
+         ))
+
 
 # for each age group
 for (i in unique(analytical_state_10_age$AGEGRP)){
   # --------------------
   # Subsetting relevant data
   # -------------------- 
-  dummy_age <- analytical_state_10_age %>% filter(RACE == "A") %>% filter(AGEGRP == i)
   
-  min_i <- min(dummy_age$EOC)
-  max_i <- max(dummy_age$EOC)
+  # the RACE passed into dummy_age will be the one being plotted 
+  # dummy_age2 is for creating a consistent legend
+  dummy_age <- analytical_state_10_age %>% filter(RACE == "NHPI_AIC") %>% filter(AGEGRP == i)
+  dummy_age2 <- analytical_state_10_age %>% filter(RACE == "NHPI_A") %>% filter(AGEGRP == i)
   
-  splits <- as.integer(seq(min_i, max_i, length.out = 4))
+  min_i <- min(dummy_age$EOC,dummy_age2$EOC)
+  max_i <- max(dummy_age$EOC, dummy_age2$EOC)
+  
+  splits <- as.integer(seq(min_i, max_i, length.out = 5))
   
   dummy_age <- dummy_age %>% 
     mutate(percent_fctr = case_when(
@@ -573,7 +507,8 @@ for (i in unique(analytical_state_10_age$AGEGRP)){
       EOC >= splits[1] & EOC < splits[2] ~ paste0(splits[1], " to ", splits[2], "%"),
       EOC >= splits[2] & EOC < splits[3] ~ paste0(splits[2], " to ", splits[3], "%"),
       EOC >= splits[3] & EOC <= splits[4] ~ paste0(splits[3], " to ", splits[4], "%"),
-      EOC > splits[4] ~ paste0("Greater than ", splits[4], "%")))
+      EOC >= splits[4] & EOC <= splits[5] ~ paste0(splits[4], " to ", splits[5], "%"),
+      EOC > splits[4] ~ paste0("Greater than ", splits[5], "%")))
   
   dummy_age$percent_fctr <- as.factor(dummy_age$percent_fctr)
   
@@ -586,27 +521,71 @@ for (i in unique(analytical_state_10_age$AGEGRP)){
   # --------------------
   # MAPPING
   # --------------------
-  a2010_breaks <- c(PurpOr7[1], PurpOr7[2], PurpOr7[3], PurpOr7[4], PurpOr7[5])
+  a2010_breaks <- c(PurpOr7[1], PurpOr7[2], PurpOr7[3], PurpOr7[4], PurpOr7[5], PurpOr7[6])
   
   names(a2010_breaks) <- c(paste0("Less than ",splits[1],"%"), paste0(splits[1], " to ", splits[2], "%"), paste0(splits[2], " to ", splits[3], "%"),
-                           paste0(splits[3], " to ", splits[4], "%"), paste0("Greater than ", splits[4], "%"))
+                           paste0(splits[3], " to ", splits[4], "%"),paste0(splits[4], " to ", splits[5], "%"), paste0("Greater than ", splits[5], "%"))
   
   # Asian Alone - A 
   A_2010_state <- state_map(dummy_age, a2010_breaks)
   A_2010_state <- A_2010_state +  
     labs(fill = "Error of Closure (%)     ",
-         title =paste0("      Population Estimates and Census Comparison\n      Asian (Alone) Populations - Ages ", agegrp_labels[i]),
+         title =paste0("      Population Estimates and Census Comparison\n      NHPI (Alone or in Combination) Populations - Ages ", agegrp_labels[i]),
          subtitle = "         Resident Population By State - 2010",
-         caption = "An error of closure value less than 0% indicates a potential\nundercount ie. the estimates for Asian (alone) populations\n were greater than the census results.") +
+         caption = "An error of closure value less than 0% indicates a potential\nundercount ie. the estimates for NHPI (alone or in combination) populations\n were greater than the census results.") +
     titles_upper()
   
   # state_agegrp_imgs <- append(state_agegrp_imgs, A_2010_state)
   # save
-  ggsave(filename = paste("../../AAJC Vis/diff_state_agegrp_2010/diff_by_agegrp_",i,"_AA_2010_state_map.png",sep=""),
+  ggsave(filename = paste("../../AAJC Vis/diff_state_agegrp_2010/diff_by_agegrp_",i,"_NHPIAIC_2010_state_map.png",sep=""),
          plot = A_2010_state, bg = "white", width = 9, height = 7)
 }
 
 
+# 65 + 
+dummy_age <- over65 %>% filter(RACE == "NHPI_A")
+dummy_age2 <- over65 %>% filter(RACE == "NHPI_AIC")
+
+min_i <- min(dummy_age$EOC,dummy_age2$EOC)
+max_i <- max(dummy_age$EOC, dummy_age2$EOC)
+
+splits <- as.integer(seq(min_i, max_i, length.out = 5))
+
+dummy_age <- dummy_age %>% 
+  mutate(percent_fctr = case_when(
+    EOC < splits[1] ~ paste0("Less than ",splits[1],"%"),
+    EOC >= splits[1] & EOC < splits[2] ~ paste0(splits[1], " to ", splits[2], "%"),
+    EOC >= splits[2] & EOC < splits[3] ~ paste0(splits[2], " to ", splits[3], "%"),
+    EOC >= splits[3] & EOC <= splits[4] ~ paste0(splits[3], " to ", splits[4], "%"),
+    EOC >= splits[4] & EOC <= splits[5] ~ paste0(splits[4], " to ", splits[5], "%"),
+    EOC > splits[4] ~ paste0("Greater than ", splits[5], "%")))
+
+dummy_age$percent_fctr <- as.factor(dummy_age$percent_fctr)
+
+# ------------
+# Getting geospatial data 
+# ------------
+
+dummy_age <- left_join(dummy_age, state_overlay_geo, by = "STNAME")
+
+# --------------------
+# MAPPING
+# --------------------
+a2010_breaks <- c(PurpOr7[1], PurpOr7[2], PurpOr7[3], PurpOr7[4], PurpOr7[5], PurpOr7[6])
+
+names(a2010_breaks) <- c(paste0("Less than ",splits[1],"%"), paste0(splits[1], " to ", splits[2], "%"), paste0(splits[2], " to ", splits[3], "%"),
+                         paste0(splits[3], " to ", splits[4], "%"),paste0(splits[4], " to ", splits[5], "%"), paste0("Greater than ", splits[5], "%"))
+
+A_2010_state <- state_map(dummy_age, a2010_breaks)
+A_2010_state <- A_2010_state +  
+  labs(fill = "Error of Closure (%)     ",
+       title =paste0("      Population Estimates and Census Comparison\n      NHPI (Alone) Populations - Ages 65 or older"),
+       subtitle = "         Resident Population By State - 2010",
+       caption = "An error of closure value less than 0% indicates a potential\nundercount ie. the estimates for NHPI (alone) populations\n were greater than the census results.") +
+  titles_upper()
+
+ggsave(filename = paste("../../AAJC Vis/diff_state_agegrp_2010/diff_by_agegrp_65_or_older_NHPIA_2010_state_map.png",sep=""),
+       plot = A_2010_state, bg = "white", width = 9, height = 7)
 
 
 # --------------------
@@ -644,8 +623,6 @@ dummy %>% filter(RACE_GROUP == "AA") %>%
 state_2010 <- read.csv("../../Transformed Data/2010/state_level_comparisons_2010.csv")
 state_2020 <- read.csv("../../Transformed Data/2020/state_level_comparisons_2020.csv")
 
-year_dfs <- c(state_2010, state_2020)
-
 title_labels <- c("Asian (Alone)", "Asian (Alone or in Combination)", "NHPI (Alone)", "NHPI (Alone or in Combination)")
 caption_labels <- c("Asian (Alone)\n", "Asian (Alone or in Combination)\npopulations", "NHPI (Alone)\n", "NHPI (Alone or in Combination)\npopulations")
 race_groups <- unique(state_2010$RACE)
@@ -655,13 +632,16 @@ for (i in seq(race_groups)) {
   
   # filter data for race group
   # -------
-  dummy <- state_2020
+  dummy <- state_2010    # replace this with the DF we want the map of (2010 or 2020)
+  dummy2 <- state_2020   # swap this one out with the other year
+  
   dummy <- dummy %>% filter(RACE == race_groups[i]) %>% rename(EOC = PERC_DIFF)
+  dummy2 <- dummy2 %>% filter(RACE == race_groups[i]) %>% rename(EOC = PERC_DIFF)
   
   # creating percent_fctr column
   # -------
-  min_i <- min(dummy$EOC)
-  max_i <- max(dummy$EOC)
+  min_i <- min(dummy$EOC, dummy2$EOC)
+  max_i <- max(dummy$EOC, dummy2$EOC)
   
   splits <- as.integer(seq(min_i, max_i, length.out = 4))
   
@@ -691,13 +671,13 @@ for (i in seq(race_groups)) {
   state_vis <- state_vis +  
     labs(fill = "Error of Closure (%)     ",
          title =paste0("      Population Estimates and Census Comparison\n      ", title_labels[i], " Populations"),
-         subtitle = "         Resident Population By State - 2020",
+         subtitle = "         Resident Population By State - 2010",
          caption = paste0("An error of closure value less than 0% indicates a potential\nundercount ie. the estimates for ",caption_labels[i]," were greater than the census results.")) +
     titles_upper()
   
   # state_agegrp_imgs <- append(state_agegrp_imgs, A_2010_state)
   # save
-  ggsave(filename = paste("../../AAJC Vis/state_maps/state_map_",race_groups[i],"_2020.png",sep=""),
+  ggsave(filename = paste("../../AAJC Vis/state_maps/state_map_",race_groups[i],"_2010.png",sep=""),
          plot = state_vis, bg = "white", width = 9, height = 7)
   
 }
