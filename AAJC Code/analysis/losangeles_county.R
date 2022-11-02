@@ -1,0 +1,139 @@
+library(tidycensus)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(tigris)
+library(grid)
+library(gridExtra)
+library(dvmisc)
+source("aajc_tools.R")
+
+
+# Import theme created for AAJC Analysis in "AAJC Code/AAJC_theme.R"
+theme_AAJC <- readRDS('../theme_AAJC.rds')
+
+
+# ==========================
+# LINE CHART: overcounts and undercounts by age groups for LA County and for the United States
+# as a whole for AA Alone and AA Alone or in Combination for 2010
+# ==========================
+
+# read data 
+agegrp_2010 <- read.csv("../../Transformed Data/2010/ES_MR_AGEGRP_comparison_2010.csv")
+
+agegrp_labels <- c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49",
+                   "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85+")
+
+# -------
+# LA County 
+# --------
+
+la_line <- agegrp_2010 %>% filter(CTYNAME == "Los Angeles County", RACE %in% c("A_A", "A_AIC")) %>%
+  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = RACE)) +
+  geom_hline(yintercept = 0, linetype='dotted', col='grey')+
+  geom_line(aes(color=RACE), size=1) +
+  scale_color_manual(values = c("#916a92", "#f4c78d"), labels=c("Asian (alone)", "Asian (alone\nor in combination)"), name = "Race") + 
+  theme_minimal() +
+  xlab("Age Group") + 
+  ylab("Error of Closure (%)") + 
+  ggtitle("Los Angeles County Coverage by Age Group for Asian Populations - 2010")+
+  scale_x_discrete(labels = agegrp_labels) +
+  annotate("text",x=17.7, y=1, label="overcount", size=2.5, color='grey') +
+  annotate("text",x=17.7, y=-1, label="undercount", size=2.5, color='grey')
+
+# change age group labels 
+la_line <- la_line + theme(axis.text.x = element_text(angle=45))
+
+ggsave(filename = "../../AAJC Vis/case_studies/los_angeles/line_graph_coverage_by_agegrp_Asian_2010.png",
+       plot = la_line, bg = "white")
+
+
+# -------
+# US as a whole 
+# --------
+
+# 1. 
+# aggregate data for entire US
+agegrp_2010_UNITED_STATES <- agegrp_2010 %>% group_by(AGEGRP, RACE) %>% summarise(ESTIM = sum(ESTIM), MR = sum(MR)) %>%
+  mutate(NUM_DIFF = MR - ESTIM,   # numeric diff
+         PERC_DIFF = round(( (MR - ESTIM) / ( (MR + ESTIM)/2 ) * 100)  ,2),   # percent difference/error of closure (EOC)
+         COVERAGE = case_when(
+           NUM_DIFF < 0 ~ 'undercount',
+           NUM_DIFF > 0 ~ 'overcount',
+           NUM_DIFF == 0 ~ 'equal'
+         ))
+
+# 2. 
+# Plot
+us_line <- agegrp_2010_UNITED_STATES %>% filter(RACE %in% c("A_A", "A_AIC")) %>%
+  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = RACE)) +
+  geom_hline(yintercept = 0, linetype='dotted', col='grey')+
+  geom_line(aes(color=RACE), size=1) +
+  scale_color_manual(values = c("#916a92", "#f4c78d"), labels=c("Asian (alone)", "Asian (alone\nor in combination)"), name = "Race") +
+  theme_minimal() +
+  xlab("Age Group") + 
+  ylab("Error of Closure (%)") + 
+  ggtitle("United States Coverage by Age Group for Asian Populations - 2010")+
+  scale_x_discrete(labels = agegrp_labels) +
+  annotate("text",x=17.7, y=1, label="overcount", size=2.5, color='grey') +
+  annotate("text",x=17.7, y=-1, label="undercount", size=2.5, color='grey')
+
+# change age group labels 
+us_line <- us_line + theme(axis.text.x = element_text(angle=45))
+
+ggsave(filename = "../../AAJC Vis/case_studies/los_angeles/US_line_graph_coverage_by_agegrp_Asian_2010.png",
+       plot = us_line, bg = "white")
+
+
+# -------
+# Version 2: 
+#   1 chart for AA comparing LA and US and 1 for AA_AIC
+# --------
+
+# 1. 
+# Prepare data 
+# using agegrp_2010_UNITED_STATES filter for race group -> A_A or A_AIC
+agegrp_2010_UNITED_STATES$CTYNAME <- "United States"
+agegrp_2010_UNITED_STATES <- agegrp_2010_UNITED_STATES %>% select(CTYNAME, AGEGRP, RACE, ESTIM, MR, PERC_DIFF, COVERAGE)
+
+# filter LA data 
+agegrp_2010_LA <- agegrp_2010 %>% filter(CTYNAME == "Los Angeles County") %>% select(CTYNAME, AGEGRP, RACE, ESTIM, MR, PERC_DIFF, COVERAGE)
+                       
+# join US and LA data 
+agegrp_2010_LA_USA <- rbind(agegrp_2010_LA, agegrp_2010_UNITED_STATES)
+
+# 2. 
+# Plot
+v2_line <- agegrp_2010_LA_USA %>% filter(RACE == "A_AIC") %>%
+  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME)) +
+  geom_hline(yintercept = 0, linetype='dotted', col='grey')+
+  geom_line(aes(color=CTYNAME), size=1) +
+  scale_color_manual(values = c("#916a92", "#f4c78d"), name = "Region") +
+  theme_minimal() +
+  xlab("Age Group") + 
+  ylab("Error of Closure (%)") + 
+  ggtitle("Coverage by Age Group for Asian (Alone or in Combination) Populations - 2010")+
+  scale_x_discrete(labels = agegrp_labels) +
+  annotate("text",x=17.7, y=1, label="overcount", size=2.5, color='grey') +
+  annotate("text",x=17.7, y=-1, label="undercount", size=2.5, color='grey')
+
+# change age group labels 
+v2_line <- v2_line + theme(axis.text.x = element_text(angle=45))
+
+ggsave(filename = "../../AAJC Vis/case_studies/los_angeles/US_AND_LA_line_graph_coverage_by_agegrp_A_AIC_2010.png",
+       plot = v2_line, bg = "white", width =9.07, height = 5.47)
+
+
+# ==========================
+# add a scatterplot of response rate by % AA by tract in LA County
+# ==========================
+
+# read in self response data 
+sr_2020 <- read.csv("../../Raw Data/2020/california_selfresponse_rates_2020_by_tract.csv")
+
+
+# Quesitons for Chris
+# Which data are we using for % AA by tract --> MR or Estimates 
+# 
+  
+
