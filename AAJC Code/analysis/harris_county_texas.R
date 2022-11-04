@@ -60,7 +60,7 @@ agegrp_2010_HC_USA <- rbind(agegrp_2010_HC, agegrp_2010_UNITED_STATES)
 
 # 3. 
 # Plot
-v2_line <- agegrp_2010_KC_USA %>% filter(RACE == "A_AIC") %>%
+v2_line <- agegrp_2010_HC_USA %>% filter(RACE == "A_A") %>%
   ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME)) +
   geom_hline(yintercept = 0, linetype='dotted', col='grey')+
   geom_line(aes(color=CTYNAME), size=1) +
@@ -78,6 +78,117 @@ v2_line <- v2_line + theme(axis.text.x = element_text(angle=45))
 
 ggsave(filename = "../../AAJC Vis/case_studies/harris_county_texas/US_AND_HC_line_graph_coverage_by_agegrp_A_AIC_2010.png",
        plot = v2_line, bg = "white", width =9.07, height = 5.47)
+
+
+
+
+# ==========================
+# add a scatterplot of response rate by % AA by tract in LA County
+# ==========================
+
+# read in self response data 
+sr_2020 <- read.csv("../../Raw Data/2020/texas_selfresponse_rates_2020_by_tract.csv")
+
+
+# Questions for Chris
+# (?) Which data are we using for % AA by tract --> MR or Estimates 
+#    - Because we used Chris's MR file for 2020, Census populations were pulled by tracts using tidycensus 
+#    - Chris MR file contains counties only 
+
+# (?) Do we want to size the scatter plot points by total tract popualtion? 
+#     - little harder to read but could provide insight 
+#     - Some points are at 0 or a very small tract population so it would make sense for 
+#       for those to have really low self response rates 
+
+
+# -------
+# Pulling Census populations by tract (tidycensus)
+# --------
+
+# Anam's Key: 
+census_api_key("0d3f6eaad6d4d9ffb24d6b420e4deccd7fe7f780")
+
+options(tigris_use_cache = TRUE)
+
+# search for relevant variables 
+vars_2020 <- load_variables(2020, "pl", cache = TRUE)
+
+# store asian variables 
+asian_vars <- vars_2020 %>% filter(grepl('Asian', label) & concept == "RACE")
+asian_vars <- asian_vars$name
+
+# api call - pulling census data 
+hc_census_tract_asian <- get_decennial(geography = "tract",
+                                       variables = asian_vars,
+                                       state = "TX",
+                                       county = "Harris County",
+                                       summary_var = 'P1_001N', # total pop. of a tract 
+                                       year = 2020)
+
+# -------
+# Preparing SR and Census Data 
+# --------
+
+# fix GEOID column in self response DF to match and join later with census DF
+sr_2020 <- sr_2020 %>% separate(GEO_ID, c('A','GEO_ID_tract'), sep = 'US') %>% select(-A)
+
+
+# filtering self response data 
+sr_2020_HC <- sr_2020 %>% filter(COUNTY == " Harris County" & STATE == " Texas")
+
+
+# -------
+# Aggregating all 'in combination' race variables for census population 
+# --------
+
+# create new DFs for aic values and alone values 
+hc_census_tract_aic <- hc_census_tract_asian %>%group_by(GEOID, summary_value) %>%
+  summarise(value = sum(value)) %>% mutate(RACE = "A_AIC") %>% rename('total_tract_pop' = summary_value)
+
+hc_census_tract_a <- hc_census_tract_asian %>% mutate(RACE = case_when(variable == "P1_006N" ~ 'A_A'), 
+                                                      value = case_when(
+                                                        variable == "P1_006N" ~ value)) %>%
+  filter(!is.na(value)) %>% select(-NAME, -variable) %>% rename('total_tract_pop' = summary_value)
+
+# combine the two DFs 
+hc_census <- rbind(hc_census_tract_aic, hc_census_tract_a) %>% arrange(GEOID, RACE)
+
+
+# -------
+# Adding percentage calculations
+# --------
+
+# Compute % of Asian populations for scatter plot 
+hc_census <- hc_census %>% mutate(pop_percentage = round((value/total_tract_pop)*100, 2))
+
+# joining self response and census population data
+sr_2020_HC <- sr_2020_HC %>% left_join(hc_census %>% select(GEO_ID_tract = GEOID, total_tract_pop, RACE, value, pop_percentage), by = 'GEO_ID_tract')
+
+
+# -------
+# Plot
+# --------
+
+# Asian Alone 
+scatter_response <- sr_2020_HC %>% filter(RACE == 'A_A') %>%
+  ggplot(aes(x = pop_percentage, y = CRRALL, size = total_tract_pop)) + 
+  geom_point(color = "#e49d48", alpha = 0.7) + 
+  theme_minimal() + 
+  xlab("Asian (Alone) Population (%)") + 
+  ylab("Cumulative Self-Response\nRate - Overall (%)") + 
+  ggtitle("Response Rate by Percentage of Asian Population by Census Tract - 2020")
+
+ggsave(filename = "../../AAJC Vis/case_studies/harris_county_texas/resp_by_tract_pop_scatter_AA_2020_SIZE.png",
+       plot = scatter_response, bg = "white", width =9.07, height = 5.47)
+
+# light or - e49d48
+# dark or - ac550f
+#     
+
+# 2 options 
+#   1) points are not sized according to census population & no alpha 
+#   2) points sized by census population and alpha to make them lighter for readablity 
+
 
 
 
