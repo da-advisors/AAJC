@@ -224,4 +224,75 @@ ggsave(filename = "../../AAJC Vis/case_studies/new_york_city/resp_by_tract_pop_s
 
 
 
+# ==========================
+# map of response rate for 2020 by census tract for Harris County
+# ==========================
+
+# 1. 
+# Get geospatial data for county by tract 
+
+geo <- get_decennial(
+  geography = "tract",
+  state = "NY",
+  county = ny_boroughs,
+  variables = 'P1_001N', # total pop. of a tract 
+  year = 2020,
+  geometry = TRUE,
+  cb = FALSE,
+  resolution = "20m")
+
+nyc_county_overlay <- get_decennial(
+  geography = "county",
+  state = "NY",
+  county = ny_boroughs,
+  variables = 'P1_001N', # total pop. of a tract 
+  year = 2020,
+  geometry = TRUE,
+  cb = FALSE,
+  resolution = "20m")
+
+# merge geo data with sr data frame 
+sr_2020_NY_geo <- sr_2020_NY %>% left_join(geo %>% select(GEO_ID_tract = GEOID, geometry), by = 'GEO_ID_tract')
+
+splits <- c(0,25,50,75,100)
+
+sr_2020_NY_geo <- sr_2020_NY_geo %>% 
+  mutate(CRRALL_fctr = case_when(
+    CRRALL < splits[1] ~ paste0("Less than ",splits[1],"%"),
+    CRRALL >= splits[1] & CRRALL < splits[2] ~ paste0(splits[1], " to ", splits[2], "%"),
+    CRRALL >= splits[2] & CRRALL < splits[3] ~ paste0(splits[2], " to ", splits[3], "%"),
+    CRRALL >= splits[3] & CRRALL <= splits[4] ~ paste0(splits[3], " to ", splits[4], "%"),
+    CRRALL >= splits[4] & CRRALL <= splits[5] ~ paste0(splits[4], " to ", splits[5], "%"),
+    CRRALL > splits[4] ~ paste0("Greater than ", splits[5], "%")))
+
+sr_2020_NY_geo$CRRALL_fctr <- as.factor(sr_2020_NY_geo$CRRALL_fctr)
+
+# 2. 
+# Plot 
+sr_2020_NY_geo %>% 
+  ggplot(aes(fill = CRRALL_fctr, geometry = geometry))+
+  # geom_sf(data = nyc_county_overlay, fill = '#d7f2f9', color='black', size=.20) +
+  geom_sf(color = "black", size = 0.04) +
+  # geom_sf(data = nyc_county_overlay, color = 'black', size = 0.2) +
+  scale_fill_brewer(palette = "PuOr") +
+  # scale_fill_viridis_c(option = "magma") +
+  ggtitle("          Response Rate by Census Tract - 2020") +
+  labs(fill = "Cumulative Self-Response\nRate - Overall (%)",
+       caption = "Census tracts shaded in white indicate no self responsedata reported") +
+  theme(plot.caption.position = "plot",
+        plot.caption = element_text(hjust = 1),
+        ) +
+  theme_void() + 
+  titles_upper()
+
+
+
+
+
+
+
+
+
+
+
 

@@ -171,14 +171,15 @@ sr_2020_KC <- sr_2020_KC %>% left_join(kc_census %>% select(GEO_ID_tract = GEOID
 
 # Asian Alone 
 scatter_response <- sr_2020_KC %>% filter(RACE == 'A_A') %>%
-  ggplot(aes(x = pop_percentage, y = CRRALL)) + 
-  geom_point(color = "#e49d48") + 
+  ggplot(aes(x = pop_percentage, y = CRRALL , size = total_tract_pop)) + 
+  geom_point(color = "#e49d48", alpha = 0.7) + 
   theme_minimal() + 
   xlab("Asian (Alone) Population (%)") + 
   ylab("Cumulative Self-Response\nRate - Overall (%)") + 
-  ggtitle("Response Rate by Percentage of Asian Population by Census Tract - 2020")
+  ggtitle("Response Rate by Percentage of Asian Population by Census Tract - 2020") + 
+  scale_shape_manual(name = "Total Tract Population")
 
-ggsave(filename = "../../AAJC Vis/case_studies/king_county_washington//resp_by_tract_pop_scatter_AA_2020.png",
+ggsave(filename = "../../AAJC Vis/case_studies/king_county_washington//resp_by_tract_pop_scatter_AA_2020_SIZE.png",
        plot = scatter_response, bg = "white", width =9.07, height = 5.47)
 
 # light or - e49d48
@@ -188,6 +189,56 @@ ggsave(filename = "../../AAJC Vis/case_studies/king_county_washington//resp_by_t
 # 2 options 
 #   1) points are not sized according to census population & no alpha 
 #   2) points sized by census population and alpha to make them lighter for readablity 
+
+
+
+
+
+# ==========================
+# map of response rate for 2020 by census tract for King County
+# ==========================
+
+# 1. 
+# Get geospatial data for county by tract 
+
+geo <- get_decennial(
+  geography = "tract",
+  state = "WA",
+  county = "King County",
+  variables = 'P1_001N', # total pop. of a tract 
+  year = 2020,
+  geometry = TRUE,
+  resolution = "20m")
+
+# merge geo data with sr data frame 
+sr_2020_KC_geo <- sr_2020_KC %>% left_join(geo %>% select(GEO_ID_tract = GEOID, geometry), by = 'GEO_ID_tract')
+
+splits <- c(0,25,50,75,100)
+
+sr_2020_KC_geo <- sr_2020_KC_geo %>% 
+  mutate(CRRALL_fctr = case_when(
+    CRRALL < splits[1] ~ paste0("Less than ",splits[1],"%"),
+    CRRALL >= splits[1] & CRRALL < splits[2] ~ paste0(splits[1], " to ", splits[2], "%"),
+    CRRALL >= splits[2] & CRRALL < splits[3] ~ paste0(splits[2], " to ", splits[3], "%"),
+    CRRALL >= splits[3] & CRRALL <= splits[4] ~ paste0(splits[3], " to ", splits[4], "%"),
+    CRRALL >= splits[4] & CRRALL <= splits[5] ~ paste0(splits[4], " to ", splits[5], "%"),
+    CRRALL > splits[4] ~ paste0("Greater than ", splits[5], "%")))
+
+sr_2020_KC_geo$CRRALL_fctr <- as.factor(sr_2020_KC_geo$CRRALL_fctr)
+
+# 2. 
+# Plot 
+reponse_map <- sr_2020_KC_geo %>% 
+  ggplot(aes(fill = CRRALL_fctr, geometry = geometry))+
+  geom_sf(color = "black", size = 0.04) +
+  scale_fill_brewer(palette = "PuOr") + 
+  ggtitle("          Response Rate by Census Tract - 2020") +
+  labs(fill = "Cumulative Self-Response\nRate - Overall (%)",
+       caption = "Census tracts shaded in white indicate no self responsedata reported") +
+  theme(plot.caption.position = "plot",
+        plot.caption = element_text(hjust = 1)) +
+  theme_void() + 
+  titles_upper()
 
 
 
