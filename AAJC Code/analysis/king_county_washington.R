@@ -244,3 +244,112 @@ reponse_map <- sr_2020_KC_geo %>%
 
 
 
+
+# ==========================
+#  map of % of AA community that is foreign born by tract within LA County
+# ==========================
+
+# 2020 
+
+# ------
+# inspect/find variable
+# ------
+# acs_vars <- load_variables(2020, "acs5", cache = TRUE)
+
+# variable list also available https://www2.census.gov/programs-surveys/acs/summary_file/2020/documentation/user_tools/ACS2020_Table_Shells.xlsx
+
+# B06004D_005 - Estimate!!Total:!!Foreign born - PLACE OF BIRTH (ASIAN ALONE) IN THE UNITED STATES
+# B06004D_001 - Estimate!!Total - PLACE OF BIRTH (ASIAN ALONE) IN THE UNITED STATES
+
+# B06004E_005 - Estimate!!Total:!!Foreign born - PLACE OF BIRTH (NATIVE HAWAIIAN AND OTHER PACIFIC ISLANDER ALONE) IN THE UNITED STATES
+# B06004E_001 - Estimate!!Total - PLACE OF BIRTH (NATIVE HAWAIIAN AND OTHER PACIFIC ISLANDER ALONE) IN THE UNITED STATES
+
+fborn_vars <- c('B06004D_005','B06004D_001', 'B06004E_005', 'B06004E_001')
+
+
+# ------
+# pull 5 year acs data 
+# ------
+
+foreign_born <- get_acs(geography = "tract",
+                        state = "WA",
+                        county = "King County",
+                        variables = fborn_vars, 
+                        year = 2020,
+                        geometry = TRUE,
+                        resolution = "20m")
+
+# ------
+# Clean data for mapping
+# ------
+
+# replace this with NHPI_A for NHPI
+race <- 'NHPI_A'
+
+# 1. 
+# race column for Asian/NHPI pops
+foreign_born_perc <- foreign_born %>% mutate(RACE = case_when(variable %in% c('B06004D_005','B06004D_001') ~ 'A_A',
+                                                              variable %in% c('B06004E_005', 'B06004E_001') ~ 'NHPI_A'),
+                                             # renaming the variables to something more readable 
+                                             variable = case_when(variable == 'B06004D_005' ~ 'foreign',
+                                                                  variable == 'B06004D_001' ~ 'total_pop',
+                                                                  variable == 'B06004E_005' ~ 'foreign',
+                                                                  variable == 'B06004E_001' ~ 'total_pop')) %>%
+  filter(RACE == race) %>% group_by(GEOID, NAME) %>% 
+  summarise(percent_foreign = round(((estimate[variable == 'foreign'] / estimate[variable == 'total_pop'])*100),2 ))
+
+
+# 2. 
+# inspect NAs
+foreign_born_perc[is.na(foreign_born_perc$percent_foreign),]
+
+# tracts where total population is 0 leading to a 0 in denominator
+foreign_born_perc$percent_foreign[is.na(foreign_born_perc$percent_foreign)] <- 0
+
+
+# 3.
+# Create percent factor column for mapping 
+max <- max(foreign_born_perc$percent_foreign)
+splits <- c(0,25,50,75,100)
+
+foreign_born_perc <- foreign_born_perc %>% 
+  mutate(percent_foreign_fctr = case_when(
+    percent_foreign < splits[1] ~ paste0("Less than ",splits[1],"%"),
+    percent_foreign >= splits[1] & percent_foreign < splits[2] ~ paste0(splits[1], " to ", splits[2], "%"),
+    percent_foreign >= splits[2] & percent_foreign < splits[3] ~ paste0(splits[2], " to ", splits[3], "%"),
+    percent_foreign >= splits[3] & percent_foreign <= splits[4] ~ paste0(splits[3], " to ", splits[4], "%"),
+    percent_foreign >= splits[4] & percent_foreign <= splits[5] ~ paste0(splits[4], " to ", splits[5], "%"),
+    percent_foreign > splits[4] ~ paste0("Greater than ", splits[5], "%")))
+
+foreign_born_perc$percent_foreign_fctr <- as.factor(foreign_born_perc$percent_foreign_fctr)
+
+# ------
+# Plot
+# ------
+fborn_map <- foreign_born_perc %>% 
+  ggplot(aes(fill = percent_foreign_fctr, geometry = geometry))+
+  geom_sf(color = "black", size = 0.04) +
+  scale_fill_brewer(palette = "PuOr") + 
+  ggtitle("Foreign Born NHPI Population - 2020") +
+  labs(fill = "Percentage of NHPI Alone\nPopulation that is Foreign Born", size=1) +
+  theme(plot.caption.position = "plot",
+        plot.caption = element_text(hjust = 1)) +
+  theme_void() + 
+  titles_upper()
+
+ggsave(filename = "../../AAJC Vis/case_studies/king_county_washington/foreign_born_NHPIA.png",
+       plot = fborn_map, bg = "white")
+
+
+
+
+
+
+# ==========================
+#  scatterplot from above with dots colored by citizenship
+# ==========================
+
+
+
+
+

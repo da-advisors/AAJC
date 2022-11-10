@@ -28,24 +28,24 @@ agegrp_labels <- c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "3
 # LA County 
 # --------
 
-la_line <- agegrp_2010 %>% filter(CTYNAME == "Los Angeles County", RACE %in% c("A_A", "A_AIC")) %>%
-  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = RACE)) +
-  geom_hline(yintercept = 0, linetype='dotted', col='grey')+
-  geom_line(aes(color=RACE), size=1) +
-  scale_color_manual(values = c("#916a92", "#f4c78d"), labels=c("Asian (alone)", "Asian (alone\nor in combination)"), name = "Race") + 
-  theme_minimal() +
-  xlab("Age Group") + 
-  ylab("Error of Closure (%)") + 
-  ggtitle("Los Angeles County Coverage by Age Group for Asian Populations - 2010")+
-  scale_x_discrete(labels = agegrp_labels) +
-  annotate("text",x=17.7, y=1, label="overcount", size=2.5, color='grey') +
-  annotate("text",x=17.7, y=-1, label="undercount", size=2.5, color='grey')
-
-# change age group labels 
-la_line <- la_line + theme(axis.text.x = element_text(angle=45))
-
-ggsave(filename = "../../AAJC Vis/case_studies/los_angeles/line_graph_coverage_by_agegrp_Asian_2010.png",
-       plot = la_line, bg = "white")
+# la_line <- agegrp_2010 %>% filter(CTYNAME == "Los Angeles County", RACE %in% c("A_A", "A_AIC")) %>%
+#   ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = RACE)) +
+#   geom_hline(yintercept = 0, linetype='dotted', col='grey')+
+#   geom_line(aes(color=RACE), size=1) +
+#   scale_color_manual(values = c("#916a92", "#f4c78d"), labels=c("Asian (alone)", "Asian (alone\nor in combination)"), name = "Race") + 
+#   theme_minimal() +
+#   xlab("Age Group") + 
+#   ylab("Error of Closure (%)") + 
+#   ggtitle("Los Angeles County Coverage by Age Group for Asian Populations - 2010")+
+#   scale_x_discrete(labels = agegrp_labels) +
+#   annotate("text",x=17.7, y=1, label="overcount", size=2.5, color='grey') +
+#   annotate("text",x=17.7, y=-1, label="undercount", size=2.5, color='grey')
+# 
+# # change age group labels 
+# la_line <- la_line + theme(axis.text.x = element_text(angle=45))
+# 
+# ggsave(filename = "../../AAJC Vis/case_studies/los_angeles/line_graph_coverage_by_agegrp_Asian_2010.png",
+#        plot = la_line, bg = "white")
 
 
 # -------
@@ -104,7 +104,7 @@ agegrp_2010_LA_USA <- rbind(agegrp_2010_LA, agegrp_2010_UNITED_STATES)
 
 # 2. 
 # Plot
-v2_line <- agegrp_2010_LA_USA %>% filter(RACE == "A_AIC") %>%
+v2_line <- agegrp_2010_LA_USA %>% filter(RACE == "NHPI_AIC") %>%
   ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME)) +
   geom_hline(yintercept = 0, linetype='dotted', col='grey')+
   geom_line(aes(color=CTYNAME), size=1) +
@@ -112,15 +112,15 @@ v2_line <- agegrp_2010_LA_USA %>% filter(RACE == "A_AIC") %>%
   theme_minimal() +
   xlab("Age Group") + 
   ylab("Error of Closure (%)") + 
-  ggtitle("Coverage by Age Group for Asian (Alone or in Combination) Populations - 2010")+
+  ggtitle("Coverage by Age Group for NHPI (Alone or in Combination) Populations - 2010")+
   scale_x_discrete(labels = agegrp_labels) +
-  annotate("text",x=17.7, y=1, label="overcount", size=2.5, color='grey') +
-  annotate("text",x=17.7, y=-1, label="undercount", size=2.5, color='grey')
+  annotate("text",x=17.7, y=1.3, label="overcount", size=2.5, color='grey') +
+  annotate("text",x=17.7, y=-1.3, label="undercount", size=2.5, color='grey')
 
 # change age group labels 
 v2_line <- v2_line + theme(axis.text.x = element_text(angle=45))
 
-ggsave(filename = "../../AAJC Vis/case_studies/los_angeles/US_AND_LA_line_graph_coverage_by_agegrp_A_AIC_2010.png",
+ggsave(filename = "../../AAJC Vis/case_studies/los_angeles/US_AND_LA_line_graph_coverage_by_agegrp_NHPI_AIC_2010.png",
        plot = v2_line, bg = "white", width =9.07, height = 5.47)
 
 
@@ -160,6 +160,10 @@ vars_2020 <- load_variables(2020, "pl", cache = TRUE)
 asian_vars <- vars_2020 %>% filter(grepl('Asian', label) & concept == "RACE")
 asian_vars <- asian_vars$name
 
+# store nhpi variables 
+nhpi_vars <- vars_2020 %>% filter(grepl('Native Hawaiian', label) & concept == "RACE")
+nhpi_vars <- nhpi_vars$name
+
 # api call - pulling census data 
 la_census_tract_asian <- get_decennial(geography = "tract",
                                  variables = asian_vars,
@@ -167,6 +171,13 @@ la_census_tract_asian <- get_decennial(geography = "tract",
                                  county = "Los Angeles County",
                                  summary_var = 'P1_001N', # total pop. of a tract 
                                  year = 2020)
+
+la_census_tract_nhpi <- get_decennial(geography = "tract",
+                                       variables = nhpi_vars,
+                                       state = "CA",
+                                       county = "Los Angeles County",
+                                       summary_var = 'P1_001N', # total pop. of a tract 
+                                       year = 2020)
 
 # -------
 # Preparing SR and Census Data 
@@ -184,12 +195,12 @@ sr_2020_LA <- sr_2020 %>% filter(COUNTY == " Los Angeles County" & STATE == " Ca
 # --------
 
 # create new DFs for aic values and alone values 
-la_census_tract_aic <- la_census_tract_asian %>%group_by(GEOID, summary_value) %>%
-  summarise(value = sum(value)) %>% mutate(RACE = "A_AIC") %>% rename('total_tract_pop' = summary_value)
+la_census_tract_aic <- la_census_tract_nhpi %>%group_by(GEOID, summary_value) %>%
+  summarise(value = sum(value)) %>% mutate(RACE = "NHPI_AIC") %>% rename('total_tract_pop' = summary_value)
 
-la_census_tract_a <- la_census_tract_asian %>% mutate(RACE = case_when(variable == "P1_006N" ~ 'A_A'), 
+la_census_tract_a <- la_census_tract_nhpi %>% mutate(RACE = case_when(variable == "P1_007N" ~ 'NHPI_A'), 
                                                       value = case_when(
-                                                        variable == "P1_006N" ~ value)) %>%
+                                                        variable == "P1_007N" ~ value)) %>%
   filter(!is.na(value)) %>% select(-NAME, -variable) %>% rename('total_tract_pop' = summary_value)
 
 # combine the two DFs 
@@ -211,16 +222,15 @@ sr_2020_LA <- sr_2020_LA %>% left_join(la_census %>% select(GEO_ID_tract = GEOID
 # Plot
 # --------
 
-# Asian Alone 
-scatter_response <- sr_2020_LA %>% filter(RACE == 'A_A') %>%
+scatter_response <- sr_2020_LA %>% filter(RACE == 'NHPI_A') %>%
   ggplot(aes(x = pop_percentage, y = CRRALL, size = total_tract_pop)) + 
   geom_point(color = "#e49d48", alpha = 0.7) + 
   theme_minimal() + 
-  xlab("Asian (Alone) Population (%)") + 
+  xlab("NHPI (Alone or in Combination) Population (%)") + 
   ylab("Cumulative Self-Response\nRate - Overall (%)") + 
-  ggtitle("Response Rate by Percentage of Asian Population by Census Tract - 2020")
+  ggtitle("Response Rate by Percentage of NHPI Population by Census Tract - 2020")
 
-ggsave(filename = "../../AAJC Vis/case_studies/los_angeles/resp_by_tract_pop_scatter_AA_2020_SIZE.png",
+ggsave(filename = "../../AAJC Vis/case_studies/los_angeles/resp_by_tract_pop_scatter_NHPI_AIC_2020_SIZE.png",
        plot = scatter_response, bg = "white", width =9.07, height = 5.47)
 
 # light or - e49d48
@@ -269,9 +279,10 @@ sr_2020_LA_geo$CRRALL_fctr <- as.factor(sr_2020_LA_geo$CRRALL_fctr)
 # 2. 
 # Plot 
 reponse_map <- sr_2020_LA_geo %>% 
-  ggplot(aes(fill = CRRALL, geometry = geometry))+
+  ggplot(aes(fill = CRRALL_fctr, geometry = geometry))+
   geom_sf(color = "black", size = 0.04) +
-  scale_fill_viridis_c(option = "magma") + 
+  # scale_fill_viridis_c(option = "magma") + 
+  scale_fill_brewer(palette = "PuOr") + 
   ggtitle("Response Rate by Census Tract - 2020") +
   labs(fill = "Cumulative Self-Response\nRate - Overall (%)",
             caption = "Census tracts shaded in white indicate\nno self responsedata reported") +
@@ -284,3 +295,113 @@ reponse_map <- sr_2020_LA_geo %>%
 ggsave(filename = "../../AAJC Vis/case_studies/los_angeles/resp_by_tract_map_1.png",
        plot = response_map, bg = "white", width =9.07, height = 12)
   
+
+
+
+
+
+# ==========================
+#  map of % of AA community that is foreign born by tract within LA County
+# ==========================
+
+# 2020 
+
+# ------
+# inspect/find variable
+# ------
+acs_vars <- load_variables(2020, "acs5", cache = TRUE)
+
+# variable list also available https://www2.census.gov/programs-surveys/acs/summary_file/2020/documentation/user_tools/ACS2020_Table_Shells.xlsx
+
+# B06004D_005 - Estimate!!Total:!!Foreign born - PLACE OF BIRTH (ASIAN ALONE) IN THE UNITED STATES
+# B06004D_001 - Estimate!!Total - PLACE OF BIRTH (ASIAN ALONE) IN THE UNITED STATES
+
+# B06004E_005 - Estimate!!Total:!!Foreign born - PLACE OF BIRTH (NATIVE HAWAIIAN AND OTHER PACIFIC ISLANDER ALONE) IN THE UNITED STATES
+# B06004E_001 - Estimate!!Total - PLACE OF BIRTH (NATIVE HAWAIIAN AND OTHER PACIFIC ISLANDER ALONE) IN THE UNITED STATES
+
+fborn_vars <- c('B06004D_005','B06004D_001', 'B06004E_005', 'B06004E_001')
+
+
+# ------
+# pull 5 year acs data 
+# ------
+
+foreign_born <- get_acs(geography = "tract",
+        state = "CA",
+        county = "Los Angeles County",
+        variables = fborn_vars, 
+        year = 2020,
+        geometry = TRUE,
+        resolution = "20m")
+
+# ------
+# Clean data for mapping
+# ------
+
+# replace this with NHPI_A for NHPI
+race <- 'NHPI_A'
+
+# 1. 
+# race column for Asian/NHPI pops
+foreign_born_perc <- foreign_born %>% mutate(RACE = case_when(variable %in% c('B06004D_005','B06004D_001') ~ 'A_A',
+                                         variable %in% c('B06004E_005', 'B06004E_001') ~ 'NHPI_A'),
+                        # renaming the variables to something more readable 
+                        variable = case_when(variable == 'B06004D_005' ~ 'foreign',
+                                             variable == 'B06004D_001' ~ 'total_pop',
+                                             variable == 'B06004E_005' ~ 'foreign',
+                                             variable == 'B06004E_001' ~ 'total_pop')) %>%
+  filter(RACE == race) %>% group_by(GEOID, NAME) %>% 
+  summarise(percent_foreign = round(((estimate[variable == 'foreign'] / estimate[variable == 'total_pop'])*100),2 ))
+
+
+# 2. 
+# inspect NAs
+foreign_born_perc[is.na(foreign_born_perc$percent_foreign),]
+
+# tracts where total population is 0 leading to a 0 in denominator
+foreign_born_perc$percent_foreign[is.na(foreign_born_perc$percent_foreign)] <- 0
+
+
+# 3.
+# Create percent factor column for mapping 
+max <- max(foreign_born_perc$percent_foreign)
+splits <- c(0,25,50,75,100)
+
+foreign_born_perc <- foreign_born_perc %>% 
+  mutate(percent_foreign_fctr = case_when(
+    percent_foreign < splits[1] ~ paste0("Less than ",splits[1],"%"),
+    percent_foreign >= splits[1] & percent_foreign < splits[2] ~ paste0(splits[1], " to ", splits[2], "%"),
+    percent_foreign >= splits[2] & percent_foreign < splits[3] ~ paste0(splits[2], " to ", splits[3], "%"),
+    percent_foreign >= splits[3] & percent_foreign <= splits[4] ~ paste0(splits[3], " to ", splits[4], "%"),
+    percent_foreign >= splits[4] & percent_foreign <= splits[5] ~ paste0(splits[4], " to ", splits[5], "%"),
+    percent_foreign > splits[4] ~ paste0("Greater than ", splits[5], "%")))
+
+foreign_born_perc$percent_foreign_fctr <- as.factor(sforeign_born_perc$percent_foreign_fctr)
+
+# ------
+# Plot
+# ------
+fborn_map <- foreign_born_perc %>% 
+  ggplot(aes(fill = percent_foreign_fctr, geometry = geometry))+
+  geom_sf(color = "black", size = 0.04) +
+  scale_fill_brewer(palette = "PuOr") + 
+  ggtitle("Foreign Born NHPI Population - 2020") +
+  labs(fill = "Percentage of NHPI Alone\nPopulation that is Foreign Born", size=1) +
+  theme(plot.caption.position = "plot",
+        plot.caption = element_text(hjust = 1)) +
+  theme_void() + 
+  titles_upper()
+
+ggsave(filename = "../../AAJC Vis/case_studies/los_angeles/foreign_born_NHPIA.png",
+       plot = fborn_map, bg = "white", width =6.07, height = 5.46)
+
+
+
+
+
+
+# ==========================
+#  scatterplot from above with dots colored by citizenship
+# ==========================
+
+
