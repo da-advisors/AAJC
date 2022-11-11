@@ -77,7 +77,7 @@ agegrp_2010_HI_USA <- rbind(agegrp_2010_HI,agegrp_2010_HI_counties, agegrp_2010_
 
 # 3. 
 # Plot
-v2_line <- agegrp_2010_HI_USA %>% filter(RACE == "NHPI_AIC") %>%
+v2_line <- agegrp_2010_HI_USA %>% filter(RACE == "NHPI_A") %>%
   ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME, linetype = CTYNAME)) +
   geom_hline(yintercept = 0, linetype='dotted', col='grey')+
   geom_line(aes(color=CTYNAME), size=.7, alpha=.7) +
@@ -89,7 +89,7 @@ v2_line <- agegrp_2010_HI_USA %>% filter(RACE == "NHPI_AIC") %>%
   theme_minimal() +
   xlab("Age Group") + 
   ylab("Error of Closure (%)") + 
-  ggtitle("Coverage by Age Group for NHPI (Alone or in Combination) Populations - 2010")+
+  ggtitle("Coverage by Age Group for NHPI (Alone) Populations - 2010")+
   scale_x_discrete(labels = agegrp_labels)
   # annotate("text",x=18.1, y=5, label="overcount", size=2.5, color='grey') +
   # annotate("text",x=18.1, y=-5, label="undercount", size=2.5, color='grey')
@@ -97,7 +97,7 @@ v2_line <- agegrp_2010_HI_USA %>% filter(RACE == "NHPI_AIC") %>%
 # change age group labels 
 v2_line <- v2_line + theme(axis.text.x = element_text(angle=45)) 
 
-ggsave(filename = "../../AAJC Vis/case_studies/hawaii/US_AND_HI_line_graph_coverage_by_agegrp_NHPI_AIC_2010.png",
+ggsave(filename = "../../AAJC Vis/case_studies/hawaii/US_AND_HI_line_graph_coverage_by_agegrp_NHPI_A_2010.png",
        plot = v2_line, bg = "white", width =10.0, height = 5.47)
 
 
