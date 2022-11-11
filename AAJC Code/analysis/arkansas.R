@@ -350,6 +350,94 @@ ggsave(filename = "../../AAJC Vis/case_studies/arkansas/foreign_born_NHPIA.png",
 #  scatterplot from above with dots colored by citizenship
 # ==========================
 
+# CALCULATION - % of Asian population that are citizens 
+
+# Citizenship = [Over 18 Males (native) + Over 18 Males (naturalized citizen) + 
+#                Under 18 Males (native) + Under 18 Males (naturalized citizen) +
+#                Over 18 Females (native) + Over 18 Males (naturalized citizen) +
+#                Under 18 Females (native) + Under 18 Males (naturalized citizen)] / Total Asian Alone Population 
+
+
+nhpi_citizen_vars <- c("B05003E_001", "B05003E_009", "B05003E_011", "B05003E_004", "B05003E_006",
+                       "B05003E_020", "B05003E_022", "B05003E_015", "B05003E_017")
+
+
+# ------
+# pull 5 year acs data 
+# ------
+
+citizenship <- get_acs(geography = "tract",
+                       state = "Arkansas",
+                       variables = nhpi_citizen_vars, 
+                       year = 2020)
+
+
+# ------
+# citizenship calculation 
+# ------
+
+# filter out total population data 
+citizenship_totalpop <- citizenship %>% filter(variable == "B05003E_001") %>% mutate(variable = "total_race_pop")
+
+# filter out total population data & sum the rest
+citizenship <- citizenship %>% filter(variable != "B05003E_001") %>% group_by(GEOID, NAME) %>%
+  summarise(citizen = sum(estimate))
+
+# join total pop and total citizenship data
+citizenship <- citizenship %>% left_join(citizenship_totalpop %>% select(GEOID, NAME, total_pop = estimate), by = c('GEOID', 'NAME'))
+
+# calculation 
+citizenship <- citizenship %>% mutate(citizenship_perc = round(((citizen/total_pop)*100),2) )
+
+# inspect NAs 
+nas <- citizenship[is.na(citizenship$citizenship_perc),]
+
+# all 0s - 0 denominator issue - replace with 0
+citizenship$citizenship_perc[is.na(citizenship$citizenship_perc)] <- 0
+
+
+# ------
+# join with self response data  
+# ------
+
+sr_2020_AK <- sr_2020_AK %>% left_join(citizenship %>% select(GEO_ID_tract = GEOID, citizenship_perc), by = 'GEO_ID_tract')
+
+
+# turn into factor for plotting 
+sr_2020_AK <- sr_2020_AK %>% 
+  mutate(citizenship_perc_fctr = case_when(
+    citizenship_perc < splits[1] ~ paste0("Less than ",splits[1],"%"),
+    citizenship_perc >= splits[1] & citizenship_perc < splits[2] ~ paste0(splits[1], " to ", splits[2], "%"),
+    citizenship_perc >= splits[2] & citizenship_perc < splits[3] ~ paste0(splits[2], " to ", splits[3], "%"),
+    citizenship_perc >= splits[3] & citizenship_perc <= splits[4] ~ paste0(splits[3], " to ", splits[4], "%"),
+    citizenship_perc >= splits[4] & citizenship_perc <= splits[5] ~ paste0(splits[4], " to ", splits[5], "%"),
+    citizenship_perc > splits[4] ~ paste0("Greater than ", splits[5], "%")))
+
+sr_2020_AK$citizenship_perc_fctr <- as.factor(sr_2020_AK$citizenship_perc_fctr)
+
+
+# ------
+# plot 
+# ------
+scatter_response_color <- sr_2020_AK %>% filter(RACE == 'NHPI_A') %>%
+  ggplot(aes(x = pop_percentage, y = CRRALL, size = total_tract_pop, color = citizenship_perc_fctr)) + 
+  geom_point(alpha = .8) + 
+  scale_color_brewer(palette = "PuOr") +
+  theme_minimal() + 
+  xlab("NHPI (alone) Population (%)") + 
+  ylab("Cumulative Self-Response\nRate - Overall (%)") + 
+  ggtitle("Response Rate by Percentage of NHPI Population and Citizenship Status",
+          subtitle =  "Census Tract - 2020") + 
+  labs(color = "Citizenship of NHPI\n(alone) Population (%)", size = 'Total Tract Population', size=2) + 
+  theme(legend.title = element_text(size = 10), axis.title.y=element_text(size=10), axis.title.x=element_text(size=10))
+
+scatter_response_color
+
+ggsave(filename = "../../AAJC Vis/case_studies/arkansas/resp_by_citizenship_NHPI_A_2020_SCATTER.png",
+       plot = scatter_response_color, bg = "white")
+
+
+
 
 
 

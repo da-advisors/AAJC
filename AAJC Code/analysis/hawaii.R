@@ -50,12 +50,12 @@ agegrp_2010_UNITED_STATES <- agegrp_2010_UNITED_STATES %>% select(CTYNAME, AGEGR
 
 # Hawaii County
 # Maui County
-# Kalawao County
+# Kalawao County - dropping 
 # Kauai County
 # Honolulu County
 
 # all 5 (counties) in HI 
-hi_counties <- c("Hawaii County", "Maui County", "Kalawao County", "Kauai County", "Honolulu County")
+hi_counties <- c("Hawaii County", "Maui County", "Kauai County", "Honolulu County")
 agegrp_2010_HI_counties <- agegrp_2010 %>% filter(CTYNAME %in% hi_counties & STNAME == "Hawaii")  %>%
   select(CTYNAME, AGEGRP, RACE, ESTIM, MR, PERC_DIFF, COVERAGE)
 
@@ -77,19 +77,19 @@ agegrp_2010_HI_USA <- rbind(agegrp_2010_HI,agegrp_2010_HI_counties, agegrp_2010_
 
 # 3. 
 # Plot
-v2_line <- agegrp_2010_HI_USA %>% filter(RACE == "NHPI_A") %>%
+v2_line <- agegrp_2010_HI_USA %>% filter(RACE == "NHPI_AIC") %>%
   ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME, linetype = CTYNAME)) +
   geom_hline(yintercept = 0, linetype='dotted', col='grey')+
   geom_line(aes(color=CTYNAME), size=.7, alpha=.7) +
   scale_linetype_manual(values = c("solid",  "dashed",  "dashed",
-                                   "dashed", "dashed",  "dashed",
+                                   "dashed", "dashed",
                                    "solid"),
                         name = "Region") +
-  scale_color_manual(values = c("#CC5500", "#f4c78d", "#916a92", "#62929E", "#780116","#008148", "#0F1108"), name = "Region") +
+  scale_color_manual(values = c("#CC5500", "#f4c78d", "#916a92", "#780116","#008148", "#0F1108"), name = "Region") +
   theme_minimal() +
   xlab("Age Group") + 
   ylab("Error of Closure (%)") + 
-  ggtitle("Coverage by Age Group for NHPI (Alone) Populations - 2010")+
+  ggtitle("Coverage by Age Group for NHPI (Alone or in Combination) Populations - 2010")+
   scale_x_discrete(labels = agegrp_labels)
   # annotate("text",x=18.1, y=5, label="overcount", size=2.5, color='grey') +
   # annotate("text",x=18.1, y=-5, label="undercount", size=2.5, color='grey')
@@ -97,7 +97,7 @@ v2_line <- agegrp_2010_HI_USA %>% filter(RACE == "NHPI_A") %>%
 # change age group labels 
 v2_line <- v2_line + theme(axis.text.x = element_text(angle=45)) 
 
-ggsave(filename = "../../AAJC Vis/case_studies/hawaii/US_AND_HI_line_graph_coverage_by_agegrp_NHPI_A_2010.png",
+ggsave(filename = "../../AAJC Vis/case_studies/hawaii/US_AND_HI_line_graph_coverage_by_agegrp_NHPI_AIC_2010.png",
        plot = v2_line, bg = "white", width =10.0, height = 5.47)
 
 
@@ -382,15 +382,155 @@ ggsave(filename = "../../AAJC Vis/case_studies/hawaii//foreign_born_A.png",
 
 
 
+
+
+
+
+
+
 # ==========================
 #  scatterplot from above with dots colored by citizenship
 # ==========================
 
+# CALCULATION - % of Asian population that are citizens 
+
+# Citizenship = [Over 18 Males (native) + Over 18 Males (naturalized citizen) + 
+#                Under 18 Males (native) + Under 18 Males (naturalized citizen) +
+#                Over 18 Females (native) + Over 18 Males (naturalized citizen) +
+#                Under 18 Females (native) + Under 18 Males (naturalized citizen)] / Total Asian Alone Population 
+
+
+nhpi_citizen_vars <- c("B05003E_001", "B05003E_009", "B05003E_011", "B05003E_004", "B05003E_006",
+                       "B05003E_020", "B05003E_022", "B05003E_015", "B05003E_017")
+
+
+# ------
+# pull 5 year acs data 
+# ------
+
+citizenship <- get_acs(geography = "tract",
+                       state = "Hawaii",
+                       county = hi_counties,
+                       variables = nhpi_citizen_vars, 
+                       year = 2020)
+
+
+# ------
+# citizenship calculation 
+# ------
+
+# filter out total population data 
+citizenship_totalpop <- citizenship %>% filter(variable == "B05003E_001") %>% mutate(variable = "total_race_pop")
+
+# filter out total population data & sum the rest
+citizenship <- citizenship %>% filter(variable != "B05003E_001") %>% group_by(GEOID, NAME) %>%
+  summarise(citizen = sum(estimate))
+
+# join total pop and total citizenship data
+citizenship <- citizenship %>% left_join(citizenship_totalpop %>% select(GEOID, NAME, total_pop = estimate), by = c('GEOID', 'NAME'))
+
+# calculation 
+citizenship <- citizenship %>% mutate(citizenship_perc = round(((citizen/total_pop)*100),2) )
+
+# inspect NAs 
+nas <- citizenship[is.na(citizenship$citizenship_perc),]
+
+# all 0s - 0 denominator issue - replace with 0
+citizenship$citizenship_perc[is.na(citizenship$citizenship_perc)] <- 0
+
+
+# ------
+# join with self response data  
+# ------
+
+sr_2020_HI <- sr_2020_HI %>% left_join(citizenship %>% select(GEO_ID_tract = GEOID, citizenship_perc), by = 'GEO_ID_tract')
+
+
+# turn into factor for plotting 
+sr_2020_HI <- sr_2020_HI %>% 
+  mutate(citizenship_perc_fctr = case_when(
+    citizenship_perc < splits[1] ~ paste0("Less than ",splits[1],"%"),
+    citizenship_perc >= splits[1] & citizenship_perc < splits[2] ~ paste0(splits[1], " to ", splits[2], "%"),
+    citizenship_perc >= splits[2] & citizenship_perc < splits[3] ~ paste0(splits[2], " to ", splits[3], "%"),
+    citizenship_perc >= splits[3] & citizenship_perc <= splits[4] ~ paste0(splits[3], " to ", splits[4], "%"),
+    citizenship_perc >= splits[4] & citizenship_perc <= splits[5] ~ paste0(splits[4], " to ", splits[5], "%"),
+    citizenship_perc > splits[4] ~ paste0("Greater than ", splits[5], "%")))
+
+sr_2020_HI$citizenship_perc_fctr <- as.factor(sr_2020_HI$citizenship_perc_fctr)
+
+
+# ------
+# plot 
+# ------
+scatter_response_color <- sr_2020_HI %>% filter(RACE == 'NHPI_A') %>%
+  ggplot(aes(x = pop_percentage, y = CRRALL, size = total_tract_pop, color = citizenship_perc_fctr)) + 
+  geom_point(alpha = .8) + 
+  scale_color_brewer(palette = "PuOr") +
+  theme_minimal() + 
+  xlab("NHPI (alone) Population (%)") + 
+  ylab("Cumulative Self-Response\nRate - Overall (%)") + 
+  ggtitle("Response Rate by Percentage of NHPI Population and Citizenship Status",
+          subtitle =  "Census Tract - 2020") + 
+  labs(color = "Citizenship of NHPI\n(alone) Population (%)", size = 'Total Tract Population', size=2) + 
+  theme(legend.title = element_text(size = 10), axis.title.y=element_text(size=10), axis.title.x=element_text(size=10))
+
+scatter_response_color
+
+ggsave(filename = "../../AAJC Vis/case_studies/hawaii/resp_by_citizenship_NHPI_A_2020_SCATTER.png",
+       plot = scatter_response_color, bg = "white")
 
 
 
 
 
+
+
+
+
+
+# ==========================
+#  TABLE: with total population, AA Alone, AA Alone or in Combo and 
+#   percentages for the city, and each county
+# ==========================
+
+# read in data 
+esmr_2020 <- read.csv("../../Transformed Data/2020/ES_MR_comparison_2020.csv")
+
+
+# all 5 (counties) in HI 
+hi_counties <- c("Hawaii County", "Maui County", "Kalawao County", "Kauai County", "Honolulu County")
+
+# total population of Hawaii
+vars2020 <- load_variables(2020, "pl", cache = TRUE)
+
+tot_hawaii <- get_decennial(geography = "state",
+                            variables = c('P1_001N'),
+                            state = "Hawaii",
+                            year = 2020)
+
+
+tot_hawaii = tot_hawaii$value
+  
+# aggregate county populations
+esmr_2020_counties <- esmr_2020 %>% filter(CTYNAME %in% hi_counties & STNAME == "Hawaii") %>%
+  filter(RACE %in% c('NHPI_A', 'NHPI_AIC')) %>% select(STNAME,CTYNAME,RACE,MR) %>%
+  group_by(STNAME, CTYNAME, RACE) %>% 
+  summarise(MR = sum(MR))
+
+# aggreagte state pop
+esmr_2020_st <- esmr_2020 %>% filter(STNAME == "Hawaii") %>%
+  filter(RACE %in% c('NHPI_A', 'NHPI_AIC')) %>% select(STNAME,CTYNAME,RACE,MR) %>%
+  group_by(STNAME, RACE) %>% 
+  summarise(MR = sum(MR))
+
+esmr_2020_st$CTYNAME <- 'Hawaii State'
+esmr_2020_st <- esmr_2020_st %>% select(STNAME, CTYNAME, RACE,MR)
+
+# join data 
+esmr_2020_HI <- rbind(esmr_2020_counties, esmr_2020_st)
+
+# get percentages
+esmr_2020_HI %>% mutate(percent_nhpi = round(((MR/tot_hawaii)*100),3) )
 
 
 
