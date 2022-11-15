@@ -686,65 +686,167 @@ for (i in seq(race_groups)) {
 
 
 
-################
-# OLD VIS CODE #
-################
-# A list of our race values (AA, AAC, NHPI, NHPIC)
-variables <- unique(analytical$variable)
 
-# # for each race group, call the county map function 
-# for (i in variables){
-#   dummy <- analytical %>%
-#     # get each race group
-#     filter(variable == i) %>%
-#     # create a f% groups column for discrete color scale
-#     mutate(percent_fctr = case_when(
-#       PERCENT_DIFF < 0.0 ~ "Less than 0%",
-#       PERCENT_DIFF >= 0 & PERCENT_DIFF <= 1 ~ "0 to 1%",
-#       PERCENT_DIFF > 1 & PERCENT_DIFF <= 25 ~ "1 to 25%",
-#       PERCENT_DIFF > 25 & PERCENT_DIFF <= 50 ~ "25 to 50%",
-#       PERCENT_DIFF > 50 & PERCENT_DIFF <= 100 ~ "50 to 100%",
-#       PERCENT_DIFF > 100 ~ "Greater than 100%",)) %>%
-#     county_map() 
-#   
-#   # adding appropriate labels
-#   if (i == "AA_TOT"){
-#     dummy <- dummy +
-#       labs(fill = "% difference between Population\nEstimates and Census Results     ",
-#            title ="      Percent Difference in 2010 Asian American (alone) Population\n      Estimates Compared to 2010 Decennial Census ",
-#            subtitle = "         Resident Population By County",
-#            caption = "A percentage difference value of 'Less than 0%' indicates that the the population\nestimate for Asian Americans (only) was less than the census results ie. the Asian\n American (alone) population was greater than estimated in 2010.") +
-#       titles_upper()
-#   }
-#   
-#   else if (i == "AAC_TOT") {
-#     dummy <- dummy +
-#       labs(fill = "% difference between Population\nEstimates and Census Results     ",
-#            title ="      Percent Difference in 2010 Asian American\n      (alone or in Combination) Population Estimates\n      Compared to 2010 Decennial Census ",
-#            subtitle = "         Resident Population By County",
-#            caption = "A percentage difference value of 'Less than 0%' indicates that the the population\nestimate for Asian Americans (alone or in combination) was less than the census results ie. the Asian\n American (alone or in combination) population was greater than estimated in 2010.") +
-#       titles_upper()
-#   }
-#   else if (i == "NA_TOT") {
-#     dummy <- dummy +
-#       labs(fill = "% difference between Population\nEstimates and Census Results     ",
-#            title ="      Percent Difference in 2010 Native Hawaiian and Pacific Islander\n      (alone) Population Estimates\n      Compared to 2010 Decennial Census ",
-#            subtitle = "         Resident Population By County",
-#            caption = "A percentage difference value of 'Less than 0%' indicates that the the population\nestimate for  Native Hawaiian and Pacific Islander (alone) was less than\nthe census results ie. the Native Hawaiian and Pacific Islander (alone)\npopulation was greater than estimated in 2010.") +
-#       titles_upper()
-#   }
-#   else {
-#     dummy <- dummy +
-#       labs(fill = "% difference between Population\nEstimates and Census Results     ",
-#            title ="      Percent Difference in 2010 Native Hawaiian and Pacific Islander\n      (alone or in combination) Population Estimates\n      Compared to 2010 Decennial Census ",
-#            subtitle = "         Resident Population By County",
-#            caption = "A percentage difference value of 'Less than 0%' indicates that the the population\nestimate for  Native Hawaiian and Pacific Islander (alone or in combination) was less than\nthe census results ie. the Native Hawaiian and Pacific Islander (alone or in combination)\npopulation was greater than estimated in 2010.") +
-#       titles_upper()
-#   }
-#   
-#   
-#   ggsave(filename = paste("../AAJC Vis/",i,"_estimates_census_comparison_2010_COUNTY_MAP.png",sep=""),
-#          plot = dummy, bg = "white")
-# }
-# 
-# 
+
+
+
+########################
+## State map of PES for 2020
+########################
+
+pes2020_gstates <- read.csv('../../Raw Data/2020/DECENNIALPES2020.G_STATES-2022-11-09T120255.csv')
+
+colnames(pes2020_gstates)
+# adding coverage column 
+pes2020_gstates <- pes2020_gstates %>% filter(Geographic.Area.Name..NAME. != "Puerto Rico") %>% mutate(COVERAGE = case_when(
+  Net.Coverage.Error......G_STATES_002. < 0 ~ 'Undercount',
+  Net.Coverage.Error......G_STATES_002. > 0 ~ 'Overcount',
+  Net.Coverage.Error......G_STATES_002. == 0 ~ 'Not statistically different from zero')) %>% rename(STNAME = Geographic.Area.Name..NAME.)
+
+
+
+# ------------
+# Getting geospatial data 
+# ------------
+state_overlay_geo <- state_overlay %>% select(STNAME = NAME, geometry)
+
+data <- left_join(pes2020_gstates, state_overlay_geo, by = "STNAME")
+
+# --------------------
+# MAPPING
+# --------------------
+
+pes_map <- data %>%
+  ggplot(aes(fill = COVERAGE, geometry = geometry)) +
+  geom_sf(color = "black", size = 0.04) +
+  geom_sf(data = state_overlay, fill = NA, color = "black", size = 0.15) +
+  scale_fill_manual(values = c('#b0a9d0', '#fdb863')) + 
+  theme_void() + 
+  labs(fill = 'Net Coverage Error',
+       title = '2020 Post-Enumeration Survey',
+       subtitle = 'Census count for Post-Enumeration Survey universe: 323,200,000')
+  
+
+ggsave(filename = "../../AAJC Vis/state_maps/pes_2020_state.png",
+       plot = pes_map, bg = "white")
+# change margins to fit alaska and hawaii changes
+map <- map + theme(plot.margin = margin(1,1,1,1, "cm"))
+map
+
+
+t.test(data$Net.Coverage.Error......G_STATES_002.)
+hist(data$Net.Coverage.Error......G_STATES_002., breaks = 10)
+
+
+
+
+
+
+
+########################
+## insert map showing omissions and erroneous enumerations by state
+########################
+
+
+pes2020_hstates <- read.csv('../../Raw Data/2020/DECENNIALPES2020.H_STATES-2022-11-09T132800.csv')
+
+colnames(pes2020_hstates)
+
+pes2020_hstates <-pes2020_hstates %>% filter(Estimate.Type..H_STATES_001. == 'COUNT') %>%
+  select(Geographic.Area.Name..NAME., Erroneous.Enumerations...Duplication......H_STATES_006., Omissions......H_STATES_010.)
+# pes2020_hstates <- pes2020_hstates[-1,]
+
+
+# ------
+# DUPLICATIONS 
+# ------
+
+# -------
+# create bins 
+# -------
+min_i <- min(pes2020_hstates$Erroneous.Enumerations...Duplication......H_STATES_006.)
+max_i <- max(pes2020_hstates$Erroneous.Enumerations...Duplication......H_STATES_006.)
+
+splits <- as.integer(seq(min_i, max_i, length.out = 5))
+
+dummy_dupe <- pes2020_hstates %>% rename('duplication' = Erroneous.Enumerations...Duplication......H_STATES_006.,
+                                    'ommissions' = Omissions......H_STATES_010.,
+                                    'STNAME' = Geographic.Area.Name..NAME.) %>% 
+  mutate(duplication_fctr = case_when(
+    duplication < splits[1] ~ paste0("Less than ",splits[1]),
+    duplication >= splits[1] & duplication < splits[2] ~ paste0(splits[1], " - ", splits[2]),
+    duplication >= splits[2] & duplication < splits[3] ~ paste0(splits[2], " - ", splits[3]),
+    duplication >= splits[3] & duplication <= splits[4] ~ paste0(splits[3], " - ", splits[4]),
+    duplication > splits[4] ~ paste0(splits[4], " - ", max_i)))
+
+dummy_dupe$duplication_fctr <- as.factor(dummy_dupe$duplication_fctr)
+
+# -------
+# add geospatial data 
+# -------
+dummy_dupe <- left_join(dummy_dupe, state_overlay_geo, by = "STNAME")
+
+
+
+dupe_map <- dummy_dupe %>%
+  ggplot(aes(fill =  duplication_fctr, geometry = geometry)) +
+  geom_sf(color = "black", size = 0.04) +
+  geom_sf(data = state_overlay, fill = NA, color = "black", size = 0.15) +
+  scale_fill_brewer(palette = "PuOr") +
+  # scale_fill_manual(values = c('#b0a9d0', '#fdb863')) + 
+  theme_void() + 
+  labs(fill = 'Duplication (%)',
+       title = '2020 Erroneous Enumerations - Duplication')
+
+dupe_map
+
+ggsave(filename = "../../AAJC Vis/state_maps/duplications_STATE_map_2020.png",
+       plot = dupe_map, bg = "white")
+
+
+# ------
+# OMISSIONS 
+# ------
+
+
+# -------
+# create bins 
+# -------
+min_i <- min(pes2020_hstates$Omissions......H_STATES_010.)
+max_i <- max(pes2020_hstates$Omissions......H_STATES_010.)
+
+splits <- as.integer(seq(min_i, max_i, length.out = 5))
+
+dummy_omi <- pes2020_hstates %>% rename('duplication' = Erroneous.Enumerations...Duplication......H_STATES_006.,
+                                         'ommissions' = Omissions......H_STATES_010.,
+                                         'STNAME' = Geographic.Area.Name..NAME.) %>% 
+  mutate(ommissions_fctr = case_when(
+    ommissions < splits[1] ~ paste0("Less than ",splits[1]),
+    ommissions >= splits[1] & ommissions < splits[2] ~ paste0(splits[1], " - ", splits[2]),
+    ommissions >= splits[2] & ommissions < splits[3] ~ paste0(splits[2], " - ", splits[3]),
+    ommissions >= splits[3] & ommissions <= splits[4] ~ paste0(splits[3], " - ", splits[4]),
+    ommissions > splits[4] ~ paste0(splits[4], " - ", max_i)))
+
+dummy_omi$ommissions_fctr <- as.factor(dummy_omi$ommissions_fctr)
+
+# -------
+# add geospatial data 
+# -------
+dummy_omi <- left_join(dummy_omi, state_overlay_geo, by = "STNAME")
+
+
+
+omi_map <- dummy_omi %>%
+  ggplot(aes(fill =  ommissions_fctr, geometry = geometry)) +
+  geom_sf(color = "black", size = 0.04) +
+  geom_sf(data = state_overlay, fill = NA, color = "black", size = 0.15) +
+  scale_fill_brewer(palette = "PuOr") +
+  # scale_fill_manual(values = c('#b0a9d0', '#fdb863')) + 
+  theme_void() + 
+  labs(fill = 'Omissions (%)',
+       title = '2020 Omissions')
+
+omi_map
+
+ggsave(filename = "../../AAJC Vis/state_maps/omissions_STATE_map_2020.png",
+       plot = omi_map, bg = "white")

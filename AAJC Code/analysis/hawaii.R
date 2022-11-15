@@ -217,24 +217,23 @@ ggsave(filename = "../../AAJC Vis/case_studies/hawaii/resp_by_tract_pop_scatter_
 
 
 # ==========================
-# map of response rate for 2020 by census tract for Harris County
+# map of response rate for 2020 by census tract for HI
 # ==========================
 
 # 1. 
 # Get geospatial data for county by tract 
 
-geo <- get_decennial(
-  geography = "tract",
-  state = "HI",
-  county = hi_counties,
-  variables = 'P1_001N', # total pop. of a tract 
-  year = 2020,
-  geometry = TRUE,
-  cb = FALSE,
-  resolution = "20m")
+data <- get_acs(geography = "tract",
+                state = "HI",
+                # county = hi_counties,
+                variables = 'B06004D_005', 
+                year = 2020,
+                geometry = TRUE,
+                cb = TRUE,
+                resolution = "20m")
 
 # merge geo data with sr data frame 
-sr_2020_HI_geo <- sr_2020_HI %>% left_join(geo %>% select(GEO_ID_tract = GEOID, geometry), by = 'GEO_ID_tract')
+sr_2020_HI_geo <- sr_2020_HI %>% full_join(data %>% select(GEO_ID_tract = GEOID, geometry), by = 'GEO_ID_tract')
 
 splits <- c(0,25,50,75,100)
 
@@ -251,23 +250,25 @@ sr_2020_HI_geo$CRRALL_fctr <- as.factor(sr_2020_HI_geo$CRRALL_fctr)
 
 # 2. 
 # Plot 
-sr_2020_HI_geo %>% 
+resp_HI <- sr_2020_HI_geo %>% 
   ggplot(aes(fill = CRRALL_fctr, geometry = geometry))+
   # geom_sf(data = nyc_county_overlay, fill = '#d7f2f9', color='black', size=.20) +
   geom_sf(color = "black", size = 0.06) +
   # geom_sf(data = nyc_county_overlay, color = 'black', size = 0.2) +
-  scale_fill_brewer(palette = "PuOr") +
+  scale_fill_brewer(palette = "PuOr", na.translate=FALSE) +
   # scale_fill_viridis_c(option = "magma") +
   ggtitle("          Response Rate by Census Tract - 2020") +
-  labs(fill = "Cumulative Self-Response\nRate - Overall (%)") +
+  labs(fill = "Cumulative Self-Response\nRate - Overall (%)",
+       caption = "Census tracts shaded in white indicate no self response data reported.") +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 1),
   ) +
-  theme_void()
-  # titles_upper()
+  theme_void()+
+  coord_sf(xlim = c(-160.5, -154.8), ylim = c(18.8,22.2))
+# titles_upper()
 
-# caption = "Census tracts shaded in white indicate no self responsedata reported"
-
+ggsave(filename = "../../AAJC Vis/case_studies/hawaii/resp_by_tract_map_1.png",
+       plot = resp_HI, bg = "white")
 
 
 
@@ -366,17 +367,18 @@ foreign_born_perc$percent_foreign_fctr <- as.factor(foreign_born_perc$percent_fo
 # ------
 fborn_map <- foreign_born_perc %>% 
   ggplot(aes(fill = percent_foreign_fctr, geometry = geometry))+
-  geom_sf(color = "black", size = 0.04) +
+  geom_sf(color = "black", size = 0.06) +
   scale_fill_brewer(palette = "PuOr") + 
   ggtitle("Foreign Born NHPI Population - 2020") +
   labs(fill = "Percentage of Asian NHPI\nPopulation that is Foreign Born", size=1) +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 1)) +
-  theme_void()
+  theme_void() +
+  coord_sf(xlim = c(-160.5, -154.8), ylim = c(18.8,22.2)) # zoom in to hawaii
 
 fborn_map
 
-ggsave(filename = "../../AAJC Vis/case_studies/hawaii//foreign_born_A.png",
+ggsave(filename = "../../AAJC Vis/case_studies/hawaii/foreign_born_NHPI.png",
        plot = fborn_map, bg = "white")
 
 
