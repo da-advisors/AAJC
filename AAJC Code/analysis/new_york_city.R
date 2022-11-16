@@ -225,7 +225,7 @@ ggsave(filename = "../../AAJC Vis/case_studies/new_york_city/resp_by_tract_pop_s
 
 
 # ==========================
-# map of response rate for 2020 by census tract for Harris County
+# map of response rate for 2020 by census tract for NYC
 # ==========================
 
 # 1. 
@@ -238,7 +238,7 @@ geo <- get_decennial(
   variables = 'P1_001N', # total pop. of a tract 
   year = 2020,
   geometry = TRUE,
-  cb = FALSE,
+  cb = TRUE,
   resolution = "20m")
 
 nyc_county_overlay <- get_decennial(
@@ -252,7 +252,7 @@ nyc_county_overlay <- get_decennial(
   resolution = "20m")
 
 # merge geo data with sr data frame 
-sr_2020_NY_geo <- sr_2020_NY %>% left_join(geo %>% select(GEO_ID_tract = GEOID, geometry), by = 'GEO_ID_tract')
+sr_2020_NY_geo <- sr_2020_NY %>% full_join(geo %>% select(GEO_ID_tract = GEOID, geometry), by = 'GEO_ID_tract')
 
 splits <- c(0,25,50,75,100)
 
@@ -269,21 +269,24 @@ sr_2020_NY_geo$CRRALL_fctr <- as.factor(sr_2020_NY_geo$CRRALL_fctr)
 
 # 2. 
 # Plot 
-sr_2020_NY_geo %>% 
+resp_NYC <- sr_2020_NY_geo %>% 
   ggplot(aes(fill = CRRALL_fctr, geometry = geometry))+
-  # geom_sf(data = nyc_county_overlay, fill = '#d7f2f9', color='black', size=.20) +
   geom_sf(color = "black", size = 0.04) +
-  # geom_sf(data = nyc_county_overlay, color = 'black', size = 0.2) +
-  scale_fill_brewer(palette = "PuOr") +
+  # geom_sf(data = nyc_county_overlay, fill = NA, color='black', size=.3) +
+  scale_fill_brewer(palette = "PuOr",na.translate=FALSE) +
   # scale_fill_viridis_c(option = "magma") +
   ggtitle("          Response Rate by Census Tract - 2020") +
   labs(fill = "Cumulative Self-Response\nRate - Overall (%)",
-       caption = "Census tracts shaded in white indicate no self responsedata reported") +
+       caption = "Census tracts shaded in white indicate no self response data reported") +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 1),
-        ) +
-  theme_void() + 
-  titles_upper()
+  ) +
+  theme_void()
+# titles_upper()
+
+
+ggsave(filename = "../../AAJC Vis/case_studies/new_york_city/resp_by_tract_map_1.png",
+       plot = resp_NYC, bg = "white")
 
 
 
@@ -322,9 +325,7 @@ foreign_born <- get_acs(geography = "tract",
                         state = "NY",
                         county = ny_boroughs,
                         variables = fborn_vars, 
-                        year = 2020,
-                        geometry = TRUE,
-                        resolution = "20m")
+                        year = 2020)
 
 # ------
 # Clean data for mapping
@@ -370,19 +371,22 @@ foreign_born_perc <- foreign_born_perc %>%
 
 foreign_born_perc$percent_foreign_fctr <- as.factor(foreign_born_perc$percent_foreign_fctr)
 
+# merge geo data with sr data frame 
+foreign_born_perc <- foreign_born_perc %>% full_join(geo %>% select(GEOID, geometry), by = 'GEOID')
+
 # ------
 # Plot
 # ------
 fborn_map <- foreign_born_perc %>% 
   ggplot(aes(fill = percent_foreign_fctr, geometry = geometry))+
   geom_sf(color = "black", size = 0.04) +
-  scale_fill_brewer(palette = "PuOr") + 
+  scale_fill_brewer(palette = "PuOr",na.translate=FALSE) + 
   ggtitle("Foreign Born Asian Population - 2020") +
   labs(fill = "Percentage of Asian Alone\nPopulation that is Foreign Born", size=1) +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 1)) +
-  theme_void() + 
-  titles_upper()
+  theme_void()
+  # titles_upper()
 
 ggsave(filename = "../../AAJC Vis/case_studies/new_york_city/foreign_born_A.png",
        plot = fborn_map, bg = "white")
