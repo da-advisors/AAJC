@@ -180,12 +180,108 @@ write.csv(analytical, "../Transformed Data/2010/ES_MR_comparison_2010.csv")
 # ====================================================================================================================================
 
 
+#####################################
+# 2010 non Hispanic population only # 
+#####################################
+
+# 1.
+# READ IN 2010 ESTIMATES DATA 
+
+estim2010 <- read.csv("../../Raw Data/2010/estimates_2010_county.csv")
+
+# documentation for dataset https://www2.census.gov/programs-surveys/popest/technical-documentation/file-layouts/2000-2010/cc-est2010-alldata.pdf
+
+
+# key for the YEAR variable - 14 
+# 14 = 7/1/2010 population estimate (most recent)
+
+# key for AGEGRP - 0 = Total
+
+# Needed variables:
+keepCols <- c(
+  "STATE", 
+  "COUNTY",
+  "STNAME",
+  "CTYNAME", 
+  "YEAR" ,
+  "AGEGRP", 
+  "NHAA_MALE" ,
+  "NHAA_FEMALE",
+  "NHNA_MALE" ,
+  "NHNA_FEMALE",
+  "NHAAC_MALE" ,
+  "NHAAC_FEMALE", 
+  "NHNAC_MALE",
+  "NHNAC_FEMALE") 
+
+estim2010 <- estim2010[, keepCols]
+
+str(estim2010)
+
+# get the correct age groups, year, and totals 
+estim2010 <- estim2010 %>%
+  filter(YEAR == 14) %>%  # 14 = 7/1/2010
+  filter(AGEGRP == 0)   # 0 = total 
+
+# Creating totals columns (men pop + woman pop)
+estim2010 <- estim2010 %>%
+  mutate(A_A = NHAA_MALE + NHAA_FEMALE, # asian alone
+         NHPI_A = NHNA_MALE + NHNA_FEMALE, # nhpi alone
+         A_AIC = NHAAC_FEMALE + NHAAC_MALE,   # asian alone or in combo 
+         NHPI_AIC = NHNAC_MALE + NHNAC_FEMALE)  # nhpi alone or in combo 
+
+
+# drop unneeded columns 
+estim2010 <- estim2010 %>%
+  select(STATE, COUNTY, STNAME, CTYNAME, A_A, A_AIC, NHPI_A, NHPI_AIC) 
+
+# melt data frame
+estim2010 <- estim2010 %>% pivot_longer(cols = 'A_A':'NHPI_AIC', names_to = "RACE", values_to = "ESTIM")
+
+
+# 2.
+# READ IN 2010 MR DATA
+
+mr_2010 <- read.csv("../../Transformed Data/2010/MR_county_2010_non_hispanic.csv")
+
+
+# 3. 
+# JOIN ESTIMATES AND MODIFIED RACE DATA
+
+analytical <- estim2010 %>% left_join(mr_2010, by = c("STNAME", "CTYNAME", "RACE")) %>% select(-X, STfips = STATE, CTYfips = COUNTY)
+
+# inspect NAs
+nas <- analytical[rowSums(is.na(analytical)) > 0, ] # rows where there were no reported residents for a given race category 
+
+# setting NAs = 0 (represents 0 residents reported)
+analytical$MR[rowSums(is.na(analytical)) > 0] <- 0
+
+# 4.
+# NUMERIC + PERCENT DIFFERENCE CALCULATIONS
+analytical <- analytical %>% mutate(NUM_DIFF = MR - ESTIM,   # numeric diff
+                                    PERC_DIFF = round(( (MR - ESTIM) / ( (MR + ESTIM)/2 ) * 100)  ,2),   # percent difference/error of closure (EOC)
+                                    COVERAGE = case_when(
+                                      NUM_DIFF < 0 ~ 'undercount',
+                                      NUM_DIFF > 0 ~ 'overcount',
+                                      NUM_DIFF == 0 ~ 'equal'
+                                    ))
+
+# inspect NAs
+nas <- analytical[rowSums(is.na(analytical)) > 0, ] 
+# percent diff = NaN because of 0 denominator these should all be set to 0
+
+analytical$PERC_DIFF[rowSums(is.na(analytical)) > 0] <- 0
+
+# write to csv
+write.csv(analytical, "../../Transformed Data/2010/ES_MR_comparison_2010_non_hispanic.csv")
+
+
 #################################
 ## READ IN 2020 ESTIMATES DATA ##
 #################################
 
 
-estim2020 <- read.csv("../Raw Data/2020/estimates_2020_county.csv")
+estim2020 <- read.csv("../../Raw Data/2020/estimates_2020_county.csv")
 
 
 # key for the YEAR variable - 13
@@ -200,14 +296,14 @@ keepCols <- c(
   "CTYNAME", 
   "YEAR" ,
   "AGEGRP",
-  "AA_MALE" ,
-  "AA_FEMALE",
-  "NA_MALE" ,
-  "NA_FEMALE",
-  "AAC_MALE" ,
-  "AAC_FEMALE", 
-  "NAC_MALE",
-  "NAC_FEMALE") 
+  "NHAA_MALE" ,
+  "NHAA_FEMALE",
+  "NHNA_MALE" ,
+  "NHNA_FEMALE",
+  "NHAAC_MALE" ,
+  "NHAAC_FEMALE", 
+  "NHNAC_MALE",
+  "NHNAC_FEMALE") 
 
 estim2020 <- estim2020[, keepCols]
 
@@ -222,10 +318,10 @@ estim2020[7:14] = lapply(estim2020[7:14], FUN = as.integer)
 
 # Creating totals columns (men pop + woman pop)
 estim2020 <- estim2020 %>%
-  mutate(A_A = AA_MALE + AA_FEMALE, # asian alone
-         NHPI_A = NA_MALE + NA_FEMALE, # nhpi alone
-         A_AIC = AAC_FEMALE + AAC_MALE,   # asian alone or in combo 
-         NHPI_AIC = NAC_MALE + NAC_FEMALE)  # nhpi alone or in combo 
+  mutate(A_A = NHAA_MALE + NHAA_FEMALE, # asian alone
+         NHPI_A = NHNA_MALE + NHNA_FEMALE, # nhpi alone
+         A_AIC = NHAAC_FEMALE + NHAAC_MALE,   # asian alone or in combo 
+         NHPI_AIC = NHNAC_MALE + NHNAC_FEMALE)  # nhpi alone or in combo 
 
 
 # drop unneeded columns 
@@ -239,7 +335,7 @@ estim2020 <- estim2020 %>% pivot_longer(cols = 'A_A':'NHPI_AIC', names_to = "RAC
 # 2.
 # READ IN 2010 MR DATA
 
-mr_2020 <- read.csv("../Transformed Data/2020/MR_county_2020.csv")
+mr_2020 <- read.csv("../../Transformed Data/2020/MR_county_2020.csv")
 
 
 # 3. 
@@ -277,6 +373,6 @@ nas <- analytical[rowSums(is.na(analytical)) > 0, ]
 analytical$PERC_DIFF[rowSums(is.na(analytical)) > 0] <- 0
 
 # write to csv
-write.csv(analytical, "../Transformed Data/2020/ES_MR_comparison_2020.csv")
+write.csv(analytical, "../../Transformed Data/2020/ES_MR_comparison_2020.csv")
 
 

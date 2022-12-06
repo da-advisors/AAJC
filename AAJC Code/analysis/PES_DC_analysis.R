@@ -217,13 +217,23 @@ analytical10_states <- analytical10 %>% group_by(STNAME, RACE) %>%
                                                            NUM_DIFF == 0 ~ 'equal'
                                                          )) 
 
-write.csv(analytical10_states, "../../Transformed Data/2010/state_level_comparisons_2010.csv")
+# write.csv(analytical10_states, "../../Transformed Data/2010/state_level_comparisons_2010_non_hispanic.csv")
 
 # TOP and Bottom 10 tables - tables made in word 
 analytical10_states %>% filter(RACE == "NHPI_AIC") %>% arrange(desc(abs(PERC_DIFF)))
 
 # National Coverage by Race 
 analytical10_states %>% filter(RACE %in% c('NHPI_A', 'NHPI_AIC')) %>% group_by(RACE) %>% summarise(ESTIM = sum(ESTIM), MR=sum(MR)) %>%
+  mutate(NUM_DIFF = MR - ESTIM, 
+         PERC_DIFF = round(( (MR - ESTIM) / ( (MR + ESTIM)/2 ) * 100)  ,2),
+         COVERAGE = case_when(
+           NUM_DIFF < 0 ~ 'undercount',
+           NUM_DIFF > 0 ~ 'overcount',
+           NUM_DIFF == 0 ~ 'equal'
+         ))
+
+
+analytical10_states %>% filter(RACE %in% c('A_A', 'A_AIC')) %>% group_by(RACE) %>% summarise(ESTIM = sum(ESTIM), MR=sum(MR)) %>%
   mutate(NUM_DIFF = MR - ESTIM, 
          PERC_DIFF = round(( (MR - ESTIM) / ( (MR + ESTIM)/2 ) * 100)  ,2),
          COVERAGE = case_when(
@@ -253,6 +263,15 @@ write.csv(analytical20_states, "../../Transformed Data/2020/state_level_comparis
 
 # National Coverage by Race 
 analytical20_states %>% filter(RACE %in% c('NHPI_A', 'NHPI_AIC')) %>% group_by(RACE) %>% summarise(ESTIM = sum(ESTIM), MR=sum(MR)) %>%
+  mutate(NUM_DIFF = MR - ESTIM, 
+         PERC_DIFF = round(( (MR - ESTIM) / ( (MR + ESTIM)/2 ) * 100)  ,2),
+         COVERAGE = case_when(
+           NUM_DIFF < 0 ~ 'undercount',
+           NUM_DIFF > 0 ~ 'overcount',
+           NUM_DIFF == 0 ~ 'equal'
+         ))
+
+analytical20_states %>% filter(RACE %in% c('A_A', 'A_AIC')) %>% group_by(RACE) %>% summarise(ESTIM = sum(ESTIM), MR=sum(MR)) %>%
   mutate(NUM_DIFF = MR - ESTIM, 
          PERC_DIFF = round(( (MR - ESTIM) / ( (MR + ESTIM)/2 ) * 100)  ,2),
          COVERAGE = case_when(

@@ -34,7 +34,7 @@ theme_AAJC <- readRDS('theme_AAJC.rds')
 # read csv with column name information (done in Excel)
 # documentation used to make column width csv file: (p. 15)
 #   https://www2.census.gov/programs-surveys/popest/technical-documentation/methodology/modified-race-summary-file-method/mrsf2000.pdf
-col_info <- read.csv("../Raw Data/mr-co-column-info.csv")
+col_info <- read.csv("../../Raw Data/2000/mr-co-column-info.csv")
 
 # Define column widths 
 widths <- col_info$column_widths
@@ -43,7 +43,7 @@ widths <- col_info$column_widths
 cols <- col_info$column_names  # col names set to "not API" if the race group does not contain Asian/NHPI
 
 
-mr_2000 <- read_fwf("../Raw Data/mr-co.txt",
+mr_2000 <- read_fwf("../../Raw Data/2000/mr-co.txt",
                     fwf_widths( widths,
                                 # columns that do NOT contain Asian/NHPI populations named - "NA"
                                 col_names = cols))
@@ -259,9 +259,9 @@ write.csv(mr_2000_api, "../Transformed Data/MR_county_2000_API.csv")
 
 # read in datasets
 # Alabama - Missouri 
-mr_al_mo_2010 <- read.csv("../Raw Data/2010/modified_race_2010_al_mo.csv")
+mr_al_mo_2010 <- read.csv("../../Raw Data/2010/modified_race_2010_al_mo.csv")
 # Montana - Wyoming
-mr_mt_wy_2010 <- read.csv("../Raw Data/2010/modified_race_2010_mt_wy.csv")
+mr_mt_wy_2010 <- read.csv("../../Raw Data/2010/modified_race_2010_mt_wy.csv")
 
 # documentation: https://www2.census.gov/programs-surveys/popest/technical-documentation/file-layouts/2000-2010/mr2010.pdf
 
@@ -511,6 +511,230 @@ mr_2010_tidy <- rbind(mr_al_mo_2010_ASIAN, mr_al_mo_2010_NHPI, mr_mt_wy_2010_ASI
 write.csv(mr_2010_tidy, "../Transformed Data/2010/MR_county_2010.csv")
 
 
+
+
+
+
+#####################################
+# 2010 non Hispanic population only # 
+#####################################
+
+# read in datasets
+# Alabama - Missouri 
+mr_al_mo_2010 <- read.csv("../../Raw Data/2010/modified_race_2010_al_mo.csv")
+# Montana - Wyoming
+mr_mt_wy_2010 <- read.csv("../../Raw Data/2010/modified_race_2010_mt_wy.csv")
+
+# documentation: https://www2.census.gov/programs-surveys/popest/technical-documentation/file-layouts/2000-2010/mr2010.pdf
+
+# =========
+# Data Prep
+# =========
+
+# keep only county geographic summary level
+mr_al_mo_2010 <- mr_al_mo_2010[mr_al_mo_2010$SUMLEV == 50, ]
+mr_mt_wy_2010 <- mr_mt_wy_2010[mr_mt_wy_2010$SUMLEV == 50, ]
+
+# remove unecessary columns -> sumlev
+drop_cols = 1
+mr_al_mo_2010 <- mr_al_mo_2010[, -drop_cols]
+mr_mt_wy_2010 <- mr_mt_wy_2010[, -drop_cols]
+
+
+# ===============
+# Get Race Groups
+# ===============
+
+# Identify which key values in the IMPRACE column are relevant
+keep_imprace <- c(4,5,8,9,11,12,13,14,15,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31)
+
+# filter data to keep all rows where imprace has a value in keep_imprace
+
+# JUST the population info
+mr_al_mo_2010 <- mr_al_mo_2010 %>% filter(ORIGIN ==1 ) %>%
+  filter(IMPRACE %in% keep_imprace) %>%
+  group_by(STNAME,CTYNAME, IMPRACE) %>%
+  summarise(count = sum(RESPOP))
+
+# JUST the population info
+mr_mt_wy_2010 <- mr_mt_wy_2010 %>% filter(ORIGIN ==1 ) %>%
+  filter(IMPRACE %in% keep_imprace) %>%
+  group_by(STNAME, CTYNAME, IMPRACE) %>%
+  summarise(count = sum(RESPOP))
+
+
+# ===============================
+# Create AA, AAC, NA, NAC groups
+# ===============================
+
+# list of values which contain Asian + another race
+keep_imprace_asian <- c(8,11,13,15,17,19,21,22,24,25,26,28,29,30,31)
+
+# -----------------
+# ASIAN populations 
+# -----------------
+
+# 1. 
+# Create a DF for asian imprace values only 
+mr_al_mo_2010_ASIAN <- mr_al_mo_2010 %>% filter(IMPRACE == 4 | IMPRACE  %in% keep_imprace_asian) %>%
+  mutate(RACE = case_when(IMPRACE == 4 ~ "A_A", # Asian Alone
+                          IMPRACE %in% keep_imprace_asian ~ "A_AIC")) %>% # Asian alone or in combo
+  group_by(STNAME, CTYNAME, RACE) %>%
+  summarise(MR = sum(count)) # get total Asian alone or in combo value 
+
+mr_mt_wy_2010_ASIAN <- mr_mt_wy_2010 %>% filter(IMPRACE == 4 | IMPRACE  %in% keep_imprace_asian) %>%
+  mutate(RACE = case_when(IMPRACE == 4 ~ "A_A", # Asian Alone
+                          IMPRACE %in% keep_imprace_asian ~ "A_AIC")) %>% # Asian alone or in combo
+  group_by(STNAME, CTYNAME, RACE) %>%
+  summarise(MR = sum(count)) # get total Asian alone or in combo value 
+
+# 2.
+# Add alone and AIC values to get alone or in combination 
+aic <- mr_al_mo_2010_ASIAN %>% group_by(STNAME, CTYNAME) %>% summarise(aic = sum(MR))
+aic$RACE <- "A_AIC"
+
+aic2 <- mr_mt_wy_2010_ASIAN %>% group_by(STNAME, CTYNAME) %>% summarise(aic = sum(MR))
+aic2$RACE <- "A_AIC"
+
+# check if counties match 
+identical(mr_al_mo_2010_ASIAN$CTYNAME[mr_al_mo_2010_ASIAN$RACE == "A_AIC"], aic$CTYNAME)
+identical(mr_mt_wy_2010_ASIAN$CTYNAME[mr_mt_wy_2010_ASIAN$RACE == "A_AIC"], aic2$CTYNAME)
+
+# get all the counties that exist in aic but not in the mr_al_mo_2010_ASIAN DF 
+#   this is because some counties do not have any data for Asian race groups other than Asian alone 
+missing_counties <- aic$CTYNAME[!(aic$CTYNAME %in% mr_al_mo_2010_ASIAN$CTYNAME[mr_al_mo_2010_ASIAN$RACE == "A_AIC"])]
+missing_counties2 <- aic2$CTYNAME[!(aic2$CTYNAME %in% mr_mt_wy_2010_ASIAN$CTYNAME[mr_mt_wy_2010_ASIAN$RACE == "A_AIC"])]
+
+# for each county missing a row where RACE = "A_AIC" 
+for (cty in missing_counties){
+  # copy the RACE = A_A
+  missing_row <- mr_al_mo_2010_ASIAN[mr_al_mo_2010_ASIAN$CTYNAME == cty, ]
+  # change the RACE value 
+  missing_row$RACE <- "A_AIC"
+  # insert the new row back into the DF
+  mr_al_mo_2010_ASIAN <- rbind(mr_al_mo_2010_ASIAN, missing_row)
+}
+
+# for each county missing a row where RACE = "A_AIC" 
+for (cty in missing_counties2){
+  # copy the RACE = A_A
+  missing_row <- mr_mt_wy_2010_ASIAN[mr_mt_wy_2010_ASIAN$CTYNAME == cty, ]
+  # change the RACE value 
+  missing_row$RACE <- "A_AIC"
+  # insert the new row back into the DF
+  mr_mt_wy_2010_ASIAN <- rbind(mr_mt_wy_2010_ASIAN, missing_row)
+}
+
+# join the AIC values DF to the mr_al_mo_2010_ASIAN DF
+mr_al_mo_2010_ASIAN <- mr_al_mo_2010_ASIAN %>% group_by(STNAME, CTYNAME, RACE) %>%
+  left_join(aic, by = c("STNAME", "CTYNAME", "RACE"))
+
+mr_mt_wy_2010_ASIAN <- mr_mt_wy_2010_ASIAN %>% group_by(STNAME, CTYNAME, RACE) %>%
+  left_join(aic2, by = c("STNAME", "CTYNAME", "RACE"))
+
+# check for NAs
+mr_al_mo_2010_ASIAN[mr_al_mo_2010_ASIAN$RACE != "A_A" & is.na(mr_al_mo_2010_ASIAN$aic), ]
+mr_mt_wy_2010_ASIAN[mr_mt_wy_2010_ASIAN$RACE != "A_A" & is.na(mr_mt_wy_2010_ASIAN$aic), ]
+
+# replace MR values where RACE = alone or in combo with the aic value 
+mr_al_mo_2010_ASIAN <- mr_al_mo_2010_ASIAN %>% mutate(MR = case_when(RACE == "A_A" ~ MR, RACE == "A_AIC" ~ aic)) %>%
+  select(-aic)
+
+mr_mt_wy_2010_ASIAN <- mr_mt_wy_2010_ASIAN %>% mutate(MR = case_when(RACE == "A_A" ~ MR, RACE == "A_AIC" ~ aic)) %>%
+  select(-aic)
+
+# -----------------
+# NHPI populations 
+# -----------------
+
+# list of values which contain native hawaiian/pacific islander + another race
+keep_imprce_nhpi <- c(9,12,14,15,18,20,21,23,24,25,27,28,29,30,31)
+
+# 1. 
+# Create a DF for NHPI imprace values only 
+mr_al_mo_2010_NHPI <- mr_al_mo_2010 %>% filter(IMPRACE == 5 | IMPRACE  %in% keep_imprce_nhpi) %>%
+  mutate(RACE = case_when(IMPRACE == 5 ~ "NHPI_A", # Asian Alone
+                          IMPRACE %in% keep_imprce_nhpi ~ "NHPI_AIC")) %>% # Asian alone or in combo
+  group_by(STNAME, CTYNAME, RACE) %>%
+  summarise(MR = sum(count)) # get total Asian alone or in combo value 
+
+mr_mt_wy_2010_NHPI <- mr_mt_wy_2010 %>% filter(IMPRACE == 5 | IMPRACE  %in% keep_imprce_nhpi) %>%
+  mutate(RACE = case_when(IMPRACE == 5 ~ "NHPI_A", # Asian Alone
+                          IMPRACE %in% keep_imprce_nhpi ~ "NHPI_AIC")) %>% # Asian alone or in combo
+  group_by(STNAME, CTYNAME, RACE) %>%
+  summarise(MR = sum(count)) # get total Asian alone or in combo value 
+
+# 2.
+# Add alone and AIC values to get alone or in combination 
+aic <- mr_al_mo_2010_NHPI %>% group_by(STNAME, CTYNAME) %>% summarise(aic = sum(MR))
+aic$RACE <- "NHPI_AIC"
+
+aic2 <- mr_mt_wy_2010_NHPI %>% group_by(STNAME, CTYNAME) %>% summarise(aic = sum(MR))
+aic2$RACE <- "NHPI_AIC"
+
+# check if counties match 
+identical(mr_al_mo_2010_NHPI$CTYNAME[mr_al_mo_2010_NHPI$RACE == "NHPI_AIC"], aic$CTYNAME)
+identical(mr_mt_wy_2010_NHPI$CTYNAME[mr_mt_wy_2010_NHPI$RACE == "NHPI_AIC"], aic2$CTYNAME)
+
+# get all the counties that exist in aic but not in the mr_al_mo_2010_ASIAN DF 
+#   this is because some counties do not have any data for Asian race groups other than Asian alone 
+missing_counties <- aic$CTYNAME[!(aic$CTYNAME %in% mr_al_mo_2010_NHPI$CTYNAME[mr_al_mo_2010_NHPI$RACE == "NHPI_AIC"])]
+missing_counties2 <- aic2$CTYNAME[!(aic2$CTYNAME %in% mr_mt_wy_2010_NHPI$CTYNAME[mr_mt_wy_2010_NHPI$RACE == "NHPI_AIC"])]
+
+
+# for each county missing a row where RACE = "NHPI_AIC" 
+for (cty in missing_counties){
+  # copy the RACE = NHPI_A
+  missing_row <- mr_al_mo_2010_NHPI[mr_al_mo_2010_NHPI$CTYNAME == cty, ]
+  # change the RACE value 
+  missing_row$RACE <- "NHPI_AIC"
+  # insert the new row back into the DF
+  mr_al_mo_2010_NHPI <- rbind(mr_al_mo_2010_NHPI, missing_row)
+}
+
+# for each county missing a row where RACE = "NHPI_AIC" 
+for (cty in missing_counties2){
+  # copy the RACE = NHPI_A
+  missing_row <- mr_mt_wy_2010_NHPI[mr_mt_wy_2010_NHPI$CTYNAME == cty, ]
+  # change the RACE value 
+  missing_row$RACE <- "NHPI_AIC"
+  # insert the new row back into the DF
+  mr_mt_wy_2010_NHPI <- rbind(mr_mt_wy_2010_NHPI, missing_row)
+}
+
+# join the AIC values DF to the mr_al_mo_2010_ASIAN DF
+mr_al_mo_2010_NHPI <- mr_al_mo_2010_NHPI %>% group_by(STNAME, CTYNAME, RACE) %>%
+  left_join(aic, by = c("STNAME", "CTYNAME", "RACE"))
+
+mr_mt_wy_2010_NHPI <- mr_mt_wy_2010_NHPI %>% group_by(STNAME, CTYNAME, RACE) %>%
+  left_join(aic2, by = c("STNAME", "CTYNAME", "RACE"))
+
+# check for NAs
+mr_al_mo_2010_NHPI[mr_al_mo_2010_NHPI$RACE != "NHPI_A" & is.na(mr_al_mo_2010_NHPI$aic), ]
+mr_mt_wy_2010_NHPI[mr_mt_wy_2010_NHPI$RACE != "NHPI_A" & is.na(mr_mt_wy_2010_NHPI$aic), ]
+
+# replace MR values where RACE = alone or in combo with the aic value 
+mr_al_mo_2010_NHPI <- mr_al_mo_2010_NHPI %>% mutate(MR = case_when(RACE == "NHPI_A" ~ MR, RACE == "NHPI_AIC" ~ aic)) %>%
+  select(-aic)
+
+mr_mt_wy_2010_NHPI <- mr_mt_wy_2010_NHPI %>% mutate(MR = case_when(RACE == "NHPI_A" ~ MR, RACE == "NHPI_AIC" ~ aic)) %>%
+  select(-aic)
+
+# There are counties with only AIC race categories and no "Asian alone" or "NHPI alone" category
+# Those will be left alone, not adding a row for alone
+
+# -------------
+# Join all DFs
+# --------------
+
+mr_2010_tidy <- rbind(mr_al_mo_2010_ASIAN, mr_al_mo_2010_NHPI, mr_mt_wy_2010_ASIAN, mr_mt_wy_2010_NHPI %>% ungroup()) %>%
+  arrange(STNAME, CTYNAME)
+
+# write to csv 
+write.csv(mr_2010_tidy, "../../Transformed Data/2010/MR_county_2010_non_hispanic.csv")
+
+
+
 # ==========
 # Simple EDA
 # ==========
@@ -567,7 +791,7 @@ write.csv(mr_2010_tidy, "../Transformed Data/2010/MR_county_2010.csv")
 ########
 
 # read in datasets
-mr_2020 <- read.csv("../Raw Data/2020/mrf_2020.csv") # modified by Chris 
+mr_2020 <- read.csv("../../Raw Data/2020/mrf_2020.csv") # modified by Chris 
 
 
 # ===============
@@ -815,3 +1039,106 @@ write.csv(mr_2020_tidy, "../Transformed Data/2020/MR_county_2020.csv")
 #   geom_histogram(binwidth = 3) + 
 #   theme_minimal() + 
 #   ggtitle("PES vs Modified Race % difference by race group")
+
+
+
+
+# ==========
+# Clean Data
+# ==========
+
+
+# all population data is contained within columns 5 - 100
+# Melt columns 5 - 100
+colnames(mr_2000)[5]
+colnames(mr_2000)[128]
+
+mr_2000 <- mr_2000 %>%
+  pivot_longer(cols = "not_api...5":"NHL-F-W_B_AINA_A_NHPI", names_to = "RACE_GROUP", values_to = "population") %>%
+  rename(five_yr_age_grp = `Five-year age groups `, STNAME = `State postal abbreviation  `, CTYNAME = `County or county equivalent `,
+         FIPS_ST = `FIPS state code `, FIPS_CTY = `FIPS county code `) %>%
+  select(FIPS_ST,FIPS_CTY,STNAME,CTYNAME,five_yr_age_grp,RACE_GROUP, population)
+
+# DOUBLE COUNTING ISSUE !! #
+# --------------------------
+# State records can be identified by blanks in the county or municipio code field.
+
+# sanity check 
+mr_2000 %>% filter(STNAME == "CA", CTYNAME == "California") 
+
+mr_2000 %>% filter(STNAME == "CA", CTYNAME != "California") %>%
+  group_by(five_yr_age_grp, RACE_GROUP) %>%
+  summarise(pop = sum(population))
+
+# get population of all races by county
+mr_2000_allraces <- mr_2000 %>%
+  group_by(FIPS_ST, STNAME, CTYNAME) %>% summarise(population = sum(population))
+  
+# save it 
+write.csv(mr_2000_allraces, "../../Transformed Data/2000/MR_county_all_races_population.csv")
+
+
+
+
+
+
+
+
+# ===============
+# Get Race Groups
+# ===============
+
+# JUST the population info all races by county 
+mr_al_mo_2010 <- mr_al_mo_2010 %>% group_by(STATE, COUNTY, STNAME, CTYNAME) %>%
+  summarise(population = sum(RESPOP))
+
+mr_mt_wy_2010 <- mr_mt_wy_2010 %>% group_by(STATE, COUNTY, STNAME, CTYNAME) %>%
+  summarise(population = sum(RESPOP))
+
+mr_2010_allraces <- rbind(mr_al_mo_2010, mr_mt_wy_2010)
+
+# save it 
+write.csv(mr_2010_allraces, "../../Transformed Data/2010/MR_county_all_races_population.csv")
+
+
+
+
+# 2020 
+
+# ===============
+# Get Race Groups
+# ===============
+
+mr_2020 <- mr_2020 %>% group_by(GEOID) %>% summarise(population = sum(RESPOP))
+
+
+# ===============================
+# Add city and state names 
+# ===============================
+fips <- read.csv("../../Raw Data/2000/county_fips.csv")
+
+# merge with mr_2020 DF
+mr_2020 <- left_join(mr_2020 %>% select(fips = GEOID, population), fips, by = "fips") %>%
+  select(FIPS = fips, STNAME = NAME, CTYNAME, population)
+
+# inspecting nas
+nas <- mr_2020[rowSums(is.na(mr_2020)) > 0, ]
+unique(nas$FIPS)
+
+# new census areas: https://www.census.gov/programs-surveys/geography/technical-documentation/county-changes.2010.html
+# 2066 - Copper River Census Area, Alaska
+# 2063 - Chugach Census Area, Alaska
+# 2158 - Kusilvak Census Area, Alaska
+# 46102 - Oglala Lakota County, South Dakota
+
+# manually entering missing state and county names 
+mr_2020$STNAME[mr_2020$FIPS %in% c(2066, 2063, 2158)] <- "Alaska"
+mr_2020$STNAME[mr_2020$FIPS == 46102] <- "South Dakota"
+mr_2020$CTYNAME[mr_2020$FIPS == 46102] <- "Oglala Lakota County"
+mr_2020$CTYNAME[mr_2020$FIPS == 2066] <- "Copper River Census Area"
+mr_2020$CTYNAME[mr_2020$FIPS == 2063] <- "Chugach Census Area"
+mr_2020$CTYNAME[mr_2020$FIPS == 2158] <- "Kusilvak Census Area"
+
+
+# save it 
+write.csv(mr_2020, "../../Transformed Data/2020/MR_county_all_races_population_2020.csv")

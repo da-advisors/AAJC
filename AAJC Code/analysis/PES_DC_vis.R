@@ -125,19 +125,19 @@ county_map <- function(data){
 
 prgn <- brewer.pal(6,"RdYlBu")
 
-county_map_sunset <- function(data){
+county_map_purpOr <- function(data){
   
   map <- data %>%
     ggplot(aes(fill = percent_fctr, geometry = geometry)) +
     geom_sf(color = "black", size = 0.04) +
     geom_sf(data = state_overlay, fill = NA, color = "black", size = 0.15) +
     theme_AAJC + 
-    scale_fill_manual(values = c("-200 to -125%" = Sunset[1],
-                                 "-125 to -50%" = Sunset[2],
-                                 "-50 to 0%" = Sunset[3],
-                                 "0 to 50%" = Sunset[4],
-                                 "50 to 125%" = Sunset[5],
-                                 "125 - 200%" = Sunset[6]))
+    scale_fill_manual(values = c("-200 to -125%" = PurpOr6[1],
+                                 "-125 to -50%" = PurpOr6[2],
+                                 "-50 to 0%" = PurpOr6[3],
+                                 "0 to 50%" = PurpOr6[4],
+                                 "50 to 125%" = PurpOr6[5],
+                                 "125 - 200%" = PurpOr6[6]))
     # scale_fill_brewer(palette = "PuOr")
   
   # change margins to fit alaska and hawaii changes
@@ -209,7 +209,7 @@ save_county_maps <- function(data, year) {
     # --------------------
     # MAPPING
     # --------------------
-    sunset_county <- county_map_sunset(dummy)
+    sunset_county <- county_map_purpOr(dummy)
     sunset_county <- sunset_county +  
       labs(fill = "EOC (%)",
            title =paste0("      Population Estimates and Census Comparison for\n      ",races_titles[i], " Populations"),
@@ -218,7 +218,7 @@ save_county_maps <- function(data, year) {
                             races_caps[i]," was less than the census results.")) +
       titles_upper()
     
-    ggsave(filename = paste("../../AAJC Vis/county_maps/county_map_Sunset_",all_races[i],"_", year,".png",sep=""),
+    ggsave(filename = paste("../../AAJC Vis/county_maps/PuOr/county_map_REPLACE_PuOr_",all_races[i],"_", year,".png",sep=""),
            plot = sunset_county, bg = "white", width = 9, height = 7)
   }
   
@@ -385,8 +385,10 @@ display_carto_pal(5, "Sunset") #county maps
 display_carto_pal(7, "OrYel") #state maps, option 2
 display.brewer.pal(6,"PuOr")
 
-PurpOr7 <- brewer.pal(6,"PuOr")
-
+PurpOr7 <- brewer.pal(5,"PuOr")
+PurpOr6 <- brewer.pal(6,"PuOr")
+PurpOr6 <- PurpOr6[2:6]
+PurpOr4 <- brewer.pal(4,"PuOr")
 
 # ================
 # Mapping Function - STATE 
@@ -627,6 +629,13 @@ title_labels <- c("Asian (Alone)", "Asian (Alone or in Combination)", "NHPI (Alo
 caption_labels <- c("Asian (Alone)\n", "Asian (Alone or in Combination)\npopulations", "NHPI (Alone)\n", "NHPI (Alone or in Combination)\npopulations")
 race_groups <- unique(state_2010$RACE)
 
+race_groups_NHPI <- race_groups[3:4]
+title_labels_NHPI <- title_labels[3:4]
+caption_labels_NHPI <- caption_labels[3:4]
+race_groups_AA <- race_groups[1:2]
+title_labels_AA <- title_labels[1:2]
+caption_labels_AA <- caption_labels[1:2]
+
 # for each year 2010 and 2020
 for (i in seq(race_groups)) {
   
@@ -640,36 +649,113 @@ for (i in seq(race_groups)) {
   
   # creating percent_fctr column
   # -------
-  min_i <- min(dummy$EOC, dummy2$EOC)
-  max_i <- max(dummy$EOC, dummy2$EOC)
   
-  splits <- as.integer(seq(min_i, max_i, length.out = 4))
+  if (race_groups[i] == "NHPI_AIC") {
+    splits <- c(-25,0,25,50)
+    # NHPI
+    dummy <- dummy %>% 
+      mutate(percent_fctr = case_when(
+        EOC < splits[1] ~ paste0("Less than ",splits[1],"%"),
+        EOC >= splits[1] & EOC < splits[2] ~ paste0(splits[1], " to ", splits[2], "%"),
+        EOC >= splits[2] & EOC <= splits[3] ~ paste0(splits[2], " to ", splits[3], "%"),
+        EOC > splits[3] ~ paste0("Greater than ", splits[3], "%")))
+    
+    dummy$percent_fctr <- as.factor(dummy$percent_fctr)
+    
+    # add geospatial data 
+    # -------
+    dummy <- left_join(dummy, state_overlay_geo, by = "STNAME")
+    
+    # Mapping
+    # -------
+    a2010_breaks <- c(PurpOr4[1], PurpOr4[2], PurpOr4[3], PurpOr4[4])
+    
+    names(a2010_breaks) <- c(paste0("Less than ",splits[1],"%"), paste0(splits[1], " to ", splits[2], "%"), paste0(splits[2], " to ", splits[3], "%")
+                             , paste0("Greater than ", splits[3], "%"))
+  } 
   
-  dummy <- dummy %>% 
-    mutate(percent_fctr = case_when(
-      EOC < splits[1] ~ paste0("Less than ",splits[1],"%"),
-      EOC >= splits[1] & EOC < splits[2] ~ paste0(splits[1], " to ", splits[2], "%"),
-      EOC >= splits[2] & EOC < splits[3] ~ paste0(splits[2], " to ", splits[3], "%"),
-      EOC >= splits[3] & EOC <= splits[4] ~ paste0(splits[3], " to ", splits[4], "%"),
-      EOC > splits[4] ~ paste0("Greater than ", splits[4], "%")))
+  else if (race_groups[i] == "NHPI_A") {
+    splits <- c(-25,0,25,50)
+    # NHPI
+    dummy <- dummy %>% 
+      mutate(percent_fctr = case_when(
+        EOC < splits[1] ~ paste0("Less than ",splits[1],"%"),
+        EOC >= splits[1] & EOC < splits[2] ~ paste0(splits[1], " to ", splits[2], "%"),
+        EOC >= splits[2] & EOC <= splits[3] ~ paste0(splits[2], " to ", splits[3], "%"),
+        EOC >= splits[3] & EOC <= splits[4] ~ paste0(splits[3], " to ", splits[4], "%"),
+        EOC > splits[4] ~ paste0("Greater than ", splits[4], "%")))
+    
+    dummy$percent_fctr <- as.factor(dummy$percent_fctr)
+    
+    # add geospatial data 
+    # -------
+    dummy <- left_join(dummy, state_overlay_geo, by = "STNAME")
+    
+    # Mapping
+    # -------
+    a2010_breaks <- c(PurpOr6[1], PurpOr6[2], PurpOr6[3], PurpOr6[4], PurpOr6[5])
+    
+    names(a2010_breaks) <- c(paste0("Less than ",splits[1],"%"), paste0(splits[1], " to ", splits[2], "%"), paste0(splits[2], " to ", splits[3], "%")
+                             , paste0(splits[3], " to ", splits[4], "%"), paste0("Greater than ", splits[4], "%"))
+  }
   
-  dummy$percent_fctr <- as.factor(dummy$percent_fctr)
+  else if (race_groups[i] == "A_AIC") {
+    splits <- c(-5,0,5,10)
+    
+    dummy <- dummy %>% 
+      mutate(percent_fctr = case_when(
+        EOC < splits[1] ~ paste0("Less than ",splits[1],"%"),
+        EOC >= splits[1] & EOC < splits[2] ~ paste0(splits[1], " to ", splits[2], "%"),
+        EOC >= splits[2] & EOC <= splits[3] ~ paste0(splits[2], " to ", splits[3], "%"),
+        EOC >= splits[3] & EOC <= splits[4] ~ paste0(splits[3], " to ", splits[4], "%"),
+        EOC > splits[4] ~ paste0("Greater than ", splits[4], "%")))
+    
+    dummy$percent_fctr <- as.factor(dummy$percent_fctr)
+    
+    # add geospatial data 
+    # -------
+    dummy <- left_join(dummy, state_overlay_geo, by = "STNAME")
+    
+    # Mapping
+    # -------
+    a2010_breaks <- c(PurpOr6[1], PurpOr6[2], PurpOr6[3], PurpOr6[4], PurpOr6[5])
+    
+    names(a2010_breaks) <- c(paste0("Less than ",splits[1],"%"), paste0(splits[1], " to ", splits[2], "%"), paste0(splits[2], " to ", splits[3], "%")
+                             , paste0(splits[3], " to ", splits[4], "%"), paste0("Greater than ", splits[4], "%"))
+  }
   
-  # add geospatial data 
-  # -------
-  dummy <- left_join(dummy, state_overlay_geo, by = "STNAME")
+  else {
+    splits <- c(-20,-10,0,10,20)
+    
+    dummy <- dummy %>% 
+      mutate(percent_fctr = case_when(
+        EOC < splits[1] ~ paste0("Less than ",splits[1],"%"),
+        EOC >= splits[1] & EOC < splits[2] ~ paste0(splits[1], " to ", splits[2], "%"),
+        EOC >= splits[2] & EOC <= splits[3] ~ paste0(splits[2], " to ", splits[3], "%"),
+        EOC >= splits[3] & EOC <= splits[4] ~ paste0(splits[3], " to ", splits[4], "%"),
+        EOC >= splits[4] & EOC <= splits[5] ~ paste0(splits[4], " to ", splits[5], "%"),
+        EOC > splits[5] ~ paste0("Greater than ", splits[5], "%")))
+    
+    dummy$percent_fctr <- as.factor(dummy$percent_fctr)
+    
+    # add geospatial data 
+    # -------
+    dummy <- left_join(dummy, state_overlay_geo, by = "STNAME")
+    
+    # Mapping
+    # -------
+    PurpOr6 <- brewer.pal(6,"PuOr")
+    a2010_breaks <- c(PurpOr6[1], PurpOr6[2], PurpOr6[3], PurpOr6[4], PurpOr6[5], PurpOr6[6])
+    
+    names(a2010_breaks) <- c(paste0("Less than ",splits[1],"%"), paste0(splits[1], " to ", splits[2], "%"), paste0(splits[2], " to ", splits[3], "%")
+                             , paste0(splits[3], " to ", splits[4], "%"),paste0(splits[4], " to ", splits[5], "%"), paste0("Greater than ", splits[5], "%"))
+  }
   
-  # Mapping
-  # -------
-  a2010_breaks <- c(PurpOr7[1], PurpOr7[2], PurpOr7[3], PurpOr7[4], PurpOr7[5])
-  
-  names(a2010_breaks) <- c(paste0("Less than ",splits[1],"%"), paste0(splits[1], " to ", splits[2], "%"), paste0(splits[2], " to ", splits[3], "%"),
-                           paste0(splits[3], " to ", splits[4], "%"), paste0("Greater than ", splits[4], "%"))
   
   
   state_vis <- state_map(dummy, a2010_breaks)
   state_vis <- state_vis +  
-    labs(fill = "Error of Closure (%)     ",
+    labs(fill = "Coverage - Error of Closure (%)     ",
          title =paste0("      Population Estimates and Census Comparison\n      ", title_labels[i], " Populations"),
          subtitle = "         Resident Population By State - 2010",
          caption = paste0("An error of closure value less than 0% indicates a potential\nundercount ie. the estimates for ",caption_labels[i]," were greater than the census results.")) +
@@ -677,12 +763,13 @@ for (i in seq(race_groups)) {
   
   # state_agegrp_imgs <- append(state_agegrp_imgs, A_2010_state)
   # save
-  ggsave(filename = paste("../../AAJC Vis/state_maps/state_map_",race_groups[i],"_2010.png",sep=""),
+  ggsave(filename = paste("../../AAJC Vis/state_maps/replace/state_map_",race_groups[i],"_2010.png",sep=""),
          plot = state_vis, bg = "white", width = 9, height = 7)
   
 }
 
-
+state_2020 %>% filter(RACE == "A_AIC")
+state_2010 %>% filter(RACE == "A_AIC")
 
 
 
@@ -694,15 +781,24 @@ for (i in seq(race_groups)) {
 ## State map of PES for 2020
 ########################
 
+#  1.645 Standard Errors to be statistically different from zero at the 90% confidence level
+
 pes2020_gstates <- read.csv('../../Raw Data/2020/DECENNIALPES2020.G_STATES-2022-11-09T120255.csv')
 
 colnames(pes2020_gstates)
-# adding coverage column 
 pes2020_gstates <- pes2020_gstates %>% filter(Geographic.Area.Name..NAME. != "Puerto Rico") %>% mutate(COVERAGE = case_when(
-  Net.Coverage.Error......G_STATES_002. < 0 ~ 'Undercount',
-  Net.Coverage.Error......G_STATES_002. > 0 ~ 'Overcount',
-  Net.Coverage.Error......G_STATES_002. == 0 ~ 'Not statistically different from zero')) %>% rename(STNAME = Geographic.Area.Name..NAME.)
+  (stat_diff_zero == 'Yes') & (Net.Coverage.Error......G_STATES_002. < 0) ~ 'Undercount',
+  (stat_diff_zero == 'Yes') & (Net.Coverage.Error......G_STATES_002. > 0) ~ 'Overcount',
+  stat_diff_zero == 'No' ~ 'Not statistically different from zero')) %>% rename(STNAME = Geographic.Area.Name..NAME.)
 
+# adding coverage column 
+pes2020_gstates <- pes2020_gstates %>% filter(Geographic.Area.Name..NAME. != "Puerto Rico") %>% mutate(sdz = case_when(
+  Standard.Error......G_STATES_003. >= 1.645 ~ "Yes",
+  Standard.Error......G_STATES_003. < 1.645 ~ 'No'
+))  %>% mutate(COVERAGE = case_when(
+  (sdz == 'Yes') & (Net.Coverage.Error......G_STATES_002. < 0) ~ 'Undercount',
+  (sdz == 'Yes') & (Net.Coverage.Error......G_STATES_002. > 0) ~ 'Overcount',
+  sdz == 'No' ~ 'Not statistically different from zero')) %>% rename(STNAME = Geographic.Area.Name..NAME.)
 
 
 # ------------
@@ -720,24 +816,25 @@ pes_map <- data %>%
   ggplot(aes(fill = COVERAGE, geometry = geometry)) +
   geom_sf(color = "black", size = 0.04) +
   geom_sf(data = state_overlay, fill = NA, color = "black", size = 0.15) +
-  scale_fill_manual(values = c('#b0a9d0', '#fdb863')) + 
+  scale_fill_manual(values = c('Undercount' = '#fdb863','Not statistically different from zero' = '#eeefeb','Overcount' = '#b0a9d0')) + 
   theme_void() + 
   labs(fill = 'Net Coverage Error',
        title = '2020 Post-Enumeration Survey',
        subtitle = 'Census count for Post-Enumeration Survey universe: 323,200,000')
   
+pes_map
 
 ggsave(filename = "../../AAJC Vis/state_maps/pes_2020_state.png",
-       plot = pes_map, bg = "white")
-# change margins to fit alaska and hawaii changes
-map <- map + theme(plot.margin = margin(1,1,1,1, "cm"))
-map
+       plot = pes_map, bg = "white", width = 7, height = 5)
+# # change margins to fit alaska and hawaii changes
+# map <- map + theme(plot.margin = margin(1,1,1,1, "cm"))
+# map
+# 
+# 
+# t.test(data$Net.Coverage.Error......G_STATES_002.)
+# hist(data$Net.Coverage.Error......G_STATES_002., breaks = 10)
 
-
-t.test(data$Net.Coverage.Error......G_STATES_002.)
-hist(data$Net.Coverage.Error......G_STATES_002., breaks = 10)
-
-
+m <- mean(pes2020_gstates$Net.Coverage.Error......G_STATES_002.)
 
 
 
