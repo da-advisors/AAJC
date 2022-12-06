@@ -468,3 +468,432 @@ ggsave(filename = "../../AAJC Vis/case_studies/harris_county_texas/resp_by_citiz
 
 
 
+##################################################################
+#                                                                # 
+# BY THE NUMBERS                                                 #
+#                                                                #
+##################################################################
+
+
+# ======================================
+# (d) Chart of the top 10 sub-ethnicities (for AA) or top 5 sub-ethnicities (for NHPI)
+#       in the current geography versus the nation as a whole (use the most recent 5 year ACS)
+# ======================================
+
+# ----------
+# 1. AA 
+# ----------
+
+# Table ID - B02018
+#   ASIAN ALONE OR IN ANY COMBINATION BY SELECTED GROUPS
+
+acs_vars <- load_variables(2020, "acs5", cache = TRUE)
+
+asian_groups_vars <- acs_vars[acs_vars$concept == "ASIAN ALONE OR IN ANY COMBINATION BY SELECTED GROUPS",]
+
+# ------
+# pull 5 year acs data 
+# ------
+
+subethnicity_aa_20 <- get_acs(geography = "county",
+                              state = "TX",
+                              county = "Harris County",
+                              table = 'B02018', 
+                              year = 2020)
+
+subethnicity_aa_20_NATIONAL <- get_acs(geography = "us",
+                                       table = 'B02018', 
+                                       year = 2020)
+
+# get sub ethnicity labels 
+subethnicity_aa_20 <- subethnicity_aa_20 %>% left_join(asian_groups_vars %>% select('variable' = name, label), by='variable')
+subethnicity_aa_20_NATIONAL <- subethnicity_aa_20_NATIONAL %>% 
+  left_join(asian_groups_vars %>% select('variable' = name, label), by='variable')
+
+# extract sub ethnicity from label column
+subethnicity_aa_20$label <- sub(".*Estimate!!Total Groups Tallied:!!", "", subethnicity_aa_20$label) 
+subethnicity_aa_20_NATIONAL$label <- sub(".*Estimate!!Total Groups Tallied:!!", "", subethnicity_aa_20_NATIONAL$label) 
+
+# remove total asian population count 
+subethnicity_aa_20 <- subethnicity_aa_20[subethnicity_aa_20$variable != 'B02018_001',]
+subethnicity_aa_20_NATIONAL <- subethnicity_aa_20_NATIONAL[subethnicity_aa_20_NATIONAL$variable != 'B02018_001',]
+
+subethnicity_aa_20 <- subethnicity_aa_20 %>% top_n(10, wt=estimate) %>% arrange(desc(estimate))
+subethnicity_aa_20_NATIONAL <- subethnicity_aa_20_NATIONAL %>% top_n(10, wt=estimate) %>% arrange(desc(estimate))
+
+
+# change estimate values for readability in plot 
+subethnicity_aa_20$estimate <- subethnicity_aa_20$estimate/1000
+subethnicity_aa_20_NATIONAL$estimate <- subethnicity_aa_20_NATIONAL$estimate/1000
+
+subethnicity_aa_20$label <- sub(",.*", "", subethnicity_aa_20$label) 
+subethnicity_aa_20_NATIONAL$label <- sub(",.*", "", subethnicity_aa_20_NATIONAL$label)
+
+# facet grid 
+subethnicity_aa_20$NAME <- sub(",.*", "", subethnicity_aa_20$NAME)
+subethnicity_aa_20_facet <- rbind(subethnicity_aa_20,subethnicity_aa_20_NATIONAL)
+
+# ------
+# plot - Harris county
+# ------
+
+# US - #f4c78d
+
+ethnicities_bar <- subethnicity_aa_20 %>% 
+  ggplot(aes(x=reorder(label,-estimate),y=estimate)) + 
+  geom_bar(stat = 'identity',fill="#916a92")+
+  theme_minimal()+
+  labs(subtitle = "Harris County, Texas - 2020")+
+  theme(axis.text.x = element_text(angle=30),
+        plot.caption=element_text(size=6, hjust=1, vjust = .5, face="italic"),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank())
+
+ethnicities_bar
+
+# ------
+# plot - National
+# ------
+
+ethnicities_bar_NATIONAL <- subethnicity_aa_20_NATIONAL %>% 
+  ggplot(aes(x=reorder(label,-estimate),y=estimate)) + 
+  geom_bar(stat = 'identity',fill="#f4c78d")+
+  theme_minimal()+
+  xlab("") + 
+  ylab("") + 
+  labs(
+    subtitle = "United States - 2020")+
+  # caption = "\"Chinese\" population excludes Taiwanese individuals.\n\"Other Asian\" groups are not specified in the ACS data") +
+  theme(axis.text.x = element_text(angle=30),
+        plot.caption=element_text(size=6, hjust=1, vjust = .5, face="italic"),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank())
+
+ethnicities_bar_NATIONAL
+
+
+# ------
+# plot - FACET 
+# ------
+
+ethnicities_bar_FACET <- grid.arrange(ethnicities_bar, ethnicities_bar_NATIONAL, nrow=1,
+                                      top = textGrob("Top 10 Asian (alone or in combination) Ethnicity Groups",gp=gpar(fontsize=14)),
+                                      bottom = textGrob("Ethnicity"),
+                                      left="Estimates (thousands)")
+
+ggsave(filename = "../../AAJC Vis/case_studies/harris_county_texas/sub_ethn_AA_FACET_2020.png", 
+       plot = ethnicities_bar_FACET, bg = "white")
+
+# NOTE - facet plot does not contain caption
+
+
+# ------
+# plot - harris county
+# ------
+
+# US - #f4c78d
+
+ethnicities_bar <- subethnicity_aa_20 %>% 
+  ggplot(aes(x=reorder(label,-estimate),y=estimate)) + 
+  geom_bar(stat = 'identity',fill="#916a92")+
+  theme_minimal()+
+  xlab("Ethnicity") +
+  ylab("Estimate (thousands)") +
+  ggtitle("Top 10 Asian (alone or in combination) Ethnicity Groups")+
+  labs(subtitle = "Harris County, Texas - 2020",
+       caption = "\"Chinese\" population excludes Taiwanese individuals.\n\"Other Asian\" groups are not specified in the ACS data") +
+  theme(axis.text.x = element_text(angle=30),
+        plot.caption=element_text(size=6, hjust=1, vjust = .5, face="italic"))
+# axis.title.x=element_blank(),
+# axis.title.y=element_blank())
+
+ethnicities_bar
+ggsave(filename = "../../AAJC Vis/case_studies/harris_county_texas/sub_ethn_AA_2020.png", 
+       plot = ethnicities_bar, bg = "white")
+
+
+
+# ------
+# plot - National
+# ------
+
+ethnicities_bar_NATIONAL <- subethnicity_aa_20_NATIONAL %>% 
+  ggplot(aes(x=reorder(label,-estimate),y=estimate)) + 
+  geom_bar(stat = 'identity',fill="#f4c78d")+
+  theme_minimal()+
+  xlab("Ethnicity") +
+  ylab("Estimate (thousands)") +
+  labs(title = "Top 10 Asian (alone or in combination) Ethnicity Groups",
+    subtitle = "United States - 2020",
+    caption = "\"Chinese\" population excludes Taiwanese individuals.\n\"Other Asian\" groups are not specified in the ACS data") +
+  theme(axis.text.x = element_text(angle=30),
+        plot.caption=element_text(size=6, hjust=1, vjust = .5, face="italic"))
+
+ethnicities_bar_NATIONAL
+
+ggsave(filename = "../../AAJC Vis/case_studies/harris_county_texas/sub_ethn_AA_NATIONAL_2020.png", 
+       plot = ethnicities_bar_NATIONAL, bg = "white")
+
+
+
+
+
+
+
+
+
+
+
+# ======================================
+# (e) Citizenship status for the race group we are looking at in the county versus the state, versus the nation (ACS 5 year)
+# (g) English ability by citizenship status for the race group we are talking about in the county versus the state versus 
+#     the nation (ACS 5 year)
+# ======================================
+
+
+# =====
+# AA
+# =====
+
+# 1.
+# ------
+# Pulling ACS 5 year data - citizenship
+# ------
+
+# Table - SEX BY AGE BY NATIVITY AND CITIZENSHIP STATUS (ASIAN ALONE)
+# Table ID - B05003D
+
+# Native = Under 18 & Native (F) + Under 18 & Native (M) + Over 18 and Native (F) + Over 18 and Native (M)
+# Foreign born (naturalized citizen) = Under 18 & Foreign born (Naturalized citizen M + F) + Over 18 & Foreign born (Naturalized citizen M +F)
+# Foreign born (not citizen) = Under 18 & Foreign born (not citizen M + F) + Over 18 & Foreign born (non citizen M+ F)
+
+asian_citizen_vars <- c("B05003D_004", "B05003D_009", 'B05003D_015', 'B05003D_020', # native vars
+                        "B05003D_006", "B05003D_011", "B05003D_017", "B05003D_022", # fborn - naturalized vars
+                        "B05003D_007", "B05003D_012", "B05003D_018", "B05003D_023") # fborn - non citizen
+
+# ------
+# pull 5 year acs data 
+# ------
+
+citizenship <- get_acs(geography = "county",
+                       state = "TX",
+                       variables = asian_citizen_vars, 
+                       year = 2020)
+
+
+# ------
+# citizenship calculation 
+# ------
+
+native <- c("B05003D_004", "B05003D_009", 'B05003D_015', 'B05003D_020')
+fborn_naturalized <- c( "B05003D_006", "B05003D_011", "B05003D_017", "B05003D_022")
+fborn_non_citzn <- c("B05003D_007", "B05003D_012", "B05003D_018", "B05003D_023")
+
+citizenship <- citizenship %>% mutate(citizenship_status = case_when(
+  variable %in% native ~ "Native",
+  variable %in% fborn_naturalized ~ "Foreign born - naturalized citizen",
+  variable %in% fborn_non_citzn ~ "Foreign born - non citizen"
+)) %>% # aggregate
+  group_by(GEOID, NAME, citizenship_status) %>%
+  summarise(estimate = sum(estimate))
+
+
+# ------
+# get county and state level info
+# ------
+
+citizenship_county <- citizenship %>% filter(NAME == 'Harris County, Texas')
+
+citizenship_state <- citizenship %>% group_by(citizenship_status) %>%
+  summarise(estimate = sum(estimate)) %>% mutate(NAME = 'Texas', GEOID = '48') %>%
+  select(GEOID, NAME, citizenship_status, estimate)
+
+
+# ------
+# get US as a while data
+# ------
+
+citizenship_US <- get_acs(geography = 'us',
+                          variables = asian_citizen_vars, 
+                          year = 2020)
+
+citizenship_US <- citizenship_US %>% mutate(citizenship_status = case_when(
+  variable %in% native ~ "Native",
+  variable %in% fborn_naturalized ~ "Foreign born - naturalized citizen",
+  variable %in% fborn_non_citzn ~ "Foreign born - non citizen"
+)) %>% # aggregate
+  group_by(GEOID, NAME, citizenship_status) %>%
+  summarise(estimate = sum(estimate))
+
+# ------
+# combine county, state, and US data 
+# ------
+
+citizenship <- rbind(citizenship_county, citizenship_state, citizenship_US)
+
+
+# 2.
+# ------
+# Pulling ACS 5 year data - English Ability
+# ------
+
+# Table - NATIVITY BY LANGUAGE SPOKEN AT HOME BY ABILITY TO SPEAK ENGLISH FOR THE POPULATION 5 YEARS AND OVER (ASIAN ALONE)
+# Table ID - B16005D
+
+
+english <- get_acs(geography = "county",
+                   state = "TX",
+                   table = 'B16005D', 
+                   year = 2020)
+
+native <- c('B16005D_003',
+            'B16005D_004',
+            'B16005D_005',
+            'B16005D_006')
+
+fborn <- c('B16005D_008',
+           'B16005D_009',
+           'B16005D_010',
+           'B16005D_011')
+
+only_english <- c('B16005D_003', 'B16005D_008')
+another_lang <- c('B16005D_004', 'B16005D_009')
+english_well <- c('B16005D_005', 'B16005D_010')
+english_lessthan_well <- c('B16005D_006', 'B16005D_011')
+
+english <- english %>% mutate(citizenship_status = case_when(
+  variable %in% native ~ 'Native',
+  variable %in% fborn ~ 'Foreign Born'
+), english_ability = case_when(
+  variable %in% only_english ~ 'Speak only English',
+  variable %in% another_lang ~ 'Speak another language',
+  variable %in% english_well ~ 'Speak English very well',
+  variable %in% english_lessthan_well ~ 'Speak English less than very well'
+))
+
+
+# ------
+# get county and state data 
+# ------
+
+english_county <- english %>% filter(NAME == "Harris County, Texas") %>% drop_na(citizenship_status) %>% 
+  select(GEOID, NAME, citizenship_status, english_ability, estimate)
+
+english_state <- english %>% group_by(citizenship_status, english_ability) %>%
+  summarise(estimate = sum(estimate)) %>% drop_na(citizenship_status) %>% 
+  mutate(GEOID = '48', NAME = 'Texas') %>%
+  select(GEOID, NAME, citizenship_status, english_ability, estimate)
+
+
+# ------
+# get US Data 
+# ------
+
+english_US <- get_acs(geography = "us",
+                      table = 'B16005D', 
+                      year = 2020)
+
+
+english_US <- english_US %>% mutate(citizenship_status = case_when(
+  variable %in% native ~ 'Native',
+  variable %in% fborn ~ 'Foreign Born'
+), english_ability = case_when(
+  variable %in% only_english ~ 'Speak only English',
+  variable %in% another_lang ~ 'Speak another language',
+  variable %in% english_well ~ 'Speak English very well',
+  variable %in% english_lessthan_well ~ 'Speak English less than very well'
+)) %>% drop_na(citizenship_status) %>%
+  select(GEOID, NAME, citizenship_status, english_ability, estimate)
+
+
+# ------
+# combine county, state, and US data 
+# ------
+
+english <- rbind(english_county,english_state, english_US)
+
+# ------
+# export citizenship & english data to an excel sheet 
+# ------
+library(openxlsx)
+datasets <- list("citizenship" = data.frame(citizenship), "english" = data.frame(english))
+write.xlsx(datasets, file = "../../Transformed Data/2020/citizenship_english_ability_Harris_County_TX.xlsx")
+
+
+
+
+
+
+
+
+# ======================================
+# (f) Renter vs Owner for the race group we are talking about in the county versus the state versus the nation (ACS 5 year)
+# ======================================
+
+# =====
+# AA
+# =====
+
+# 1.
+# ------
+# Pulling ACS 5 year data
+# ------
+
+# Table - TENURE (ASIAN ALONE HOUSEHOLDER)
+# Table ID - B25003D
+
+
+housing <- get_acs(geography = "county",
+                   state = "Texas",
+                   table = 'B25003D', 
+                   year = 2020)
+
+
+housing <- housing %>% mutate(variable = case_when(
+  variable == "B25003D_001" ~ 'total',
+  variable == "B25003D_002" ~ 'owner',
+  variable == "B25003D_003" ~ 'renter'
+))
+
+# get county and state data 
+housing_county <- housing %>% filter(NAME == "Harris County, Texas") %>% select(GEOID, NAME, variable, estimate)
+
+housing_state <- housing %>% group_by(variable) %>% summarise(estimate =sum(estimate)) %>% mutate(
+  GEOID = '48', NAME = 'Texas'
+) %>% select(GEOID, NAME, variable, estimate)
+
+# ------
+# Get national data 
+# ------
+
+housing_US <- get_acs(geography = "us",
+                      table = 'B25003D', 
+                      year = 2020)
+
+housing_US <- housing_US %>% mutate(variable = case_when(
+  variable == "B25003D_001" ~ 'total',
+  variable == "B25003D_002" ~ 'owner',
+  variable == "B25003D_003" ~ 'renter'
+)) %>% select(GEOID, NAME, variable, estimate)
+
+
+# ------
+# Combine couty, state and national data 
+# ------
+
+housing_HC_AA <- rbind(housing_county, housing_state, housing_US)
+
+
+# export data 
+datasets <- list("LA - AA" = data.frame(housing_LA_AA), "LA - NHPI" = data.frame(housing_LA_NHPI),
+                 "KC - AA" = data.frame(housing_KC_AA), "HC - AA" = data.frame(housing_HC_AA))
+write.xlsx(datasets, file = "../../Transformed Data/2020/renter_owner.xlsx")
+
+
+
+
+
+
+
+
+

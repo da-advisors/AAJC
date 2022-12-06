@@ -541,3 +541,436 @@ esmr_2020_HI %>% mutate(percent_nhpi = round(((MR/tot_hawaii)*100),3) )
 
 
 
+
+
+##################################################################
+#                                                                # 
+# BY THE NUMBERS                                                 #
+#                                                                #
+##################################################################
+
+
+# ======================================
+# (d) Chart of the top 10 sub-ethnicities (for AA) or top 5 sub-ethnicities (for NHPI)
+#       in the current geography versus the nation as a whole (use the most recent 5 year ACS)
+# ======================================
+
+
+# ----------
+# 1. NHPI 
+# ----------
+
+# Table ID - # B02019
+#   ASIAN ALONE OR IN ANY COMBINATION BY SELECTED GROUPS
+
+acs_vars <- load_variables(2020, "acs5", cache = TRUE)
+
+nhpi_groups_vars <- acs_vars[acs_vars$concept == "NATIVE HAWAIIAN AND OTHER PACIFIC ISLANDER ALONE OR IN ANY COMBINATION BY SELECTED GROUPS",]
+
+# ------
+# pull 5 year acs data 
+# ------
+
+subethnicity_nhpi_20 <- get_acs(geography = "county",
+                                state = "Hawaii",
+                                table = 'B02019', 
+                                year = 2020)
+
+subethnicity_nhpi_20_NATIONAL <- get_acs(geography = "us",
+                                         table = 'B02019', 
+                                         year = 2020)
+
+# get sub ethnicity labels 
+subethnicity_nhpi_20 <- subethnicity_nhpi_20 %>% left_join(nhpi_groups_vars %>% select('variable' = name, label), by='variable')
+subethnicity_nhpi_20_NATIONAL <- subethnicity_nhpi_20_NATIONAL %>% 
+  left_join(nhpi_groups_vars %>% select('variable' = name, label), by='variable')
+
+# extract sub ethnicity from label column
+subethnicity_nhpi_20$label <- sub(".*Estimate!!Total Groups Tallied:!!", "", subethnicity_nhpi_20$label) 
+subethnicity_nhpi_20_NATIONAL$label <- sub(".*Estimate!!Total Groups Tallied:!!", "", subethnicity_nhpi_20_NATIONAL$label) 
+subethnicity_nhpi_20$label <- sub(".*!!", "", subethnicity_nhpi_20$label) 
+subethnicity_nhpi_20_NATIONAL$label <- sub(".*!!", "", subethnicity_nhpi_20_NATIONAL$label) 
+
+# remove total nhpi population count 
+subethnicity_nhpi_20 <- subethnicity_nhpi_20[subethnicity_nhpi_20$variable != 'B02019_001',]
+subethnicity_nhpi_20_NATIONAL <- subethnicity_nhpi_20_NATIONAL[subethnicity_nhpi_20_NATIONAL$variable != 'B02019_001',]
+
+# aggregate all counties
+subethnicity_nhpi_20 <- subethnicity_nhpi_20 %>% group_by(label) %>% summarise(estimate = sum(estimate))
+
+subethnicity_nhpi_20 <- subethnicity_nhpi_20 %>% top_n(5, wt=estimate) %>% arrange(desc(estimate))
+subethnicity_nhpi_20_NATIONAL <- subethnicity_nhpi_20_NATIONAL %>% top_n(5, wt=estimate) %>% arrange(desc(estimate))
+
+
+# change estimate values for readability in plot 
+subethnicity_nhpi_20$estimate <- subethnicity_nhpi_20$estimate/1000
+subethnicity_nhpi_20_NATIONAL$estimate <- subethnicity_nhpi_20_NATIONAL$estimate/1000
+
+subethnicity_nhpi_20$label <- sub(",.*", "", subethnicity_nhpi_20$label) 
+subethnicity_nhpi_20_NATIONAL$label <- sub(",.*", "", subethnicity_nhpi_20_NATIONAL$label)
+
+subethnicity_nhpi_20$label <- gsub(" ","\n",subethnicity_nhpi_20$label)
+subethnicity_nhpi_20_NATIONAL$label <- gsub(" ","\n",subethnicity_nhpi_20_NATIONAL$label)
+ 
+subethnicity_nhpi_20$label[subethnicity_nhpi_20$label == "Other\nPacific\nIslander"] <- "Other Pacific\nIslander"
+subethnicity_nhpi_20_NATIONAL$label[subethnicity_nhpi_20_NATIONAL$label == "Other\nPacific\nIslander"] <- "Other Pacific\nIslander"
+
+
+# ------
+# plot - LA
+# ------
+
+# US - #f4c78d
+
+ethnicities_bar <- subethnicity_nhpi_20 %>% 
+  ggplot(aes(x=reorder(label,-estimate),y=estimate)) + 
+  geom_bar(stat = 'identity',fill="#916a92")+
+  theme_minimal()+
+  xlab("Ethnicity") +
+  ylab("Estimate (thousands)") +
+  labs(subtitle = "Hawaii - 2020")+
+  # title = "Top 5 NHPI (alone or in combination) Ethnicity Groups",
+  # caption = "\"Other\" Pacific Islander population groups are not specified in the ACS data") +
+  theme(axis.text.x = element_text( size = 6),
+        plot.caption=element_text(size=6, hjust=1, vjust = .5, face="italic"),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank())
+
+ethnicities_bar
+
+# ------
+# plot - National
+# ------
+
+ethnicities_bar_NATIONAL <- subethnicity_nhpi_20_NATIONAL %>% 
+  ggplot(aes(x=reorder(label,-estimate),y=estimate)) + 
+  geom_bar(stat = 'identity',fill="#f4c78d")+
+  theme_minimal()+
+  xlab("Ethnicity") +
+  ylab("Estimate (thousands)") + 
+  labs(
+    subtitle = "United States - 2020")+
+  #   title = "Top 5 NHPI (alone or in combination) Ethnicity Groups",
+  # caption = "\"Other\" Pacific Islander population groups are not specified in the ACS data") +
+  theme(axis.text.x = element_text(size=6),
+        plot.caption=element_text(size=6, hjust=1, vjust = .5, face="italic"),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank())
+
+ethnicities_bar_NATIONAL
+
+
+# ------
+# plot - FACET 
+# ------
+
+ethnicities_bar_FACET <- grid.arrange(ethnicities_bar, ethnicities_bar_NATIONAL, nrow=1,
+                                      top = textGrob("Top 5 NHPI (alone or in combination) Ethnicity Groups",gp=gpar(fontsize=14)),
+                                      bottom = textGrob("Ethnicity"),
+                                      left="Estimates (thousands)")
+
+ggsave(filename = "../../AAJC Vis/case_studies/hawaii/sub_ethn_NHPI_FACET_2020.png", 
+       plot = ethnicities_bar_FACET, bg = "white")
+
+
+
+
+
+
+
+
+
+# ------
+# plot - hawaii
+# ------
+
+# US - #f4c78d
+
+ethnicities_bar <- subethnicity_nhpi_20 %>% 
+  ggplot(aes(x=reorder(label,-estimate),y=estimate)) + 
+  geom_bar(stat = 'identity',fill="#916a92")+
+  theme_minimal()+
+  xlab("Ethnicity") +
+  ylab("Estimate (thousands)") +
+  labs(subtitle = "Hawaii - 2020",
+  title = "Top 5 NHPI (alone or in combination) Ethnicity Groups",
+  caption = "\"Other\" Pacific Islander population groups are not specified in the ACS data") +
+  theme(axis.text.x = element_text( size = 6),
+        plot.caption=element_text(size=6, hjust=1, vjust = .5, face="italic"))
+
+ethnicities_bar
+ggsave(filename = "../../AAJC Vis/case_studies/hawaii/sub_ethn_NHPI_2020.png", 
+       plot = ethnicities_bar, bg = "white")
+
+# ------
+# plot - National
+# ------
+
+ethnicities_bar_NATIONAL <- subethnicity_nhpi_20_NATIONAL %>% 
+  ggplot(aes(x=reorder(label,-estimate),y=estimate)) + 
+  geom_bar(stat = 'identity',fill="#f4c78d")+
+  theme_minimal()+
+  xlab("Ethnicity") +
+  ylab("Estimate (thousands)") + 
+  labs(
+    subtitle = "United States - 2020",
+    title = "Top 5 NHPI (alone or in combination) Ethnicity Groups",
+  caption = "\"Other\" Pacific Islander population groups are not specified in the ACS data") +
+  theme(axis.text.x = element_text(size=6),
+        plot.caption=element_text(size=6, hjust=1, vjust = .5, face="italic"))
+
+ethnicities_bar_NATIONAL
+ggsave(filename = "../../AAJC Vis/case_studies/hawaii/sub_ethn_NHPI_NATIONAL_2020.png", 
+       plot = ethnicities_bar_NATIONAL, bg = "white")
+
+
+
+
+
+
+
+# ======================================
+# (e) Citizenship status for the race group we are looking at in the county versus the state, versus the nation (ACS 5 year)
+# (g) English ability by citizenship status for the race group we are talking about in the county versus the state versus 
+#     the nation (ACS 5 year)
+# ======================================
+
+# =====
+# NHPI
+# =====
+
+# 1.
+# ------
+# Pulling ACS 5 year data - citizenship
+# ------
+
+# Table - SEX BY AGE BY NATIVITY AND CITIZENSHIP STATUS (NHPI ALONE)
+# Table ID - B05003E
+
+# Native = Under 18 & Native (F) + Under 18 & Native (M) + Over 18 and Native (F) + Over 18 and Native (M)
+# Foreign born (naturalized citizen) = Under 18 & Foreign born (Naturalized citizen M + F) + Over 18 & Foreign born (Naturalized citizen M +F)
+# Foreign born (not citizen) = Under 18 & Foreign born (not citizen M + F) + Over 18 & Foreign born (non citizen M+ F)
+
+nhpi_citizen_vars <- c("B05003E_004", "B05003E_009", 'B05003E_015', 'B05003E_020', # native vars
+                       "B05003E_006", "B05003E_011", "B05003E_017", "B05003E_022", # fborn - naturalized vars
+                       "B05003E_007", "B05003E_012", "B05003E_018", "B05003E_023")
+
+
+# ------
+# pull 5 year acs data 
+# ------
+
+citizenship <- get_acs(geography = "county",
+                       state = "Hawaii",
+                       variables = nhpi_citizen_vars, 
+                       year = 2020)
+
+
+# ------
+# citizenship calculation 
+# ------
+
+native <- c("B05003E_004", "B05003E_009", 'B05003E_015', 'B05003E_020')
+fborn_naturalized <- c( "B05003E_006", "B05003E_011", "B05003E_017", "B05003E_022")
+fborn_non_citzn <- c("B05003E_007", "B05003E_012", "B05003E_018", "B05003E_023")
+
+citizenship <- citizenship %>% mutate(citizenship_status = case_when(
+  variable %in% native ~ "Native",
+  variable %in% fborn_naturalized ~ "Foreign born - naturalized citizen",
+  variable %in% fborn_non_citzn ~ "Foreign born - non citizen"
+)) %>% # aggregate
+  group_by(GEOID, NAME, citizenship_status) %>%
+  summarise(estimate = sum(estimate))
+
+
+# ------
+# get county and state level info
+# ------
+
+citizenship_county <- citizenship
+
+citizenship_state <- citizenship %>% group_by(citizenship_status) %>%
+  summarise(estimate = sum(estimate)) %>% mutate(NAME = 'Hawaii', GEOID = '15') %>%
+  select(GEOID, NAME, citizenship_status, estimate)
+
+
+# ------
+# get US as a while data
+# ------
+
+citizenship_US <- get_acs(geography = 'us',
+                          variables = nhpi_citizen_vars, 
+                          year = 2020)
+
+citizenship_US <- citizenship_US %>% mutate(citizenship_status = case_when(
+  variable %in% native ~ "Native",
+  variable %in% fborn_naturalized ~ "Foreign born - naturalized citizen",
+  variable %in% fborn_non_citzn ~ "Foreign born - non citizen"
+)) %>% # aggregate
+  group_by(GEOID, NAME, citizenship_status) %>%
+  summarise(estimate = sum(estimate))
+
+# ------
+# combine county, state, and US data 
+# ------
+
+citizenship <- rbind(citizenship_county, citizenship_state, citizenship_US)
+
+
+# 2.
+# ------
+# Pulling ACS 5 year data - English Ability
+# ------
+
+# Table - NATIVITY BY LANGUAGE SPOKEN AT HOME BY ABILITY TO SPEAK ENGLISH FOR THE POPULATION 5 YEARS AND OVER (NATIVE HAWAIIAN AND OTHER PACIFIC ISLANDER ALONE)
+# Table ID - B16005E
+
+
+english <- get_acs(geography = "county",
+                   state = "Hawaii",
+                   table = 'B16005E', 
+                   year = 2020)
+
+native <- c('B16005E_003',
+            'B16005E_004',
+            'B16005E_005',
+            'B16005E_006')
+
+fborn <- c('B16005E_008',
+           'B16005E_009',
+           'B16005E_010',
+           'B16005E_011')
+
+only_english <- c('B16005E_003', 'B16005E_008')
+another_lang <- c('B16005E_004', 'B16005E_009')
+english_well <- c('B16005E_005', 'B16005E_010')
+english_lessthan_well <- c('B16005E_006', 'B16005E_011')
+
+english <- english %>% mutate(citizenship_status = case_when(
+  variable %in% native ~ 'Native',
+  variable %in% fborn ~ 'Foreign Born'
+), english_ability = case_when(
+  variable %in% only_english ~ 'Speak only English',
+  variable %in% another_lang ~ 'Speak another language',
+  variable %in% english_well ~ 'Speak English very well',
+  variable %in% english_lessthan_well ~ 'Speak English less than very well'
+))
+
+
+# ------
+# get county and state data 
+# ------
+
+english_county <- english %>% drop_na(citizenship_status) %>% 
+  select(GEOID, NAME, citizenship_status, english_ability, estimate)
+
+english_state <- english %>% group_by(citizenship_status, english_ability) %>%
+  summarise(estimate = sum(estimate)) %>% drop_na(citizenship_status) %>% 
+  mutate(GEOID = '15', NAME = 'Hawaii') %>%
+  select(GEOID, NAME, citizenship_status, english_ability, estimate)
+
+
+# ------
+# get US Data 
+# ------
+
+english_US <- get_acs(geography = "us",
+                      table = 'B16005E', 
+                      year = 2020)
+
+
+english_US <- english_US %>% mutate(citizenship_status = case_when(
+  variable %in% native ~ 'Native',
+  variable %in% fborn ~ 'Foreign Born'
+), english_ability = case_when(
+  variable %in% only_english ~ 'Speak only English',
+  variable %in% another_lang ~ 'Speak another language',
+  variable %in% english_well ~ 'Speak English very well',
+  variable %in% english_lessthan_well ~ 'Speak English less than very well'
+)) %>% drop_na(citizenship_status) %>%
+  select(GEOID, NAME, citizenship_status, english_ability, estimate)
+
+
+# ------
+# combine county, state, and US data 
+# ------
+
+english <- rbind(english_county,english_state, english_US)
+
+# ------
+# export citizenship & english data to an excel sheet 
+# ------
+datasets <- list("citizenship" = data.frame(citizenship), "english" = data.frame(english))
+write.xlsx(datasets, file = "../../Transformed Data/2020/citizenship_english_ability_Hawaii_NHPI.xlsx")
+
+
+
+
+
+
+
+
+
+# ======================================
+# (f) Renter vs Owner for the race group we are talking about in the county versus the state versus the nation (ACS 5 year)
+# ======================================
+
+# =====
+# NHPI
+# =====
+
+# 1.
+# ------
+# Pulling ACS 5 year data
+# ------
+
+# Table - TENURE (NATIVE HAWAIIAN AND OTHER PACIFIC ISLANDER ALONE HOUSEHOLDER)
+# Table ID - B25003E
+
+
+housing <- get_acs(geography = "county",
+                   state = "Hawaii",
+                   table = 'B25003E', 
+                   year = 2020)
+
+
+housing <- housing %>% mutate(variable = case_when(
+  variable == "B25003E_001" ~ 'total',
+  variable == "B25003E_002" ~ 'owner',
+  variable == "B25003E_003" ~ 'renter'
+))
+
+# get county and state data 
+housing_county <- housing %>% select(GEOID, NAME, variable, estimate)
+
+housing_state <- housing %>% group_by(variable) %>% summarise(estimate =sum(estimate)) %>% mutate(
+  GEOID = '15', NAME = 'Hawaii'
+) %>% select(GEOID, NAME, variable, estimate)
+
+# ------
+# Get national data 
+# ------
+
+housing_US <- get_acs(geography = "us",
+                      table = 'B25003E', 
+                      year = 2020)
+
+housing_US <- housing_US %>% mutate(variable = case_when(
+  variable == "B25003E_001" ~ 'total',
+  variable == "B25003E_002" ~ 'owner',
+  variable == "B25003E_003" ~ 'renter'
+)) %>% select(GEOID, NAME, variable, estimate)
+
+
+# ------
+# Combine couty, state and national data 
+# ------
+
+housing_HI_NHPI <- rbind(housing_county, housing_state, housing_US)
+
+
+# export data 
+datasets <- list("LA - AA" = data.frame(housing_LA_AA), "LA - NHPI" = data.frame(housing_LA_NHPI),
+                 "KC - AA" = data.frame(housing_KC_AA), "HC - AA" = data.frame(housing_HC_AA),
+                 "NYC - AA" = data.frame(housing_NY_AA), "HI - NHPI" = data.frame(housing_HI_NHPI))
+write.xlsx(datasets, file = "../../Transformed Data/2020/renter_owner.xlsx")
