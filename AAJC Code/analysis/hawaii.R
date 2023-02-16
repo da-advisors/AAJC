@@ -441,6 +441,52 @@ nas <- citizenship[is.na(citizenship$citizenship_perc),]
 citizenship$citizenship_perc[is.na(citizenship$citizenship_perc)] <- 0
 
 
+
+# Non-citizen map # 
+# -----------------
+
+# add non cit col 
+citizenship <- citizenship %>% mutate(non_citizenship_perc = 100 - citizenship_perc) 
+
+
+# Create percent factor column for mapping 
+splits <- c(0,25,50,75,100)
+
+citizenship <- citizenship %>% 
+  mutate(non_citizenship_perc_fctr = case_when(
+    non_citizenship_perc < splits[1] ~ paste0("Less than ",splits[1],"%"),
+    non_citizenship_perc >= splits[1] & non_citizenship_perc < splits[2] ~ paste0(splits[1], " to ", splits[2], "%"),
+    non_citizenship_perc >= splits[2] & non_citizenship_perc < splits[3] ~ paste0(splits[2], " to ", splits[3], "%"),
+    non_citizenship_perc >= splits[3] & non_citizenship_perc <= splits[4] ~ paste0(splits[3], " to ", splits[4], "%"),
+    non_citizenship_perc >= splits[4] & non_citizenship_perc <= splits[5] ~ paste0(splits[4], " to ", splits[5], "%"),
+    non_citizenship_perc > splits[4] ~ paste0("Greater than ", splits[5], "%")))
+
+citizenship$non_citizenship_perc_fctr <- as.factor(citizenship$non_citizenship_perc_fctr)
+
+# add geometry 
+citizenship_plot <- foreign_born_perc %>% left_join(citizenship  %>% select(NAME, non_citizenship_perc_fctr), by = 'NAME')
+
+# ------
+# Plot
+# ------
+non_citizen_map <- citizenship_plot %>% 
+  ggplot(aes(fill = non_citizenship_perc_fctr, geometry = geometry))+
+  geom_sf(color = "black", size = 0.04) +
+  scale_fill_brewer(palette = "PuOr") + 
+  ggtitle("Non-Citizen NHPI Alone Population - 2020") +
+  labs(fill = "Percentage Non-citizen ", size=1) +
+  theme(plot.caption.position = "plot",
+        plot.caption = element_text(hjust = 1)) +
+  theme_void() + 
+  titles_upper() +
+  coord_sf(xlim = c(-160.5, -154.8), ylim = c(18.8,22.2)) # zoom in to hawaii
+
+
+# save 
+ggsave(filename = "../../AAJC Vis/case_studies/hawaii/non_citizenship_map_AA_2020.png",
+       plot = non_citizen_map, bg = "white")
+
+
 # ------
 # join with self response data  
 # ------
@@ -623,7 +669,7 @@ subethnicity_nhpi_20_NATIONAL$label[subethnicity_nhpi_20_NATIONAL$label == "Othe
 # US - #f4c78d
 
 ethnicities_bar <- subethnicity_nhpi_20 %>% 
-  ggplot(aes(x=reorder(label,-estimate),y=estimate)) + 
+  ggplot(aes(x=reorder(label,estimate),y=estimate)) + 
   geom_bar(stat = 'identity',fill="#916a92")+
   theme_minimal()+
   xlab("Ethnicity") +
@@ -634,7 +680,8 @@ ethnicities_bar <- subethnicity_nhpi_20 %>%
   theme(axis.text.x = element_text( size = 6),
         plot.caption=element_text(size=6, hjust=1, vjust = .5, face="italic"),
         axis.title.x=element_blank(),
-        axis.title.y=element_blank())
+        axis.title.y=element_blank()) + 
+  coord_flip()
 
 ethnicities_bar
 
@@ -643,7 +690,7 @@ ethnicities_bar
 # ------
 
 ethnicities_bar_NATIONAL <- subethnicity_nhpi_20_NATIONAL %>% 
-  ggplot(aes(x=reorder(label,-estimate),y=estimate)) + 
+  ggplot(aes(x=reorder(label,estimate),y=estimate)) + 
   geom_bar(stat = 'identity',fill="#f4c78d")+
   theme_minimal()+
   xlab("Ethnicity") +
@@ -655,7 +702,8 @@ ethnicities_bar_NATIONAL <- subethnicity_nhpi_20_NATIONAL %>%
   theme(axis.text.x = element_text(size=6),
         plot.caption=element_text(size=6, hjust=1, vjust = .5, face="italic"),
         axis.title.x=element_blank(),
-        axis.title.y=element_blank())
+        axis.title.y=element_blank())+ 
+  coord_flip()
 
 ethnicities_bar_NATIONAL
 
@@ -665,12 +713,12 @@ ethnicities_bar_NATIONAL
 # ------
 
 ethnicities_bar_FACET <- grid.arrange(ethnicities_bar, ethnicities_bar_NATIONAL, nrow=1,
-                                      top = textGrob("Top 5 NHPI (alone or in combination) Ethnicity Groups",gp=gpar(fontsize=14)),
-                                      bottom = textGrob("Ethnicity"),
-                                      left="Estimates (thousands)")
+                                      top = textGrob("Top 5 NHPI (alone or in combination) Subgroups",gp=gpar(fontsize=14)),
+                                      bottom = textGrob("Estimates (thousands)"),
+                                      left="Subgroup")
 
-ggsave(filename = "../../AAJC Vis/case_studies/hawaii/sub_ethn_NHPI_FACET_2020.png", 
-       plot = ethnicities_bar_FACET, bg = "white")
+ggsave(filename = "../../AAJC Vis/case_studies/hawaii/sub_ethn_NHPI_FACET_2020_horizontal.png", 
+       plot = ethnicities_bar_FACET, bg = "white", width = 9, height = 5)
 
 
 

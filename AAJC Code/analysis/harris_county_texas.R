@@ -207,12 +207,10 @@ geo <- get_decennial(
   state = "TX",
   county = "Harris County",
   variables = 'P1_001N', # total pop. of a tract 
-  year = 2020,
-  geometry = TRUE,
-  resolution = "20m")
+  year = 2020)
 
 # merge geo data with sr data frame 
-sr_2020_HC_geo <- sr_2020_HC %>% left_join(geo %>% select(GEO_ID_tract = GEOID, geometry), by = 'GEO_ID_tract')
+sr_2020_HC_geo <- sr_2020_HC %>% left_join(geo %>% select(GEO_ID_tract = GEOID), by = 'GEO_ID_tract')
 
 splits <- c(0,25,50,75,100)
 
@@ -227,13 +225,14 @@ sr_2020_HC_geo <- sr_2020_HC_geo %>%
 
 sr_2020_HC_geo$CRRALL_fctr <- as.factor(sr_2020_HC_geo$CRRALL_fctr)
 
+sr_2020_HC_geo_plot <- foreign_born_perc %>% left_join(sr_2020_HC_geo  %>% select(GEOID = GEO_ID_tract, CRRALL_fctr), by = 'GEOID')
+
 # 2. 
 # Plot 
-reponse_map <- sr_2020_HC_geo %>% 
-  ggplot(aes(fill = CRRALL, geometry = geometry))+
+reponse_map <- sr_2020_HC_geo_plot %>% 
+  ggplot(aes(fill = CRRALL_fctr, geometry = geometry))+
   geom_sf(color = "black", size = 0.04) +
-  # scale_fill_brewer(palette = "PuOr") + 
-  scale_fill_viridis_c(option = "magma") +
+  scale_fill_brewer(palette = "PuOr", na.translate = F) + 
   ggtitle("          Response Rate by Census Tract - 2020") +
   labs(fill = "Cumulative Self-Response\nRate - Overall (%)",
        caption = "Census tracts shaded in white indicate no self responsedata reported") +
@@ -242,9 +241,8 @@ reponse_map <- sr_2020_HC_geo %>%
   theme_void() + 
   titles_upper()
 
-
-
-
+ggsave(filename = "../../AAJC Vis/case_studies/harris_county_texas/response_rate_map_2020.png",
+       plot = reponse_map, bg = "white", width = 6, height = 4)
 
 
 
@@ -415,6 +413,53 @@ nas <- citizenship[is.na(citizenship$citizenship_perc),]
 citizenship$citizenship_perc[is.na(citizenship$citizenship_perc)] <- 0
 
 
+
+# Non-citizen map # 
+# -----------------
+
+# add non cit col 
+citizenship <- citizenship %>% mutate(non_citizenship_perc = 100 - citizenship_perc) 
+
+
+# Create percent factor column for mapping 
+max <- max(citizenship$non_citizenship_perc)
+splits <- c(0,25,50,75,100)
+
+citizenship <- citizenship %>% 
+  mutate(non_citizenship_perc_fctr = case_when(
+    non_citizenship_perc < splits[1] ~ paste0("Less than ",splits[1],"%"),
+    non_citizenship_perc >= splits[1] & non_citizenship_perc < splits[2] ~ paste0(splits[1], " to ", splits[2], "%"),
+    non_citizenship_perc >= splits[2] & non_citizenship_perc < splits[3] ~ paste0(splits[2], " to ", splits[3], "%"),
+    non_citizenship_perc >= splits[3] & non_citizenship_perc <= splits[4] ~ paste0(splits[3], " to ", splits[4], "%"),
+    non_citizenship_perc >= splits[4] & non_citizenship_perc <= splits[5] ~ paste0(splits[4], " to ", splits[5], "%"),
+    non_citizenship_perc > splits[4] ~ paste0("Greater than ", splits[5], "%")))
+
+citizenship$non_citizenship_perc_fctr <- as.factor(citizenship$non_citizenship_perc_fctr)
+
+# add geometry 
+citizenship_plot <- foreign_born_perc %>% left_join(citizenship  %>% select(NAME, non_citizenship_perc_fctr), by = 'NAME')
+
+# ------
+# Plot
+# ------
+non_citizen_map <- citizenship_plot %>% 
+  ggplot(aes(fill = non_citizenship_perc_fctr, geometry = geometry))+
+  geom_sf(color = "black", size = 0.04) +
+  scale_fill_brewer(palette = "PuOr") + 
+  ggtitle("Non-Citizen Asian Alone Population - 2020") +
+  labs(fill = "Percentage Non-citizen ", size=1) +
+  theme(plot.caption.position = "plot",
+        plot.caption = element_text(hjust = 1)) +
+  theme_void() + 
+  titles_upper()
+
+
+# save 
+ggsave(filename = "../../AAJC Vis/case_studies/harris_county_texas/non_citizenship_map_AA_2020.png",
+       plot = non_citizen_map, bg = "white", width = 4.74, height = 3)
+
+
+
 # ------
 # join with self response data  
 # ------
@@ -540,14 +585,15 @@ subethnicity_aa_20_facet <- rbind(subethnicity_aa_20,subethnicity_aa_20_NATIONAL
 # US - #f4c78d
 
 ethnicities_bar <- subethnicity_aa_20 %>% 
-  ggplot(aes(x=reorder(label,-estimate),y=estimate)) + 
+  ggplot(aes(x=reorder(label,estimate),y=estimate)) + 
   geom_bar(stat = 'identity',fill="#916a92")+
   theme_minimal()+
   labs(subtitle = "Harris County, Texas - 2020")+
-  theme(axis.text.x = element_text(angle=30),
+  theme(
         plot.caption=element_text(size=6, hjust=1, vjust = .5, face="italic"),
         axis.title.x=element_blank(),
-        axis.title.y=element_blank())
+        axis.title.y=element_blank()) + 
+  coord_flip()
 
 ethnicities_bar
 
@@ -556,7 +602,7 @@ ethnicities_bar
 # ------
 
 ethnicities_bar_NATIONAL <- subethnicity_aa_20_NATIONAL %>% 
-  ggplot(aes(x=reorder(label,-estimate),y=estimate)) + 
+  ggplot(aes(x=reorder(label,estimate),y=estimate)) + 
   geom_bar(stat = 'identity',fill="#f4c78d")+
   theme_minimal()+
   xlab("") + 
@@ -564,10 +610,11 @@ ethnicities_bar_NATIONAL <- subethnicity_aa_20_NATIONAL %>%
   labs(
     subtitle = "United States - 2020")+
   # caption = "\"Chinese\" population excludes Taiwanese individuals.\n\"Other Asian\" groups are not specified in the ACS data") +
-  theme(axis.text.x = element_text(angle=30),
+  theme(
         plot.caption=element_text(size=6, hjust=1, vjust = .5, face="italic"),
         axis.title.x=element_blank(),
-        axis.title.y=element_blank())
+        axis.title.y=element_blank())+ 
+  coord_flip()
 
 ethnicities_bar_NATIONAL
 
@@ -577,12 +624,12 @@ ethnicities_bar_NATIONAL
 # ------
 
 ethnicities_bar_FACET <- grid.arrange(ethnicities_bar, ethnicities_bar_NATIONAL, nrow=1,
-                                      top = textGrob("Top 10 Asian (alone or in combination) Ethnicity Groups",gp=gpar(fontsize=14)),
-                                      bottom = textGrob("Ethnicity"),
-                                      left="Estimates (thousands)")
+                                      top = textGrob("Top 10 Asian (alone or in combination) Subgroups",gp=gpar(fontsize=14)),
+                                      bottom = textGrob("Estimates (thousands)"),
+                                      left="Subgroup")
 
-ggsave(filename = "../../AAJC Vis/case_studies/harris_county_texas/sub_ethn_AA_FACET_2020.png", 
-       plot = ethnicities_bar_FACET, bg = "white")
+ggsave(filename = "../../AAJC Vis/case_studies/harris_county_texas/sub_ethn_AA_FACET_2020_horizontal.png", 
+       plot = ethnicities_bar_FACET, bg = "white", width = 9, height = 5)
 
 # NOTE - facet plot does not contain caption
 

@@ -32,7 +32,7 @@ options(tigris_use_cache = TRUE)
 # ========
 
 # analytical <- read.csv("../Transformed Data/PES_DC_MR_comparison_2010.csv")
-analytical <- read.csv("../Transformed Data/PES_DC_MR_comparison_2000.csv")
+analytical <- read.csv("../../Transformed Data/2000/ES_MR_comparison_2000.csv")
 
 geo <- read.csv("../Transformed Data/PES_DC_comparison_2000.csv")
 
@@ -385,7 +385,7 @@ display_carto_pal(5, "Sunset") #county maps
 display_carto_pal(7, "OrYel") #state maps, option 2
 display.brewer.pal(6,"PuOr")
 
-PurpOr7 <- brewer.pal(5,"PuOr")
+PurpOr7 <- brewer.pal(6,"PuOr")
 PurpOr6 <- brewer.pal(6,"PuOr")
 PurpOr6 <- PurpOr6[2:6]
 PurpOr4 <- brewer.pal(4,"PuOr")
@@ -495,13 +495,15 @@ for (i in unique(analytical_state_10_age$AGEGRP)){
   
   # the RACE passed into dummy_age will be the one being plotted 
   # dummy_age2 is for creating a consistent legend
-  dummy_age <- analytical_state_10_age %>% filter(RACE == "NHPI_AIC") %>% filter(AGEGRP == i)
+  dummy_age <- analytical_state_10_age %>% filter(RACE == "A_AIC") %>% filter(AGEGRP == i)
   dummy_age2 <- analytical_state_10_age %>% filter(RACE == "NHPI_A") %>% filter(AGEGRP == i)
   
-  min_i <- min(dummy_age$EOC,dummy_age2$EOC)
-  max_i <- max(dummy_age$EOC, dummy_age2$EOC)
+  # min_i <- min(dummy_age$EOC,dummy_age2$EOC)
+  # max_i <- max(dummy_age$EOC, dummy_age2$EOC)
   
-  splits <- as.integer(seq(min_i, max_i, length.out = 5))
+  # splits <- as.integer(seq(min_i, max_i, length.out = 5))
+  # splits <- c(-50,-25,0,25,50) # have to change splits sometimes based on age group we are analyzing 
+  splits <- c(-10, 0, 25, 50)
   
   dummy_age <- dummy_age %>% 
     mutate(percent_fctr = case_when(
@@ -509,8 +511,7 @@ for (i in unique(analytical_state_10_age$AGEGRP)){
       EOC >= splits[1] & EOC < splits[2] ~ paste0(splits[1], " to ", splits[2], "%"),
       EOC >= splits[2] & EOC < splits[3] ~ paste0(splits[2], " to ", splits[3], "%"),
       EOC >= splits[3] & EOC <= splits[4] ~ paste0(splits[3], " to ", splits[4], "%"),
-      EOC >= splits[4] & EOC <= splits[5] ~ paste0(splits[4], " to ", splits[5], "%"),
-      EOC > splits[4] ~ paste0("Greater than ", splits[5], "%")))
+      EOC > splits[4] ~ paste0("Greater than ", splits[4], "%")))
   
   dummy_age$percent_fctr <- as.factor(dummy_age$percent_fctr)
   
@@ -523,35 +524,34 @@ for (i in unique(analytical_state_10_age$AGEGRP)){
   # --------------------
   # MAPPING
   # --------------------
-  a2010_breaks <- c(PurpOr7[1], PurpOr7[2], PurpOr7[3], PurpOr7[4], PurpOr7[5], PurpOr7[6])
+  a2010_breaks <- c(PurpOr7[1], PurpOr7[2], PurpOr7[4], PurpOr7[5], PurpOr7[6])
   
   names(a2010_breaks) <- c(paste0("Less than ",splits[1],"%"), paste0(splits[1], " to ", splits[2], "%"), paste0(splits[2], " to ", splits[3], "%"),
-                           paste0(splits[3], " to ", splits[4], "%"),paste0(splits[4], " to ", splits[5], "%"), paste0("Greater than ", splits[5], "%"))
+                           paste0(splits[3], " to ", splits[4], "%"), paste0("Greater than ", splits[4], "%"))
   
   # Asian Alone - A 
   A_2010_state <- state_map(dummy_age, a2010_breaks)
   A_2010_state <- A_2010_state +  
     labs(fill = "Error of Closure (%)     ",
-         title =paste0("      Population Estimates and Census Comparison\n      NHPI (Alone or in Combination) Populations - Ages ", agegrp_labels[i]),
+         title =paste0("      Population Estimates and Census Comparison\n      Asian (Alone or in Combination) Populations - Ages ", agegrp_labels[i]),
          subtitle = "         Resident Population By State - 2010",
-         caption = "An error of closure value less than 0% indicates a potential\nundercount ie. the estimates for NHPI (alone or in combination) populations\n were greater than the census results.") +
+         caption = "An error of closure value less than 0% indicates a potential\nundercount i.e. the estimates for Asian (alone or in combination)\npopulations were greater than the census results.") +
     titles_upper()
   
   # state_agegrp_imgs <- append(state_agegrp_imgs, A_2010_state)
   # save
-  ggsave(filename = paste("../../AAJC Vis/diff_state_agegrp_2010/diff_by_agegrp_",i,"_NHPIAIC_2010_state_map.png",sep=""),
+  ggsave(filename = paste("../../AAJC Vis/diff_state_agegrp_2010/replace/diff_by_agegrp_",i,"_A_AIC_2010_state_map.png",sep=""),
          plot = A_2010_state, bg = "white", width = 9, height = 7)
 }
 
 
 # 65 + 
-dummy_age <- over65 %>% filter(RACE == "NHPI_A")
+dummy_age <- over65 %>% filter(RACE == "NHPI_AIC")
 dummy_age2 <- over65 %>% filter(RACE == "NHPI_AIC")
 
-min_i <- min(dummy_age$EOC,dummy_age2$EOC)
-max_i <- max(dummy_age$EOC, dummy_age2$EOC)
-
-splits <- as.integer(seq(min_i, max_i, length.out = 5))
+min(dummy_age$EOC)
+# splits <- as.integer(seq(min_i, max_i, length.out = 5))
+splits <- c(-50, -25, 0, 15)
 
 dummy_age <- dummy_age %>% 
   mutate(percent_fctr = case_when(
@@ -559,8 +559,7 @@ dummy_age <- dummy_age %>%
     EOC >= splits[1] & EOC < splits[2] ~ paste0(splits[1], " to ", splits[2], "%"),
     EOC >= splits[2] & EOC < splits[3] ~ paste0(splits[2], " to ", splits[3], "%"),
     EOC >= splits[3] & EOC <= splits[4] ~ paste0(splits[3], " to ", splits[4], "%"),
-    EOC >= splits[4] & EOC <= splits[5] ~ paste0(splits[4], " to ", splits[5], "%"),
-    EOC > splits[4] ~ paste0("Greater than ", splits[5], "%")))
+    EOC > splits[4] ~ paste0("Greater than ", splits[4], "%")))
 
 dummy_age$percent_fctr <- as.factor(dummy_age$percent_fctr)
 
@@ -573,20 +572,20 @@ dummy_age <- left_join(dummy_age, state_overlay_geo, by = "STNAME")
 # --------------------
 # MAPPING
 # --------------------
-a2010_breaks <- c(PurpOr7[1], PurpOr7[2], PurpOr7[3], PurpOr7[4], PurpOr7[5], PurpOr7[6])
+a2010_breaks <- c(PurpOr7[1], PurpOr7[2], PurpOr7[3], PurpOr7[4])
 
 names(a2010_breaks) <- c(paste0("Less than ",splits[1],"%"), paste0(splits[1], " to ", splits[2], "%"), paste0(splits[2], " to ", splits[3], "%"),
-                         paste0(splits[3], " to ", splits[4], "%"),paste0(splits[4], " to ", splits[5], "%"), paste0("Greater than ", splits[5], "%"))
+                         paste0(splits[3], " to ", splits[4], "%"))
 
 A_2010_state <- state_map(dummy_age, a2010_breaks)
 A_2010_state <- A_2010_state +  
   labs(fill = "Error of Closure (%)     ",
-       title =paste0("      Population Estimates and Census Comparison\n      NHPI (Alone) Populations - Ages 65 or older"),
+       title =paste0("      Population Estimates and Census Comparison\n      NHPI (Alone or in Combination) Populations - Ages 65 or older"),
        subtitle = "         Resident Population By State - 2010",
-       caption = "An error of closure value less than 0% indicates a potential\nundercount ie. the estimates for NHPI (alone) populations\n were greater than the census results.") +
+       caption = "An error of closure value less than 0% indicates a potential\nundercount i.e. the estimates for NHPI (alone or in combination) populations\n were greater than the census results.") +
   titles_upper()
 
-ggsave(filename = paste("../../AAJC Vis/diff_state_agegrp_2010/diff_by_agegrp_65_or_older_NHPIA_2010_state_map.png",sep=""),
+ggsave(filename = paste("../../AAJC Vis/diff_state_agegrp_2010/replace/diff_by_agegrp_65_or_older_NHPI_AIC_2010_state_map.png",sep=""),
        plot = A_2010_state, bg = "white", width = 9, height = 7)
 
 
@@ -624,6 +623,7 @@ dummy %>% filter(RACE_GROUP == "AA") %>%
 
 state_2010 <- read.csv("../../Transformed Data/2010/state_level_comparisons_2010.csv")
 state_2020 <- read.csv("../../Transformed Data/2020/state_level_comparisons_2020.csv")
+state_2000 <- read.csv("../../Transformed Data/2000/state_level_comparisons_2000.csv")
 
 title_labels <- c("Asian (Alone)", "Asian (Alone or in Combination)", "NHPI (Alone)", "NHPI (Alone or in Combination)")
 caption_labels <- c("Asian (Alone)\n", "Asian (Alone or in Combination)\npopulations", "NHPI (Alone)\n", "NHPI (Alone or in Combination)\npopulations")
@@ -768,8 +768,61 @@ for (i in seq(race_groups)) {
   
 }
 
-state_2020 %>% filter(RACE == "A_AIC")
-state_2010 %>% filter(RACE == "A_AIC")
+
+
+## Maps for 2000 - API - AANHPI 
+
+# filter data for race group
+# -------
+dummy <- state_2000   # replace this with the DF we want the map of (2010 or 2020)
+
+dummy <- dummy %>% filter(RACE == "API_alone") %>% rename(EOC = PERC_DIFF)
+
+
+# creating percent_fctr column
+# -------
+splits <- c(-25,0,25,50)
+
+dummy <- dummy %>% 
+  mutate(percent_fctr = case_when(
+    EOC < splits[1] ~ paste0("Less than ",splits[1],"%"),
+    EOC >= splits[1] & EOC < splits[2] ~ paste0(splits[1], " to ", splits[2], "%"),
+    EOC >= splits[2] & EOC <= splits[3] ~ paste0(splits[2], " to ", splits[3], "%"),
+    EOC >= splits[3] & EOC <= splits[4] ~ paste0(splits[3], " to ", splits[4], "%"),
+    EOC > splits[4] ~ paste0("Greater than ", splits[4], "%")))
+
+dummy$percent_fctr <- as.factor(dummy$percent_fctr)
+  
+# add geospatial data 
+# -------
+dummy$STNAME[dummy$X == 18] <-  "District of Columbia"
+dummy <- left_join(dummy, state_overlay_geo, by = "STNAME")
+
+
+  
+# Mapping
+# -------
+a2010_breaks <- c(PurpOr6[1], PurpOr6[2], PurpOr6[3], PurpOr6[4], PurpOr6[5])
+
+names(a2010_breaks) <- c(paste0("Less than ",splits[1],"%"), paste0(splits[1], " to ", splits[2], "%"), paste0(splits[2], " to ", splits[3], "%")
+                         , paste0(splits[3], " to ", splits[4], "%"), paste0("Greater than ", splits[4], "%"))
+
+
+
+state_vis <- state_map(dummy, a2010_breaks)
+state_vis <- state_vis +  
+  labs(fill = "Coverage - Error of Closure (%)     ",
+       title = "AANHPI, Alone Population",
+       subtitle = "Population Estimates and Census Comparison\nResident Population By State - 2000",
+       caption = paste0("An error of closure value less than 0% indicates a potential\nundercount ie. the estimates for API (alone)\nwere greater than the census results.")) +
+  titles_upper()
+state_vis
+
+# save
+ggsave(filename = paste("../../AAJC Vis/state_maps/replace/state_map_AANHPI_alone_2000.png",sep=""),
+       plot = state_vis, bg = "white", width = 9, height = 7)
+
+
 
 
 

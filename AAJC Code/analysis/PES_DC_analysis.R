@@ -294,7 +294,7 @@ analytical00_states <- analytical00 %>% group_by(STNAME, RACE) %>%
                                                            NUM_DIFF == 0 ~ 'equal'
                                                          )) 
 
-write.csv(analytical20_states, "../../Transformed Data/2000/state_level_comparisons_2000.csv")
+write.csv(analytical00_states, "../../Transformed Data/2000/state_level_comparisons_2000.csv")
   
 
 # =====================================

@@ -5,7 +5,6 @@ library(scales)
 library(showtext)
 library(stringr)
 
-
 ## THEME IDEAS ## 
 ## Based off examples from: 
 ## https://www.advancingjustice-aajc.org/sites/default/files/2019-07/1153_AAJC_Immigration_Final_0.pdf
@@ -36,7 +35,7 @@ purple <- '#3F3875'
 
 
 # Importing the font: 
-font_add(family = "Open Sans", "OpenSans-Bold.ttf") 
+# font_add(family = "Open Sans", "OpenSans-Bold.ttf") 
 showtext_auto()
 
 
@@ -48,16 +47,13 @@ theme_aajc <- theme_void() +
   theme(
     # Similar font to AAJC report &
     # positioning Title, subtitle, and Legend away from map for Alysha
-    plot.title = element_text(family = "Open Sans",
-                              face = "bold",
+    plot.title = element_text(face = "bold",
                               vjust = 5,
                               size=15),
-    plot.subtitle = element_text(vjust = 9),
+    plot.subtitle = element_text(vjust = 7),
     
     # making legend text match with report example 
-    legend.title = element_text(family = "Open Sans",
-                                face = "bold",
-                                size = 8),
+    legend.title = element_text(face = "bold",size = 8),
     
     # increasing space between legend and map 
     legend.margin = margin(10,10,10,10),
@@ -94,20 +90,20 @@ titles_upper <- function(){
 
 
 # Theme trial & error   
-AA_alone_2000_MAP <- AA_alone %>% 
-  mutate(percent = 100 * (value/summary_value)) %>%
-  ggplot(aes(fill = percent)) + 
-  geom_sf(color = "white") +
-  theme_AAJC + 
-  scale_fill_gradient(low = orange_80t, high = orange) + 
-  labs(fill = "% of Asian     \npopulation     ",
-       title = str_to_upper(
-         "     Percentage of Asian Alone Population"
-       ),
-       subtitle =  str_to_upper("       2000 Decennial Census"))
-
-
-AA_alone_2000_MAP
+# AA_alone_2000_MAP <- AA_alone %>% 
+#   mutate(percent = 100 * (value/summary_value)) %>%
+#   ggplot(aes(fill = percent)) + 
+#   geom_sf(color = "white") +
+#   theme_AAJC + 
+#   scale_fill_gradient(low = orange_80t, high = orange) + 
+#   labs(fill = "% of Asian     \npopulation     ",
+#        title = str_to_upper(
+#          "     Percentage of Asian Alone Population"
+#        ),
+#        subtitle =  str_to_upper("       2000 Decennial Census"))
+# 
+# 
+# AA_alone_2000_MAP
 
 
 # AAJC Color Fill: 

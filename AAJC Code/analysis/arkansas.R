@@ -49,9 +49,12 @@ agegrp_2010_UNITED_STATES$CTYNAME <- "United States"
 agegrp_2010_UNITED_STATES <- agegrp_2010_UNITED_STATES %>% select(CTYNAME, AGEGRP, RACE, ESTIM, MR, PERC_DIFF, COVERAGE)
 
 
-# filter KC data 
+# filter AK data 
 agegrp_2010_AK <- agegrp_2010 %>% filter(STNAME == "Arkansas") %>% 
   select(CTYNAME, AGEGRP, RACE, ESTIM, MR, PERC_DIFF, COVERAGE)
+
+# filter benson county data
+agegrp_2010_benton <- agegrp_2010_AK %>% filter(CTYNAME == "Benton County")
 
 # aggregate data for entire AK
 agegrp_2010_AK <- agegrp_2010_AK %>% group_by(AGEGRP, RACE) %>% summarise(ESTIM = sum(ESTIM), MR = sum(MR)) %>%
@@ -68,7 +71,7 @@ agegrp_2010_AK$CTYNAME <- "Arkansas"
 agegrp_2010_AK <- agegrp_2010_AK %>% select(CTYNAME, AGEGRP, RACE, ESTIM, MR, PERC_DIFF, COVERAGE)
 
 # join US and KC data 
-agegrp_2010_AK_USA <- rbind(agegrp_2010_AK, agegrp_2010_UNITED_STATES)
+agegrp_2010_AK_USA <- rbind(agegrp_2010_AK, agegrp_2010_benton, agegrp_2010_UNITED_STATES)
 
 
 
@@ -78,19 +81,19 @@ v2_line <- agegrp_2010_AK_USA %>% filter(RACE == "NHPI_AIC") %>%
   ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME)) +
   geom_hline(yintercept = 0, linetype='dotted', col='grey')+
   geom_line(aes(color=CTYNAME), size=1) +
-  scale_color_manual(values = c("#916a92", "#f4c78d"), name = "Region") +
+  scale_color_manual(values = c("#916a92", "#f4c78d", "#e89251"), name = "Region") +
   theme_minimal() +
   xlab("Age Group") + 
   ylab("Error of Closure (%)") + 
   ggtitle("Coverage by Age Group for NHPI (Alone or in Combination) Populations - 2010")+
   scale_x_discrete(labels = agegrp_labels) +
-  annotate("text",x=17.7, y=5, label="overcount", size=2.5, color='grey') +
-  annotate("text",x=17.7, y=-5, label="undercount", size=2.5, color='grey')
+  annotate("text",x=17.7, y=7, label="overcount", size=2.5, color='grey') +
+  annotate("text",x=17.7, y=-7, label="undercount", size=2.5, color='grey')
 
 # change age group labels 
 v2_line <- v2_line + theme(axis.text.x = element_text(angle=45))
-
-ggsave(filename = "../../AAJC Vis/case_studies/arkansas/US_AND_AK_line_graph_coverage_by_agegrp_NHPI_AIC_2010.png",
+v2_line
+ggsave(filename = "../../AAJC Vis/case_studies/arkansas/US_AND_AK_line_graph_coverage_by_agegrp_NHPI_AIC_2010_BENTON.png",
        plot = v2_line, bg = "white", width =9.07, height = 5.47)
 
 
@@ -130,6 +133,7 @@ nhpi_vars <- nhpi_vars$name
 ak_census_tract_nhpi <- get_decennial(geography = "tract",
                                       variables = nhpi_vars,
                                       state = "Arkansas",
+                                      county = "Benton County",   # remove for only Arkansas scatterplot
                                       summary_var = 'P1_001N', # total pop. of a tract 
                                       year = 2020)
 # -------
@@ -140,7 +144,7 @@ ak_census_tract_nhpi <- get_decennial(geography = "tract",
 sr_2020 <- sr_2020 %>% separate(GEO_ID, c('A','GEO_ID_tract'), sep = 'US') %>% select(-A)
 
 # filtering self response data 
-sr_2020_AK <- sr_2020
+sr_2020_AK <- sr_2020 %>% filter(COUNTY == " Benton County" & STATE == " Arkansas")
 
 
 # -------
@@ -181,9 +185,9 @@ scatter_response <- sr_2020_AK %>% filter(RACE == 'NHPI_A') %>%
   theme_minimal() + 
   xlab("NHPI (Alone) Population (%)") + 
   ylab("Cumulative Self-Response\nRate - Overall (%)") + 
-  ggtitle("Response Rate by Percentage of NHPI Population by Census Tract - 2020")
+  ggtitle("Benton County Response Rate by Percentage of NHPI Population by Census Tract - 2020")
 
-ggsave(filename = "../../AAJC Vis/case_studies/arkansas/resp_by_tract_pop_scatter_NHPI_A_2020_SIZE.png",
+ggsave(filename = "../../AAJC Vis/case_studies/arkansas/resp_by_tract_pop_scatter_NHPI_A_2020_SIZE_BENTON.png",
        plot = scatter_response, bg = "white", width =9.07, height = 5.47)
 
 # light or - e49d48
@@ -208,10 +212,10 @@ ggsave(filename = "../../AAJC Vis/case_studies/arkansas/resp_by_tract_pop_scatte
 geo <- get_decennial(
   geography = "tract",
   state = "Arkansas",
+  county = "Benton County",
   variables = 'P1_001N', # total pop. of a tract 
   year = 2020,
-  geometry = TRUE,
-  resolution = "20m")
+  geometry = T)
 
 # merge geo data with sr data frame 
 sr_2020_AK_geo <- sr_2020_AK %>% left_join(geo %>% select(GEO_ID_tract = GEOID, geometry), by = 'GEO_ID_tract')
@@ -227,15 +231,19 @@ sr_2020_AK_geo <- sr_2020_AK_geo %>%
     CRRALL >= splits[4] & CRRALL <= splits[5] ~ paste0(splits[4], " to ", splits[5], "%"),
     CRRALL > splits[4] ~ paste0("Greater than ", splits[5], "%")))
 
-sr_2020_AK_geo$CRRALL_fctr <- as.factor(sr_2020_AK_geo$CRRALL_fctr)
+sr_2020_AK_geo_plot <- foreign_born_perc %>% left_join(sr_2020_AK_geo  %>% select(GEOID = GEO_ID_tract, CRRALL_fctr), by = 'GEOID')
+
+sr_2020_AK_geo_plot[nrow(sr_2020_AK_geo_plot) + 1,] <- list(NA,NA,NA,NA,NA,"0 to 25%") # do this line only for benton county 
+
+sr_2020_AK_geo_plot$CRRALL_fctr <- as.factor(sr_2020_AK_geo_plot$CRRALL_fctr)
 
 # 2. 
 # Plot 
-reponse_map <- sr_2020_AK_geo %>% 
+reponse_map <- sr_2020_AK_geo_plot %>% 
   ggplot(aes(fill = CRRALL_fctr, geometry = geometry))+
   geom_sf(color = "black", size = 0.04) +
-  scale_fill_brewer(palette = "PuOr") + 
-  ggtitle("          Response Rate by Census Tract - 2020") +
+  scale_fill_brewer(palette = "PuOr", na.translate = F) + 
+  ggtitle("          Benton County Response Rate by Census Tract - 2020") +
   labs(fill = "Cumulative Self-Response\nRate - Overall (%)",
        caption = "Census tracts shaded in white indicate no self responsedata reported") +
   theme(plot.caption.position = "plot",
@@ -243,7 +251,7 @@ reponse_map <- sr_2020_AK_geo %>%
   theme_void()
 
 
-ggsave(filename = "../../AAJC Vis/case_studies/arkansas/resp_by_tract_map.png",
+ggsave(filename = "../../AAJC Vis/case_studies/arkansas/resp_by_tract_map_BENTON.png",
        plot = reponse_map, bg = "white")
 
 
@@ -276,6 +284,7 @@ fborn_vars <- c('B06004D_005','B06004D_001', 'B06004E_005', 'B06004E_001')
 
 foreign_born <- get_acs(geography = "tract",
                         state = "Arkansas",
+                        county = "Benton County",
                         variables = fborn_vars, 
                         year = 2020,
                         geometry = TRUE,
@@ -332,13 +341,13 @@ fborn_map <- foreign_born_perc %>%
   ggplot(aes(fill = percent_foreign_fctr, geometry = geometry))+
   geom_sf(color = "black", size = 0.06) +
   scale_fill_brewer(palette = "PuOr") + 
-  ggtitle("Foreign Born NHPI Population - 2020") +
+  ggtitle("Benton County Foreign Born NHPI Population - 2020") +
   labs(fill = "Percentage of NHPI Alone\nPopulation that is Foreign Born", size=1) +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 1)) +
   theme_void()
 
-ggsave(filename = "../../AAJC Vis/case_studies/arkansas/foreign_born_NHPIA.png",
+ggsave(filename = "../../AAJC Vis/case_studies/arkansas/foreign_born_NHPIA_BENTON.png",
        plot = fborn_map, bg = "white")
 
 
@@ -368,6 +377,7 @@ nhpi_citizen_vars <- c("B05003E_001", "B05003E_009", "B05003E_011", "B05003E_004
 
 citizenship <- get_acs(geography = "tract",
                        state = "Arkansas",
+                       county = "Benton County",
                        variables = nhpi_citizen_vars, 
                        year = 2020)
 
@@ -394,6 +404,54 @@ nas <- citizenship[is.na(citizenship$citizenship_perc),]
 
 # all 0s - 0 denominator issue - replace with 0
 citizenship$citizenship_perc[is.na(citizenship$citizenship_perc)] <- 0
+
+
+
+# Non-citizen map # 
+# -----------------
+
+# add non cit col 
+citizenship <- citizenship %>% mutate(non_citizenship_perc = 100 - citizenship_perc) 
+
+
+# Create percent factor column for mapping 
+splits <- c(0,25,50,75,100)
+
+citizenship <- citizenship %>% 
+  mutate(non_citizenship_perc_fctr = case_when(
+    non_citizenship_perc < splits[1] ~ paste0("Less than ",splits[1],"%"),
+    non_citizenship_perc >= splits[1] & non_citizenship_perc < splits[2] ~ paste0(splits[1], " to ", splits[2], "%"),
+    non_citizenship_perc >= splits[2] & non_citizenship_perc < splits[3] ~ paste0(splits[2], " to ", splits[3], "%"),
+    non_citizenship_perc >= splits[3] & non_citizenship_perc <= splits[4] ~ paste0(splits[3], " to ", splits[4], "%"),
+    non_citizenship_perc >= splits[4] & non_citizenship_perc <= splits[5] ~ paste0(splits[4], " to ", splits[5], "%"),
+    non_citizenship_perc > splits[4] ~ paste0("Greater than ", splits[5], "%")))
+
+
+citizenship$non_citizenship_perc_fctr <- as.factor(citizenship$non_citizenship_perc_fctr)
+
+# add geometry 
+citizenship_plot <- foreign_born_perc %>% left_join(citizenship  %>% select(NAME, non_citizenship_perc_fctr), by = 'NAME')
+citizenship_plot <- rbind(citizenship_plot, NA)
+citizenship_plot[nrow(citizenship_plot) + 1,] <- list(NA,NA,NA,NA,NA,NA,"25 to 50%") # do this line only for benton county 
+
+# ------
+# Plot
+# ------
+non_citizen_map <- citizenship_plot %>% 
+  ggplot(aes(fill = non_citizenship_perc_fctr, geometry = geometry))+
+  geom_sf(color = "black", size = .1) +
+  scale_fill_brewer(palette = "PuOr") + 
+  ggtitle("Benton County Non-Citizen NHPI Alone Population - 2020") +
+  labs(fill = "Percentage Non-citizen ", size=1) +
+  theme(plot.caption.position = "plot",
+        plot.caption = element_text(hjust = 1)) +
+  theme_void() + 
+  titles_upper() # zoom in to hawaii
+
+
+# save 
+ggsave(filename = "../../AAJC Vis/case_studies/arkansas/non_citizenship_map_AA_2020_BENTON.png",
+       plot = non_citizen_map, bg = "white")
 
 
 # ------
@@ -426,14 +484,14 @@ scatter_response_color <- sr_2020_AK %>% filter(RACE == 'NHPI_A') %>%
   theme_minimal() + 
   xlab("NHPI (alone) Population (%)") + 
   ylab("Cumulative Self-Response\nRate - Overall (%)") + 
-  ggtitle("Response Rate by Percentage of NHPI Population and Citizenship Status",
+  ggtitle("Benton County Response Rate by Percentage of NHPI Population and Citizenship Status",
           subtitle =  "Census Tract - 2020") + 
   labs(color = "Citizenship of NHPI\n(alone) Population (%)", size = 'Total Tract Population', size=2) + 
   theme(legend.title = element_text(size = 10), axis.title.y=element_text(size=10), axis.title.x=element_text(size=10))
 
 scatter_response_color
 
-ggsave(filename = "../../AAJC Vis/case_studies/arkansas/resp_by_citizenship_NHPI_A_2020_SCATTER.png",
+ggsave(filename = "../../AAJC Vis/case_studies/arkansas/resp_by_citizenship_NHPI_A_2020_SCATTER_BENTON.png",
        plot = scatter_response_color, bg = "white")
 
 
@@ -470,8 +528,9 @@ nhpi_groups_vars <- acs_vars[acs_vars$concept == "NATIVE HAWAIIAN AND OTHER PACI
 # pull 5 year acs data 
 # ------
 
-subethnicity_nhpi_20 <- get_acs(geography = "state",
+subethnicity_nhpi_20 <- get_acs(geography = "county",
                                 state = "Arkansas",
+                                county = "Benton County",
                                 table = 'B02019', 
                                 year = 2020)
 
@@ -519,18 +578,19 @@ subethnicity_nhpi_20_NATIONAL$label[subethnicity_nhpi_20_NATIONAL$label == "Othe
 # US - #f4c78d
 
 ethnicities_bar <- subethnicity_nhpi_20 %>% 
-  ggplot(aes(x=reorder(label,-estimate),y=estimate)) + 
+  ggplot(aes(x=reorder(label,estimate),y=estimate)) + 
   geom_bar(stat = 'identity',fill="#916a92")+
   theme_minimal()+
   xlab("Ethnicity") +
   ylab("Estimate (thousands)") +
-  labs(subtitle = "Arkansas - 2020")+
+  labs(subtitle = "Benton County - 2020")+
   # title = "Top 5 NHPI (alone or in combination) Ethnicity Groups",
   # caption = "\"Other\" Pacific Islander population groups are not specified in the ACS data") +
   theme(axis.text.x = element_text( size = 6),
         plot.caption=element_text(size=6, hjust=1, vjust = .5, face="italic"),
         axis.title.x=element_blank(),
-        axis.title.y=element_blank())
+        axis.title.y=element_blank()) + 
+  coord_flip()
 
 ethnicities_bar
 
@@ -539,7 +599,7 @@ ethnicities_bar
 # ------
 
 ethnicities_bar_NATIONAL <- subethnicity_nhpi_20_NATIONAL %>% 
-  ggplot(aes(x=reorder(label,-estimate),y=estimate)) + 
+  ggplot(aes(x=reorder(label,estimate),y=estimate)) + 
   geom_bar(stat = 'identity',fill="#f4c78d")+
   theme_minimal()+
   xlab("Ethnicity") +
@@ -551,7 +611,8 @@ ethnicities_bar_NATIONAL <- subethnicity_nhpi_20_NATIONAL %>%
   theme(axis.text.x = element_text(size=6),
         plot.caption=element_text(size=6, hjust=1, vjust = .5, face="italic"),
         axis.title.x=element_blank(),
-        axis.title.y=element_blank())
+        axis.title.y=element_blank())+ 
+  coord_flip()
 
 ethnicities_bar_NATIONAL
 
@@ -561,12 +622,12 @@ ethnicities_bar_NATIONAL
 # ------
 
 ethnicities_bar_FACET <- grid.arrange(ethnicities_bar, ethnicities_bar_NATIONAL, nrow=1,
-                                      top = textGrob("Top 5 NHPI (alone or in combination) Ethnicity Groups",gp=gpar(fontsize=14)),
-                                      bottom = textGrob("Ethnicity"),
-                                      left="Estimates (thousands)")
+                                      top = textGrob("Top 5 NHPI (alone or in combination) Subgroups",gp=gpar(fontsize=14)),
+                                      bottom = textGrob("Estimates (thousands)"),
+                                      left="Subgroup")
 
-ggsave(filename = "../../AAJC Vis/case_studies/arkansas/sub_ethn_NHPI_FACET_2020.png", 
-       plot = ethnicities_bar_FACET, bg = "white")
+ggsave(filename = "../../AAJC Vis/case_studies/arkansas/sub_ethn_NHPI_FACET_2020_horizontal_BENTON.png", 
+       plot = ethnicities_bar_FACET, bg = "white", width = 9, height = 5)
 
 
 
@@ -659,8 +720,9 @@ nhpi_citizen_vars <- c("B05003E_004", "B05003E_009", 'B05003E_015', 'B05003E_020
 # pull 5 year acs data 
 # ------
 
-citizenship <- get_acs(geography = "state",
+citizenship <- get_acs(geography = "county",
                        state = "Arkansas",
+                       county = "Benton County",
                        variables = nhpi_citizen_vars, 
                        year = 2020)
 
@@ -714,8 +776,9 @@ citizenship <- rbind(citizenship, citizenship_US)
 # Table ID - B16005E
 
 
-english <- get_acs(geography = "state",
+english <- get_acs(geography = "county",
                    state = "Arkansas",
+                   county = "Benton County",
                    table = 'B16005E', 
                    year = 2020)
 
@@ -809,6 +872,7 @@ write.xlsx(datasets, file = "../../Transformed Data/2020/citizenship_english_abi
 
 housing <- get_acs(geography = "county",
                    state = "Arkansas",
+                   county = "Benton County",
                    table = 'B25003E', 
                    year = 2020)
 
