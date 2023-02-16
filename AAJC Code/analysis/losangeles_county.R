@@ -12,6 +12,10 @@ source("aajc_tools.R")
 # Import theme created for AAJC Analysis in "AAJC Code/AAJC_theme.R"
 theme_AAJC <- readRDS('../theme_AAJC.rds')
 
+# Anam's Key: 
+census_api_key("0d3f6eaad6d4d9ffb24d6b420e4deccd7fe7f780")
+
+options(tigris_use_cache = TRUE)
 
 # ==========================
 # LINE CHART: overcounts and undercounts by age groups for LA County and for the United States
