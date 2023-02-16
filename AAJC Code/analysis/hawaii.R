@@ -652,6 +652,9 @@ subethnicity_nhpi_20_NATIONAL <- subethnicity_nhpi_20_NATIONAL %>% top_n(5, wt=e
 subethnicity_nhpi_20$estimate <- subethnicity_nhpi_20$estimate/1000
 subethnicity_nhpi_20_NATIONAL$estimate <- subethnicity_nhpi_20_NATIONAL$estimate/1000
 
+# Save for Alysha 
+# write.csv(subethnicity_nhpi_20, "../../Transformed Data/data for viz_alysha/top_eth_hi.csv")
+
 subethnicity_nhpi_20$label <- sub(",.*", "", subethnicity_nhpi_20$label) 
 subethnicity_nhpi_20_NATIONAL$label <- sub(",.*", "", subethnicity_nhpi_20_NATIONAL$label)
 

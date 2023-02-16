@@ -567,23 +567,6 @@ ggsave(filename = "../../AAJC Vis/case_studies/los_angeles/resp_by_citizenship_N
 #                                                                #
 ##################################################################
 
-
-# ======================================
-# (a) National Post Enumeration Survey numbers for whichever race group we are talking about (2000, 2010, 2020)
-# ======================================
-
-
-
-
-
-
-
-
-
-
-
-
-
 # ======================================
 # (d) Chart of the top 10 sub-ethnicities (for AA) or top 5 sub-ethnicities (for NHPI)
 #       in the current geography versus the nation as a whole (use the most recent 5 year ACS)
@@ -638,9 +621,13 @@ subethnicity_aa_20_NATIONAL$estimate <- subethnicity_aa_20_NATIONAL$estimate/100
 subethnicity_aa_20$label <- sub(",.*", "", subethnicity_aa_20$label) 
 subethnicity_aa_20_NATIONAL$label <- sub(",.*", "", subethnicity_aa_20_NATIONAL$label)
 
+
+
 # facet grid 
 subethnicity_aa_20$NAME <- sub(",.*", "", subethnicity_aa_20$NAME)
 subethnicity_aa_20_facet <- rbind(subethnicity_aa_20,subethnicity_aa_20_NATIONAL)
+
+write.csv(subethnicity_aa_20_facet, "../../Transformed Data/data for viz_alysha/top_ethnicities.csv")
 
 # ------
 # plot - LA
@@ -756,6 +743,10 @@ subethnicity_nhpi_20_NATIONAL$estimate <- subethnicity_nhpi_20_NATIONAL$estimate
 
 subethnicity_nhpi_20$label <- sub(",.*", "", subethnicity_nhpi_20$label) 
 subethnicity_nhpi_20_NATIONAL$label <- sub(",.*", "", subethnicity_nhpi_20_NATIONAL$label)
+
+# Saving for Alysha
+# subethnicity_nhpi_facet <- rbind(subethnicity_nhpi_20,subethnicity_nhpi_20_NATIONAL)
+# write.csv(subethnicity_nhpi_facet, "../../Transformed Data/data for viz_alysha/top_ethnicities_nhpi.csv")
 
 subethnicity_nhpi_20$label <- gsub(" ","\n",subethnicity_nhpi_20$label)
 subethnicity_nhpi_20_NATIONAL$label <- gsub(" ","\n",subethnicity_nhpi_20_NATIONAL$label)

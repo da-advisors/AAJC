@@ -574,6 +574,9 @@ subethnicity_aa_20_NATIONAL$estimate <- subethnicity_aa_20_NATIONAL$estimate/100
 subethnicity_aa_20$label <- sub(",.*", "", subethnicity_aa_20$label) 
 subethnicity_aa_20_NATIONAL$label <- sub(",.*", "", subethnicity_aa_20_NATIONAL$label)
 
+# Save for Alysha
+# write.csv(subethnicity_aa_20, "../../Transformed Data/data for viz_alysha/top_eth_hc.csv")
+
 # facet grid 
 subethnicity_aa_20$NAME <- sub(",.*", "", subethnicity_aa_20$NAME)
 subethnicity_aa_20_facet <- rbind(subethnicity_aa_20,subethnicity_aa_20_NATIONAL)

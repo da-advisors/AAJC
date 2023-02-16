@@ -543,7 +543,7 @@ nhpi_groups_vars <- acs_vars[acs_vars$concept == "NATIVE HAWAIIAN AND OTHER PACI
 # ------
 # pull 5 year acs data 
 # ------
-target_county <- "Salt Lake County"  # "Utah County"
+target_county <- "Utah County" # "Salt Lake County"  # "Utah County"
 subethnicity_nhpi_20 <- get_acs(geography = "county",
                                 state = "Utah",
                                 county = target_county,
@@ -579,6 +579,11 @@ subethnicity_nhpi_20_NATIONAL$estimate <- subethnicity_nhpi_20_NATIONAL$estimate
 
 subethnicity_nhpi_20$label <- sub(",.*", "", subethnicity_nhpi_20$label) 
 subethnicity_nhpi_20_NATIONAL$label <- sub(",.*", "", subethnicity_nhpi_20_NATIONAL$label)
+
+
+# Saving for Alysha
+# subethnicity_nhpi_facet <- rbind(subethnicity_nhpi_20,subethnicity_nhpi_20_NATIONAL)
+# write.csv(subethnicity_nhpi_facet, "../../Transformed Data/data for viz_alysha/top_ethnicities_nhpi_u.csv")
 
 subethnicity_nhpi_20$label <- gsub(" ","\n",subethnicity_nhpi_20$label)
 subethnicity_nhpi_20_NATIONAL$label <- gsub(" ","\n",subethnicity_nhpi_20_NATIONAL$label)

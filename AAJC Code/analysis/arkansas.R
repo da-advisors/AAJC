@@ -564,6 +564,10 @@ subethnicity_nhpi_20_NATIONAL$estimate <- subethnicity_nhpi_20_NATIONAL$estimate
 subethnicity_nhpi_20$label <- sub(",.*", "", subethnicity_nhpi_20$label) 
 subethnicity_nhpi_20_NATIONAL$label <- sub(",.*", "", subethnicity_nhpi_20_NATIONAL$label)
 
+# Save for Alysha
+# write.csv(subethnicity_nhpi_20, "../../Transformed Data/data for viz_alysha/top_eth_arkansas.csv")
+
+
 subethnicity_nhpi_20$label <- gsub(" ","\n",subethnicity_nhpi_20$label)
 subethnicity_nhpi_20_NATIONAL$label <- gsub(" ","\n",subethnicity_nhpi_20_NATIONAL$label)
 
