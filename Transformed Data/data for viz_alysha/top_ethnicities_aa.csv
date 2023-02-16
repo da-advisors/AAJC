@@ -1,0 +1,51 @@
+GEOID,NAME,estimate,label
+6037,Los Angeles County,520.433,Chinese
+6037,Los Angeles County,410.034,Filipino
+6037,Los Angeles County,231.147,Korean
+6037,Los Angeles County,146.384,Japanese
+6037,Los Angeles County,125.251,Vietnamese
+6037,Los Angeles County,118.602,Asian Indian
+6037,Los Angeles County,39.564,Cambodian
+6037,Los Angeles County,33.124,Other Asian
+6037,Los Angeles County,32.466,Taiwanese
+6037,Los Angeles County,30.843,Thai
+1,United States,5121.528,Chinese
+1,United States,4505.78,Asian Indian
+1,United States,4133.942,Filipino
+1,United States,2167.209,Vietnamese
+1,United States,1926.508,Korean
+1,United States,1550.875,Japanese
+1,United States,698.168,Other Asian
+1,United States,550.834,Pakistani
+1,United States,333.529,Cambodian
+1,United States,323.156,Hmong
+36,New York,608.163,"Chinese, except Taiwanese"
+36,New York,253.619,Asian Indian
+36,New York,93.601,Korean
+36,New York,89.25,Filipino
+36,New York,76.448,Bangladeshi
+36,New York,54.906,"Other Asian, not specified"
+36,New York,51.752,Pakistani
+36,New York,34.2,Japanese
+36,New York,19.04,Vietnamese
+36,New York,13.796,Taiwanese
+48201,"Harris County, Texas",114.906,Vietnamese
+48201,"Harris County, Texas",71.538,Asian Indian
+48201,"Harris County, Texas",66.791,Chinese
+48201,"Harris County, Texas",36.905,Filipino
+48201,"Harris County, Texas",26.908,Pakistani
+48201,"Harris County, Texas",17.268,Korean
+48201,"Harris County, Texas",14.223,Other Asian
+48201,"Harris County, Texas",9.078,Japanese
+48201,"Harris County, Texas",5.59,Cambodian
+48201,"Harris County, Texas",3.706,Thai
+53033,"King County, Washington",132.606,Chinese
+53033,"King County, Washington",101.366,Asian Indian
+53033,"King County, Washington",72.861,Filipino
+53033,"King County, Washington",51.806,Vietnamese
+53033,"King County, Washington",43.696,Japanese
+53033,"King County, Washington",43.399,Korean
+53033,"King County, Washington",11.215,Cambodian
+53033,"King County, Washington",9.455,Taiwanese
+53033,"King County, Washington",9.207,Other Asian
+53033,"King County, Washington",6.368,Laotian
