@@ -1,0 +1,12 @@
+"","GEOID","NAME","variable","estimate","moe","label","total_asn_pop","percent"
+"1","1","United States","B02019_001",1500553,12290,"Total Groups Tallied:",1500553,100
+"2","1","United States","B02019_002",619855,9187,"Native Hawaiian",1500553,41.3084376226631
+"3","1","United States","B02019_011",258770,6243,"Other Pacific Islander, not specified",1500553,17.2449756856306
+"4","1","United States","B02019_003",211876,5878,"Samoan",1500553,14.1198611445247
+"5","1","United States","B02019_006",156083,5041,"Chamorro",1500553,10.4016985737925
+"6","1","United States","B02019_008",75220,4005,"Other Micronesian",1500553,5.01281860754002
+"7","1","United States","B02019_004",65037,3457,"Tongan",1500553,4.33420212415023
+"8","1","United States","B02019_009",49581,2878,"Fijian",1500553,3.30418185828824
+"9","1","United States","B02019_007",38193,2596,"Marshallese",1500553,2.54526164687285
+"10","1","United States","B02019_005",23152,1707,"Other Polynesian",1500553,1.54289785165869
+"11","1","United States","B02019_010",2786,1111,"Other Melanesian",1500553,0.185664884879108

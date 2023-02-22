@@ -15,7 +15,7 @@ theme_AAJC <- readRDS('../theme_AAJC.rds')
 # Anam's Key: 
 census_api_key("0d3f6eaad6d4d9ffb24d6b420e4deccd7fe7f780")
 # Alysha's Key:
-#census_api_key("da8e1adf14bf2c03be390d809c53dc905f195841")
+census_api_key("da8e1adf14bf2c03be390d809c53dc905f195841")
 
 options(tigris_use_cache = TRUE)
 
@@ -211,7 +211,7 @@ la_census_tract_a <- la_census_tract_nhpi %>% mutate(RACE = case_when(variable =
 
 # combine the two DFs 
 la_census <- rbind(la_census_tract_aic, la_census_tract_a) %>% arrange(GEOID, RACE)
-
+view(la_census)
 
 # -------
 # Adding percentage calculations
@@ -609,12 +609,30 @@ subethnicity_aa_20$label <- sub(".*Estimate!!Total Groups Tallied:!!", "", subet
 subethnicity_aa_20_NATIONAL$label <- sub(".*Estimate!!Total Groups Tallied:!!", "", subethnicity_aa_20_NATIONAL$label) 
 
 # remove total asian population count 
-subethnicity_aa_20 <- subethnicity_aa_20[subethnicity_aa_20$variable != 'B02018_001',]
-subethnicity_aa_20_NATIONAL <- subethnicity_aa_20_NATIONAL[subethnicity_aa_20_NATIONAL$variable != 'B02018_001',]
+# subethnicity_aa_20 <- subethnicity_aa_20[subethnicity_aa_20$variable != 'B02018_001',]
+# subethnicity_aa_20_NATIONAL <- subethnicity_aa_20_NATIONAL[subethnicity_aa_20_NATIONAL$variable != 'B02018_001',]
 
-subethnicity_aa_20 <- subethnicity_aa_20 %>% top_n(10, wt=estimate) %>% arrange(desc(estimate))
-subethnicity_aa_20_NATIONAL <- subethnicity_aa_20_NATIONAL %>% top_n(10, wt=estimate) %>% arrange(desc(estimate))
+# select top 10 for la county, descending order for national
+subethnicity_aa_20 <- subethnicity_aa_20 %>% top_n(11, wt=estimate) %>% arrange(desc(estimate))
+subethnicity_aa_20_NATIONAL <- subethnicity_aa_20_NATIONAL %>% arrange(desc(estimate))
 
+# save total estimates count
+subethnicity_aa_20_total <- subethnicity_aa_20[grep("Total",subethnicity_aa_20$label), ]
+subethnicity_aa_20_total <- subethnicity_aa_20_total$estimate
+
+subethnicity_aa_20_NATIONAL_total <- subethnicity_aa_20_NATIONAL[grep("Total",subethnicity_aa_20_NATIONAL$label), ]
+subethnicity_aa_20_NATIONAL_total <- subethnicity_aa_20_NATIONAL_total$estimate
+
+# add total estimates as column
+subethnicity_aa_20$total_asn_pop <- c(subethnicity_aa_20_total)
+
+subethnicity_aa_20_NATIONAL$total_asn_pop <- c(subethnicity_aa_20_NATIONAL_total)
+
+# add percentage of total asian population column
+subethnicity_aa_20 <- subethnicity_aa_20 %>% mutate(percent=estimate/total_asn_pop,
+                                                    percent=percent*100)
+subethnicity_aa_20_NATIONAL <- subethnicity_aa_20_NATIONAL %>% mutate(percent=estimate/total_asn_pop,
+                                                                      percent=percent*100)
 
 # change estimate values for readability in plot 
 subethnicity_aa_20$estimate <- subethnicity_aa_20$estimate/1000
@@ -629,7 +647,9 @@ subethnicity_aa_20_NATIONAL$label <- sub(",.*", "", subethnicity_aa_20_NATIONAL$
 subethnicity_aa_20$NAME <- sub(",.*", "", subethnicity_aa_20$NAME)
 subethnicity_aa_20_facet <- rbind(subethnicity_aa_20,subethnicity_aa_20_NATIONAL)
 
-write.csv(subethnicity_aa_20_facet, "../../Transformed Data/data for viz_alysha/top_ethnicities.csv")
+# save for alysha
+#write.csv(subethnicity_aa_20_facet, "../../Transformed Data/data for viz_alysha/top_ethnicities.csv")
+write.csv(subethnicity_aa_20_NATIONAL, "../../Transformed Data/data for viz_alysha/national_ethnicities_aa.csv")
 
 # ------
 # plot - LA
@@ -897,11 +917,10 @@ citizenship <- citizenship %>% mutate(citizenship_status = case_when(
 # ------
 
 citizenship_county <- citizenship %>% filter(NAME == 'Los Angeles County, California')
-
+view(citizenship_county)
 citizenship_state <- citizenship %>% group_by(citizenship_status) %>%
   summarise(estimate = sum(estimate)) %>% mutate(NAME = 'California', GEOID = '06') %>%
   select(GEOID, NAME, citizenship_status, estimate)
-
 
 # ------
 # get US as a while data
