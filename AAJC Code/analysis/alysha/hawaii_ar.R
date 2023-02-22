@@ -672,7 +672,8 @@ subethnicity_nhpi_20_NATIONAL$estimate <- subethnicity_nhpi_20_NATIONAL$estimate
 
 # Save for Alysha 
 # write.csv(subethnicity_nhpi_20, "../../Transformed Data/data for viz_alysha/top_eth_hi.csv")
-write.csv(subethnicity_nhpi_20_NATIONAL, "../../Transformed Data/data for viz_alysha/national_ethnicities_nhpi.csv")
+#write.csv(subethnicity_nhpi_20_NATIONAL, "../../Transformed Data/data for viz_alysha/national_ethnicities_nhpi.csv")
+#write.csv(subethnicity_nhpi_20, "././Transformed Data/data for viz_alysha/HI_ethnicities_nhpi.csv")
 
 
 subethnicity_nhpi_20$label <- sub(",.*", "", subethnicity_nhpi_20$label) 

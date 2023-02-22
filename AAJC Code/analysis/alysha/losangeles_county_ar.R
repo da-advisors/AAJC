@@ -8,7 +8,6 @@ library(gridExtra)
 library(dvmisc)
 source("aajc_tools.R")
 
-
 # Import theme created for AAJC Analysis in "AAJC Code/AAJC_theme.R"
 theme_AAJC <- readRDS('../theme_AAJC.rds')
 
@@ -649,7 +648,8 @@ subethnicity_aa_20_facet <- rbind(subethnicity_aa_20,subethnicity_aa_20_NATIONAL
 
 # save for alysha
 #write.csv(subethnicity_aa_20_facet, "../../Transformed Data/data for viz_alysha/top_ethnicities.csv")
-write.csv(subethnicity_aa_20_NATIONAL, "../../Transformed Data/data for viz_alysha/national_ethnicities_aa.csv")
+#write.csv(subethnicity_aa_20_NATIONAL, "../../Transformed Data/data for viz_alysha/national_ethnicities_aa.csv")
+#write.csv(subethnicity_aa_20, "././Transformed Data/data for viz_alysha/la_ethnicities_aa.csv")
 
 # ------
 # plot - LA
