@@ -19,7 +19,7 @@ theme_AAJC <- readRDS('../theme_AAJC.rds')
 # ==========================
 
 # read data 
-agegrp_2010 <- read.csv("../../Transformed Data/2010/ES_MR_AGEGRP_comparison_2010.csv")
+agegrp_2010 <- read.csv("././Transformed Data/2010/ES_MR_AGEGRP_comparison_2010.csv")
 
 agegrp_labels <- c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49",
                    "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85+")
@@ -81,12 +81,15 @@ v2_line <- agegrp_2010_HI_USA %>% filter(RACE == "NHPI_AIC") %>%
   ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME, linetype = CTYNAME)) +
   geom_hline(yintercept = 0, linetype='dotted', col='grey')+
   geom_line(aes(color=CTYNAME), size=.7, alpha=.7) +
-  scale_linetype_manual(values = c("solid",  "dashed",  "dashed",
-                                   "dashed", "dashed",
-                                   "solid"),
+  scale_linetype_manual(values = c("dashed",  "solid",  "solid",
+                                   "solid", "solid",
+                                   "dashed"),
                         name = "Region") +
-  scale_color_manual(values = c("#CC5500", "#f4c78d", "#916a92", "#780116","#008148", "#0F1108"), name = "Region") +
-  theme_minimal() +
+  scale_color_manual(values = c("#CC5500", "#E69C0C", "#916a92", "#780116","#008148", "#0F1108"), name = "Region") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "grey")) + 
   xlab("Age Group") + 
   ylab("Error of Closure (%)") + 
   ggtitle("Coverage by Age Group for NHPI (Alone or in Combination) Populations - 2010")+
@@ -660,11 +663,17 @@ subethnicity_nhpi_20$total_asn_pop <- c(subethnicity_nhpi_20_total)
 subethnicity_nhpi_20_NATIONAL$total_asn_pop <- c(subethnicity_nhpi_20_NATIONAL_total)
 
 # add percentage of total asian population column
-subethnicity_nhpi_20 <- subethnicity_nhpi_20 %>% mutate(percent=estimate/total_asn_pop,
-                                                    percent=percent*100)
-subethnicity_nhpi_20_NATIONAL <- subethnicity_nhpi_20_NATIONAL %>% mutate(percent=estimate/total_asn_pop,
-                                                                      percent=percent*100)
+subethnicity_nhpi_20 <- subethnicity_nhpi_20 %>% mutate(percent_region=estimate/total_asn_pop,
+                                                        percent_region=percent_region*100)
+subethnicity_nhpi_20_NATIONAL <- subethnicity_nhpi_20_NATIONAL %>% mutate(percent_us=estimate/total_asn_pop,
+                                                                          percent_us=percent_us*100)
 
+# merge data into 1 df
+subethnicity_nhpi_full <- merge(
+  subethnicity_nhpi_20, subethnicity_nhpi_20_NATIONAL, by="label")
+
+# Save for Alysha
+write.csv(subethnicity_nhpi_full, "././Transformed Data/data for viz_alysha/case_studies/nhpi_subethnicities_hawaii.csv")
 
 # change estimate values for readability in plot 
 subethnicity_nhpi_20$estimate <- subethnicity_nhpi_20$estimate/1000
@@ -672,8 +681,6 @@ subethnicity_nhpi_20_NATIONAL$estimate <- subethnicity_nhpi_20_NATIONAL$estimate
 
 # Save for Alysha 
 # write.csv(subethnicity_nhpi_20, "../../Transformed Data/data for viz_alysha/top_eth_hi.csv")
-#write.csv(subethnicity_nhpi_20_NATIONAL, "../../Transformed Data/data for viz_alysha/national_ethnicities_nhpi.csv")
-#write.csv(subethnicity_nhpi_20, "././Transformed Data/data for viz_alysha/HI_ethnicities_nhpi.csv")
 
 
 subethnicity_nhpi_20$label <- sub(",.*", "", subethnicity_nhpi_20$label) 

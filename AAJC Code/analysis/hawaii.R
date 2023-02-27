@@ -101,6 +101,59 @@ ggsave(filename = "../../AAJC Vis/case_studies/hawaii/US_AND_HI_line_graph_cover
        plot = v2_line, bg = "white", width =10.0, height = 5.47)
 
 
+# updated plot without gridlines and changed line type and colors
+## AIC
+v2_line2 <- agegrp_2010_HI_USA %>% filter(RACE == "NHPI_AIC") %>%
+  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME, linetype = CTYNAME)) +
+  geom_hline(yintercept = 0, linetype='dotted', col='grey')+
+  geom_line(aes(color=CTYNAME), size=.7, alpha=.7) +
+  scale_linetype_manual(values = c("dashed",  "solid",  "solid",
+                                   "solid", "solid",
+                                   "dashed"),
+                        name = "Region") +
+  scale_color_manual(values = c("#CC5500", "#E69C0C", "#916a92", "#780116","#008148", "#0F1108"), name = "Region") +
+  theme_minimal() +
+  xlab("Age Group") + 
+  ylab("Error of Closure (%)") + 
+  ggtitle("Coverage by Age Group for NHPI (Alone or in Combination) Populations - 2010")+
+  scale_x_discrete(labels = agegrp_labels)
+# annotate("text",x=18.1, y=5, label="overcount", size=2.5, color='grey') +
+# annotate("text",x=18.1, y=-5, label="undercount", size=2.5, color='grey')
+
+# change age group labels 
+v2_line2 <- v2_line2 + theme(axis.text.x = element_text(angle=45)) 
+
+ggsave(filename = "../../AAJC Vis/case_studies/hawaii/US_AND_HI_line_graph_coverage_by_agegrp_NHPI_AIC_2010_2.png",
+       plot = v2_line2, bg = "white", width =10.0, height = 5.47)
+
+## Asian Alone
+v1_line2 <- agegrp_2010_HI_USA %>% filter(RACE == "NHPI_A") %>%
+  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME, linetype = CTYNAME)) +
+  geom_hline(yintercept = 0, linetype='dotted', col='grey')+
+  geom_line(aes(color=CTYNAME), size=.7, alpha=.7) +
+  scale_linetype_manual(values = c("dashed",  "solid",  "solid",
+                                   "solid", "solid",
+                                   "dashed"),
+                        name = "Region") +
+  scale_color_manual(values = c("#CC5500", "#E69C0C", "#916a92", "#780116","#008148", "#0F1108"), name = "Region") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "grey")) + 
+  xlab("Age Group") + 
+  ylab("Error of Closure (%)") + 
+  ggtitle("Coverage by Age Group for NHPI (Alone) Populations - 2010")+
+  scale_x_discrete(labels = agegrp_labels)
+# annotate("text",x=18.1, y=5, label="overcount", size=2.5, color='grey') +
+# annotate("text",x=18.1, y=-5, label="undercount", size=2.5, color='grey')
+
+# change age group labels 
+v1_line2 <- v1_line2 + theme(axis.text.x = element_text(angle=45)) 
+
+ggsave(filename = "../../AAJC Vis/case_studies/hawaii/US_AND_HI_line_graph_coverage_by_agegrp_NHPI_A_2010_2.png",
+       plot = v1_line2, bg = "white", width =10.0, height = 5.47)
+
+
 
 
 # ==========================
@@ -199,6 +252,21 @@ scatter_response <- sr_2020_HI %>% filter(RACE == 'NHPI_A') %>%
 
 ggsave(filename = "../../AAJC Vis/case_studies/hawaii/resp_by_tract_pop_scatter_NHPI_A_2020_SIZE.png",
        plot = scatter_response, bg = "white", width =9.07, height = 5.47)
+
+# updated plot without grid lines
+scatter_response2 <- sr_2020_HI %>% filter(RACE == 'NHPI_A') %>%
+  ggplot(aes(x = pop_percentage, y = CRRALL, size = total_tract_pop)) + 
+  geom_point(color = "#e49d48", alpha = 0.7) + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "grey")) + 
+  xlab("NHPI (Alone) Population (%)") + 
+  ylab("Cumulative Self-Response\nRate - Overall (%)") + 
+  ggtitle("Response Rate by Percentage of NHPI Population by Census Tract - 2020")
+
+ggsave(filename = "../../AAJC Vis/case_studies/hawaii/resp_by_tract_pop_scatter_NHPI_A_2020_SIZE_2.png",
+       plot = scatter_response2, bg = "white", width =9.07, height = 5.47)
 
 # light or - e49d48
 # dark or - ac550f
@@ -527,7 +595,26 @@ scatter_response_color
 ggsave(filename = "../../AAJC Vis/case_studies/hawaii/resp_by_citizenship_NHPI_A_2020_SCATTER.png",
        plot = scatter_response_color, bg = "white")
 
+# updated plot without grid lines
+scatter_response_color2 <- sr_2020_HI %>% filter(RACE == 'NHPI_A') %>%
+  ggplot(aes(x = pop_percentage, y = CRRALL, size = total_tract_pop, color = citizenship_perc_fctr)) + 
+  geom_point(alpha = .8) + 
+  scale_color_brewer(palette = "PuOr") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "grey")) + 
+  xlab("NHPI (alone) Population (%)") + 
+  ylab("Cumulative Self-Response\nRate - Overall (%)") + 
+  ggtitle("Response Rate by Percentage of NHPI Population and Citizenship Status",
+          subtitle =  "Census Tract - 2020") + 
+  labs(color = "Citizenship of NHPI\n(alone) Population (%)", size = 'Total Tract Population', size=2) + 
+  theme(legend.title = element_text(size = 10), axis.title.y=element_text(size=10), axis.title.x=element_text(size=10))
 
+scatter_response_color2
+
+ggsave(filename = "../../AAJC Vis/case_studies/hawaii/resp_by_citizenship_NHPI_A_2020_SCATTER_2.png",
+       plot = scatter_response_color2, bg = "white")
 
 
 
@@ -565,7 +652,7 @@ esmr_2020_counties <- esmr_2020 %>% filter(CTYNAME %in% hi_counties & STNAME == 
   group_by(STNAME, CTYNAME, RACE) %>% 
   summarise(MR = sum(MR))
 
-# aggreagte state pop
+# aggregate state pop
 esmr_2020_st <- esmr_2020 %>% filter(STNAME == "Hawaii") %>%
   filter(RACE %in% c('NHPI_A', 'NHPI_AIC')) %>% select(STNAME,CTYNAME,RACE,MR) %>%
   group_by(STNAME, RACE) %>% 
@@ -637,6 +724,38 @@ subethnicity_nhpi_20_NATIONAL$label <- sub(".*Estimate!!Total Groups Tallied:!!"
 subethnicity_nhpi_20$label <- sub(".*!!", "", subethnicity_nhpi_20$label) 
 subethnicity_nhpi_20_NATIONAL$label <- sub(".*!!", "", subethnicity_nhpi_20_NATIONAL$label) 
 
+# aggregate all counties (if needed), limit to top 6 subethnicities, descending order for national
+subethnicity_nhpi_20_2 <- subethnicity_nhpi_20 %>% group_by(label) %>% summarise(estimate = sum(estimate))
+
+subethnicity_nhpi_20_2 <- subethnicity_nhpi_20 %>% top_n(6, wt=estimate) %>% arrange(desc(estimate))
+subethnicity_nhpi_20_NATIONAL_2 <- subethnicity_nhpi_20_NATIONAL %>% arrange(desc(estimate))
+
+# save total estimates count
+subethnicity_nhpi_20_total <- subethnicity_nhpi_20_2[grep("Total",subethnicity_nhpi_20$label), ]
+subethnicity_nhpi_20_total <- subethnicity_nhpi_20_total$estimate
+
+subethnicity_nhpi_20_NATIONAL_total <- subethnicity_nhpi_20_NATIONAL_2[grep("Total",subethnicity_nhpi_20_NATIONAL$label), ]
+subethnicity_nhpi_20_NATIONAL_total <- subethnicity_nhpi_20_NATIONAL_total$estimate
+
+# add total estimates as column
+subethnicity_nhpi_20_2$total_asn_pop <- c(subethnicity_nhpi_20_total)
+
+subethnicity_nhpi_20_NATIONAL_2$total_asn_pop <- c(subethnicity_nhpi_20_NATIONAL_total)
+
+# add percentage of total asian population column
+subethnicity_nhpi_20_2 <- subethnicity_nhpi_20_2 %>% mutate(percent_region=estimate/total_asn_pop,
+                                                            percent_region=percent_region*100)
+subethnicity_nhpi_20_NATIONAL_2 <- subethnicity_nhpi_20_NATIONAL_2 %>% mutate(percent_us=estimate/total_asn_pop,
+                                                                              percent_us=percent_us*100)
+
+# merge data into 1 df
+subethnicity_nhpi_full <- merge(
+  subethnicity_nhpi_20_2, subethnicity_nhpi_20_NATIONAL_2, by="label")
+
+# Save for Alysha 
+write.csv(subethnicity_nhpi_full, "././Transformed Data/data for viz_alysha/case_studies/nhpi_subethnicities_hawaii.csv")
+
+
 # remove total nhpi population count 
 subethnicity_nhpi_20 <- subethnicity_nhpi_20[subethnicity_nhpi_20$variable != 'B02019_001',]
 subethnicity_nhpi_20_NATIONAL <- subethnicity_nhpi_20_NATIONAL[subethnicity_nhpi_20_NATIONAL$variable != 'B02019_001',]
@@ -666,7 +785,7 @@ subethnicity_nhpi_20_NATIONAL$label[subethnicity_nhpi_20_NATIONAL$label == "Othe
 
 
 # ------
-# plot - LA
+# plot - Hawaii
 # ------
 
 # US - #f4c78d

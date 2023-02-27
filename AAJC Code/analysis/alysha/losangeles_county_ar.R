@@ -9,7 +9,7 @@ library(dvmisc)
 source("aajc_tools.R")
 
 # Import theme created for AAJC Analysis in "AAJC Code/AAJC_theme.R"
-theme_AAJC <- readRDS('../theme_AAJC.rds')
+theme_AAJC <- readRDS('./theme_AAJC.rds')
 
 # Anam's Key: 
 census_api_key("0d3f6eaad6d4d9ffb24d6b420e4deccd7fe7f780")
@@ -135,7 +135,7 @@ ggsave(filename = "../../AAJC Vis/case_studies/los_angeles/US_AND_LA_line_graph_
 # ==========================
 
 # read in self response data 
-sr_2020 <- read.csv("../../Raw Data/2020/california_selfresponse_rates_2020_by_tract.csv")
+sr_2020 <- read.csv("././Raw Data/2020/california_selfresponse_rates_2020_by_tract.csv")
 
 
 # Questions for Chris
@@ -227,6 +227,7 @@ sr_2020_LA <- sr_2020_LA %>% left_join(la_census %>% select(GEO_ID_tract = GEOID
 # Plot
 # --------
 
+# original chart
 scatter_response <- sr_2020_LA %>% filter(RACE == 'NHPI_A') %>%
   ggplot(aes(x = pop_percentage, y = CRRALL, size = total_tract_pop)) + 
   geom_point(color = "#e49d48", alpha = 0.7) + 
@@ -235,8 +236,23 @@ scatter_response <- sr_2020_LA %>% filter(RACE == 'NHPI_A') %>%
   ylab("Cumulative Self-Response\nRate - Overall (%)") + 
   ggtitle("Response Rate by Percentage of NHPI Population by Census Tract - 2020")
 
-ggsave(filename = "../../AAJC Vis/case_studies/los_angeles/resp_by_tract_pop_scatter_NHPI_AIC_2020_SIZE.png",
+ggsave(filename = "././AAJC Vis/case_studies/los_angeles/resp_by_tract_pop_scatter_NHPI_AIC_2020_SIZE.png",
        plot = scatter_response, bg = "white", width =9.07, height = 5.47)
+
+# updated chart w/o gridlines
+scatter_response2 <- sr_2020_LA %>% filter(RACE == 'NHPI_A') %>%
+  ggplot(aes(x = pop_percentage, y = CRRALL, size = total_tract_pop)) + 
+  geom_point(color = "#e49d48", alpha = 0.7) + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "grey")) + 
+  xlab("NHPI (Alone or in Combination) Population (%)") + 
+  ylab("Cumulative Self-Response\nRate - Overall (%)") + 
+  ggtitle("Response Rate by Percentage of NHPI Population by Census Tract - 2020")
+
+ggsave(filename = "././AAJC Vis/case_studies/los_angeles/resp_by_tract_pop_scatter_NHPI_AIC_2020_SIZE_2.png",
+       plot = scatter_response2, bg = "white", width =9.07, height = 5.47)
 
 # light or - e49d48
 # dark or - ac550f
@@ -349,14 +365,30 @@ race <- 'A_A'
 # 1. 
 # race column for Asian/NHPI pops
 foreign_born_perc <- foreign_born %>% mutate(RACE = case_when(variable %in% c('B06004D_005','B06004D_001') ~ 'A_A',
-                                         variable %in% c('B06004E_005', 'B06004E_001') ~ 'NHPI_A'),
+                                                              variable %in% c('B06004E_005', 'B06004E_001') ~ 'NHPI_A'))
+
+foreign_born_perc <- foreign_born_perc %>% mutate(variable = case_when(variable == 'B06004D_005' ~ 'foreign',
+                                                                       variable == 'B06004D_001' ~ 'total_pop',
+                                                                       variable == 'B06004E_005' ~ 'foreign',
+                                                                       variable == 'B06004E_001' ~ 'total_pop'))
+
+foreign_born_perc <- foreign_born_perc %>% filter(RACE == race) 
+
+foreign_born_perc <- foreign_born_perc %>% group_by(GEOID, NAME)
+
+foreign_born_perc <- foreign_born_perc %>% mutate(percent_foreign = round(((estimate[variable == 'foreign'] / estimate[variable == 'total_pop'])*100),2))
+
+foreign_born_perc <- foreign_born_perc %>% summarise(percent_foreign)
+
+                                             
+                                           #  ,
                         # renaming the variables to something more readable 
-                        variable = case_when(variable == 'B06004D_005' ~ 'foreign',
-                                             variable == 'B06004D_001' ~ 'total_pop',
-                                             variable == 'B06004E_005' ~ 'foreign',
-                                             variable == 'B06004E_001' ~ 'total_pop')) %>%
-  filter(RACE == race) %>% group_by(GEOID, NAME) %>% 
-  summarise(percent_foreign = round(((estimate[variable == 'foreign'] / estimate[variable == 'total_pop'])*100),2 ))
+                        #variable = case_when(variable == 'B06004D_005' ~ 'foreign',
+                         #                    variable == 'B06004D_001' ~ 'total_pop',
+                          #                   variable == 'B06004E_005' ~ 'foreign',
+                           #                  variable == 'B06004E_001' ~ 'total_pop')) %>%
+  #filter(RACE == race) %>% group_by(GEOID, NAME) %>% 
+  #summarise(percent_foreign = round(((estimate[variable == 'foreign'] / estimate[variable == 'total_pop'])*100),2 ))
 
 
 # 2. 
@@ -628,10 +660,14 @@ subethnicity_aa_20$total_asn_pop <- c(subethnicity_aa_20_total)
 subethnicity_aa_20_NATIONAL$total_asn_pop <- c(subethnicity_aa_20_NATIONAL_total)
 
 # add percentage of total asian population column
-subethnicity_aa_20 <- subethnicity_aa_20 %>% mutate(percent=estimate/total_asn_pop,
-                                                    percent=percent*100)
-subethnicity_aa_20_NATIONAL <- subethnicity_aa_20_NATIONAL %>% mutate(percent=estimate/total_asn_pop,
-                                                                      percent=percent*100)
+subethnicity_aa_20 <- subethnicity_aa_20 %>% mutate(percent_la=estimate/total_asn_pop,
+                                                    percent_la=percent_la*100)
+subethnicity_aa_20_NATIONAL <- subethnicity_aa_20_NATIONAL %>% mutate(percent_us=estimate/total_asn_pop,
+                                                                      percent_us=percent_us*100)
+
+# merge data into 1 df
+subethnicity_aa_20_full <- merge(
+  subethnicity_aa_20, subethnicity_aa_20_NATIONAL, by="label")
 
 # change estimate values for readability in plot 
 subethnicity_aa_20$estimate <- subethnicity_aa_20$estimate/1000
@@ -641,15 +677,13 @@ subethnicity_aa_20$label <- sub(",.*", "", subethnicity_aa_20$label)
 subethnicity_aa_20_NATIONAL$label <- sub(",.*", "", subethnicity_aa_20_NATIONAL$label)
 
 
-
 # facet grid 
 subethnicity_aa_20$NAME <- sub(",.*", "", subethnicity_aa_20$NAME)
 subethnicity_aa_20_facet <- rbind(subethnicity_aa_20,subethnicity_aa_20_NATIONAL)
 
 # save for alysha
 #write.csv(subethnicity_aa_20_facet, "../../Transformed Data/data for viz_alysha/top_ethnicities.csv")
-#write.csv(subethnicity_aa_20_NATIONAL, "../../Transformed Data/data for viz_alysha/national_ethnicities_aa.csv")
-#write.csv(subethnicity_aa_20, "././Transformed Data/data for viz_alysha/la_ethnicities_aa.csv")
+#write.csv(subethnicity_aa_full, "././Transformed Data/data for viz_alysha/case_studies/subethnicities_losangeles.csv")
 
 # ------
 # plot - LA
@@ -752,12 +786,37 @@ subethnicity_nhpi_20$label <- sub(".*!!", "", subethnicity_nhpi_20$label)
 subethnicity_nhpi_20_NATIONAL$label <- sub(".*!!", "", subethnicity_nhpi_20_NATIONAL$label) 
 
 # remove total asian population count 
-subethnicity_nhpi_20 <- subethnicity_nhpi_20[subethnicity_nhpi_20$variable != 'B02019_001',]
-subethnicity_nhpi_20_NATIONAL <- subethnicity_nhpi_20_NATIONAL[subethnicity_nhpi_20_NATIONAL$variable != 'B02019_001',]
+# subethnicity_nhpi_20 <- subethnicity_nhpi_20[subethnicity_nhpi_20$variable != 'B02019_001',]
+# subethnicity_nhpi_20_NATIONAL <- subethnicity_nhpi_20_NATIONAL[subethnicity_nhpi_20_NATIONAL$variable != 'B02019_001',]
 
-subethnicity_nhpi_20 <- subethnicity_nhpi_20 %>% top_n(5, wt=estimate) %>% arrange(desc(estimate))
-subethnicity_nhpi_20_NATIONAL <- subethnicity_nhpi_20_NATIONAL %>% top_n(5, wt=estimate) %>% arrange(desc(estimate))
+#subethnicity_nhpi_20 <- subethnicity_nhpi_20 %>% top_n(5, wt=estimate) %>% arrange(desc(estimate))
+#subethnicity_nhpi_20_NATIONAL <- subethnicity_nhpi_20_NATIONAL %>% top_n(5, wt=estimate) %>% arrange(desc(estimate))
 
+# aggregate all counties (if needed), limit to top 6 subethnicities, descending order for national
+subethnicity_nhpi_20 <- subethnicity_nhpi_20 %>% top_n(6, wt=estimate) %>% arrange(desc(estimate))
+subethnicity_nhpi_20_NATIONAL <- subethnicity_nhpi_20_NATIONAL %>% arrange(desc(estimate))
+
+# save total estimates count
+subethnicity_nhpi_20_total <- subethnicity_nhpi_20[grep("Total",subethnicity_nhpi_20$label), ]
+subethnicity_nhpi_20_total <- subethnicity_nhpi_20_total$estimate
+
+subethnicity_nhpi_20_NATIONAL_total <- subethnicity_nhpi_20_NATIONAL[grep("Total",subethnicity_nhpi_20_NATIONAL$label), ]
+subethnicity_nhpi_20_NATIONAL_total <- subethnicity_nhpi_20_NATIONAL_total$estimate
+
+# add total estimates as column
+subethnicity_nhpi_20$total_asn_pop <- c(subethnicity_nhpi_20_total)
+
+subethnicity_nhpi_20_NATIONAL$total_asn_pop <- c(subethnicity_nhpi_20_NATIONAL_total)
+
+# add percentage of total asian population column
+subethnicity_nhpi_20 <- subethnicity_nhpi_20 %>% mutate(percent_region=estimate/total_asn_pop,
+                                                        percent_region=percent_region*100)
+subethnicity_nhpi_20_NATIONAL <- subethnicity_nhpi_20_NATIONAL %>% mutate(percent_us=estimate/total_asn_pop,
+                                                                          percent_us=percent_us*100)
+
+# merge data into 1 df
+subethnicity_nhpi_full <- merge(
+  subethnicity_nhpi_20, subethnicity_nhpi_20_NATIONAL, by="label")
 
 # change estimate values for readability in plot 
 subethnicity_nhpi_20$estimate <- subethnicity_nhpi_20$estimate/1000
@@ -769,6 +828,7 @@ subethnicity_nhpi_20_NATIONAL$label <- sub(",.*", "", subethnicity_nhpi_20_NATIO
 # Saving for Alysha
 # subethnicity_nhpi_facet <- rbind(subethnicity_nhpi_20,subethnicity_nhpi_20_NATIONAL)
 # write.csv(subethnicity_nhpi_facet, "../../Transformed Data/data for viz_alysha/top_ethnicities_nhpi.csv")
+write.csv(subethnicity_nhpi_full, "././Transformed Data/data for viz_alysha/case_studies/nhpi_subethnicities_losangeles.csv")
 
 subethnicity_nhpi_20$label <- gsub(" ","\n",subethnicity_nhpi_20$label)
 subethnicity_nhpi_20_NATIONAL$label <- gsub(" ","\n",subethnicity_nhpi_20_NATIONAL$label)
