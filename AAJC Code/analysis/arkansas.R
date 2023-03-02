@@ -96,11 +96,56 @@ v2_line
 ggsave(filename = "../../AAJC Vis/case_studies/arkansas/US_AND_AK_line_graph_coverage_by_agegrp_NHPI_AIC_2010_BENTON.png",
        plot = v2_line, bg = "white", width =9.07, height = 5.47)
 
+# update plot without grid lines
+# AIC
+v2_line2 <- agegrp_2010_AK_USA %>% filter(RACE == "NHPI_AIC") %>%
+  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME)) +
+  geom_hline(yintercept = 0, linetype='dotted', col='grey')+
+  geom_line(aes(color=CTYNAME), size=1) +
+  scale_color_manual(values = c("#916a92", "#f4c78d", "#e89251"), name = "Region") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "grey")) + 
+  xlab("Age Group") + 
+  ylab("Error of Closure (%)") + 
+  ggtitle("Coverage by Age Group for NHPI (Alone or in Combination) Populations - 2010")+
+  scale_x_discrete(labels = agegrp_labels) +
+  annotate("text",x=17.7, y=7, label="overcount", size=2.5, color='grey') +
+  annotate("text",x=17.7, y=-7, label="undercount", size=2.5, color='grey')
 
+# change age group labels 
+v2_line2 <- v2_line2 + theme(axis.text.x = element_text(angle=45))
+v2_line2
+ggsave(filename = "../../AAJC Vis/case_studies/arkansas/US_AND_AK_line_graph_coverage_by_agegrp_NHPI_AIC_2010_BENTON_2.png",
+       plot = v2_line2, bg = "white", width =9.07, height = 5.47)
+
+# Asian Alone
+v1_line2 <- agegrp_2010_AK_USA %>% filter(RACE == "NHPI_A") %>%
+  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME)) +
+  geom_hline(yintercept = 0, linetype='dotted', col='grey')+
+  geom_line(aes(color=CTYNAME), size=1) +
+  scale_color_manual(values = c("#916a92", "#f4c78d", "#e89251"), name = "Region") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "grey")) + 
+  xlab("Age Group") + 
+  ylab("Error of Closure (%)") + 
+  ggtitle("Coverage by Age Group for NHPI (Alone) Populations - 2010")+
+  scale_x_discrete(labels = agegrp_labels) +
+  annotate("text",x=17.7, y=7, label="overcount", size=2.5, color='grey') +
+  annotate("text",x=17.7, y=-7, label="undercount", size=2.5, color='grey')
+
+# change age group labels 
+v1_line2 <- v1_line2 + theme(axis.text.x = element_text(angle=45))
+v1_line2
+ggsave(filename = "../../AAJC Vis/case_studies/arkansas/US_AND_AK_line_graph_coverage_by_agegrp_NHPI_A_2010_BENTON_2.png",
+       plot = v1_line2, bg = "white", width =9.07, height = 5.47)
 
 
 # ==========================
-# add a scatterplot of response rate by % AA by tract in LA County
+# add a scatterplot of response rate by % AA by tract in Benson County
 # ==========================
 
 # read in self response data 
@@ -133,7 +178,7 @@ nhpi_vars <- nhpi_vars$name
 ak_census_tract_nhpi <- get_decennial(geography = "tract",
                                       variables = nhpi_vars,
                                       state = "Arkansas",
-                                      county = "Benton County",   # remove for only Arkansas scatterplot
+                                      # county = "Benton County",   # remove for only Arkansas scatterplot
                                       summary_var = 'P1_001N', # total pop. of a tract 
                                       year = 2020)
 # -------
@@ -144,7 +189,7 @@ ak_census_tract_nhpi <- get_decennial(geography = "tract",
 sr_2020 <- sr_2020 %>% separate(GEO_ID, c('A','GEO_ID_tract'), sep = 'US') %>% select(-A)
 
 # filtering self response data 
-sr_2020_AK <- sr_2020 %>% filter(COUNTY == " Benton County" & STATE == " Arkansas")
+sr_2020_AK <- sr_2020 %>% filter(STATE == " Arkansas")
 
 
 # -------
@@ -185,10 +230,25 @@ scatter_response <- sr_2020_AK %>% filter(RACE == 'NHPI_A') %>%
   theme_minimal() + 
   xlab("NHPI (Alone) Population (%)") + 
   ylab("Cumulative Self-Response\nRate - Overall (%)") + 
-  ggtitle("Benton County Response Rate by Percentage of NHPI Population by Census Tract - 2020")
+  ggtitle("Response Rate by Percentage of NHPI Population by Census Tract - 2020")
 
 ggsave(filename = "../../AAJC Vis/case_studies/arkansas/resp_by_tract_pop_scatter_NHPI_A_2020_SIZE_BENTON.png",
        plot = scatter_response, bg = "white", width =9.07, height = 5.47)
+
+# updated plot without grid lines
+scatter_response2 <- sr_2020_AK %>% filter(RACE == 'NHPI_A') %>%
+  ggplot(aes(x = pop_percentage, y = CRRALL, size = total_tract_pop)) + 
+  geom_point(color = "#e49d48", alpha = 0.7) + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "grey")) +  
+  xlab("NHPI (Alone) Population (%)") + 
+  ylab("Cumulative Self-Response\nRate - Overall (%)") + 
+  ggtitle("Response Rate by Percentage of NHPI Population by Census Tract - 2020")
+
+ggsave(filename = "../../AAJC Vis/case_studies/arkansas/resp_by_tract_pop_scatter_NHPI_A_2020_SIZE_2.png",
+       plot = scatter_response2, bg = "white", width =9.07, height = 5.47)
 
 # light or - e49d48
 # dark or - ac550f
@@ -377,7 +437,7 @@ nhpi_citizen_vars <- c("B05003E_001", "B05003E_009", "B05003E_011", "B05003E_004
 
 citizenship <- get_acs(geography = "tract",
                        state = "Arkansas",
-                       county = "Benton County",
+                       # county = "Benton County",
                        variables = nhpi_citizen_vars, 
                        year = 2020)
 
@@ -448,7 +508,6 @@ non_citizen_map <- citizenship_plot %>%
   theme_void() + 
   titles_upper() # zoom in to hawaii
 
-
 # save 
 ggsave(filename = "../../AAJC Vis/case_studies/arkansas/non_citizenship_map_AA_2020_BENTON.png",
        plot = non_citizen_map, bg = "white")
@@ -494,7 +553,26 @@ scatter_response_color
 ggsave(filename = "../../AAJC Vis/case_studies/arkansas/resp_by_citizenship_NHPI_A_2020_SCATTER_BENTON.png",
        plot = scatter_response_color, bg = "white")
 
+# updated plot without grid lines
+scatter_response_color2 <- sr_2020_AK %>% filter(RACE == 'NHPI_A') %>%
+  ggplot(aes(x = pop_percentage, y = CRRALL, size = total_tract_pop, color = citizenship_perc_fctr)) + 
+  geom_point(alpha = .8) + 
+  scale_color_brewer(palette = "PuOr") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "grey")) + 
+  xlab("NHPI (alone) Population (%)") + 
+  ylab("Cumulative Self-Response\nRate - Overall (%)") + 
+  ggtitle("Response Rate by Percentage of NHPI Population and Citizenship Status",
+          subtitle =  "Census Tract - 2020") + 
+  labs(color = "Citizenship of NHPI\n(alone) Population (%)", size = 'Total Tract Population', size=2) + 
+  theme(legend.title = element_text(size = 10), axis.title.y=element_text(size=10), axis.title.x=element_text(size=10))
 
+scatter_response_color2
+
+ggsave(filename = "../../AAJC Vis/case_studies/arkansas/resp_by_citizenship_NHPI_A_2020_SCATTER_2.png",
+       plot = scatter_response_color2, bg = "white")
 
 
 
@@ -549,13 +627,44 @@ subethnicity_nhpi_20_NATIONAL$label <- sub(".*Estimate!!Total Groups Tallied:!!"
 subethnicity_nhpi_20$label <- sub(".*!!", "", subethnicity_nhpi_20$label) 
 subethnicity_nhpi_20_NATIONAL$label <- sub(".*!!", "", subethnicity_nhpi_20_NATIONAL$label) 
 
+# aggregate all counties (if needed), limit to top 6 subethnicities, descending order for national
+subethnicity_nhpi_20_2 <- subethnicity_nhpi_20 %>% group_by(label) %>% summarise(estimate = sum(estimate))
+
+subethnicity_nhpi_20_2 <- subethnicity_nhpi_20 %>% top_n(6, wt=estimate) %>% arrange(desc(estimate))
+subethnicity_nhpi_20_NATIONAL_2 <- subethnicity_nhpi_20_NATIONAL %>% arrange(desc(estimate))
+
+# save total estimates count
+subethnicity_nhpi_20_total <- subethnicity_nhpi_20_2[grep("Total",subethnicity_nhpi_20$label), ]
+subethnicity_nhpi_20_total <- subethnicity_nhpi_20_total$estimate
+
+subethnicity_nhpi_20_NATIONAL_total <- subethnicity_nhpi_20_NATIONAL_2[grep("Total",subethnicity_nhpi_20_NATIONAL$label), ]
+subethnicity_nhpi_20_NATIONAL_total <- subethnicity_nhpi_20_NATIONAL_total$estimate
+
+# add total estimates as column
+subethnicity_nhpi_20_2$total_asn_pop <- c(subethnicity_nhpi_20_total)
+
+subethnicity_nhpi_20_NATIONAL_2$total_asn_pop <- c(subethnicity_nhpi_20_NATIONAL_total)
+
+# add percentage of total asian population column
+subethnicity_nhpi_20_2 <- subethnicity_nhpi_20_2 %>% mutate(percent_region=estimate/total_asn_pop,
+                                                            percent_region=percent_region*100)
+subethnicity_nhpi_20_NATIONAL_2 <- subethnicity_nhpi_20_NATIONAL_2 %>% mutate(percent_us=estimate/total_asn_pop,
+                                                                              percent_us=percent_us*100)
+
+# merge data into 1 df
+subethnicity_nhpi_full <- merge(
+  subethnicity_nhpi_20_2, subethnicity_nhpi_20_NATIONAL_2, by="label")
+
+# Save for Alysha 
+write.csv(subethnicity_nhpi_full, "././Transformed Data/data for viz_alysha/case_studies/nhpi_subethnicities_arkansas.csv")
+
+
 # remove total nhpi population count 
 subethnicity_nhpi_20 <- subethnicity_nhpi_20[subethnicity_nhpi_20$variable != 'B02019_001',]
 subethnicity_nhpi_20_NATIONAL <- subethnicity_nhpi_20_NATIONAL[subethnicity_nhpi_20_NATIONAL$variable != 'B02019_001',]
 
 subethnicity_nhpi_20 <- subethnicity_nhpi_20 %>% top_n(5, wt=estimate) %>% arrange(desc(estimate))
 subethnicity_nhpi_20_NATIONAL <- subethnicity_nhpi_20_NATIONAL %>% top_n(5, wt=estimate) %>% arrange(desc(estimate))
-
 
 # change estimate values for readability in plot 
 subethnicity_nhpi_20$estimate <- subethnicity_nhpi_20$estimate/1000

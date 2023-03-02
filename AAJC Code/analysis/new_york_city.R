@@ -100,6 +100,62 @@ v2_line <- v2_line + theme(axis.text.x = element_text(angle=45))
 ggsave(filename = "../../AAJC Vis/case_studies/new_york_city//US_AND_NY_line_graph_coverage_by_agegrp_A_AIC_2010.png",
        plot = v2_line, bg = "white", width =10.0, height = 5.47)
 
+# updated plot without grid lines and line type + color change
+## AIC
+v2_line2 <- agegrp_2010_NY_USA %>% filter(RACE == "A_AIC") %>%
+  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME, linetype = CTYNAME)) +
+  geom_hline(yintercept = 0, linetype='dotted', col='grey')+
+  geom_line(aes(color=CTYNAME), size=.7, alpha=.8) +
+  scale_linetype_manual(values = c("solid",  "solid",  "dashed",
+                                   "solid", "solid",  "solid",
+                                   "dashed"),
+                        name = "Region") +
+  scale_color_manual(values = c("#916a92", "#f4c78d", "#CC5500", "#62929E", "#780116","#008148", "#0F1108"), 
+                     name = "Region") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "grey")) + 
+  xlab("Age Group") + 
+  ylab("Error of Closure (%)") + 
+  ggtitle("Coverage by Age Group for Asian (Alone or in Combination) Populations - 2010")+
+  scale_x_discrete(labels = agegrp_labels) +
+  annotate("text",x=18.0, y=1.3, label="overcount", size=2.5, color='grey') +
+  annotate("text",x=18.0, y=-1.3, label="undercount", size=2.5, color='grey')
+
+# change age group labels 
+v2_line2 <- v2_line2 + theme(axis.text.x = element_text(angle=45)) 
+
+ggsave(filename = "../../AAJC Vis/case_studies/new_york_city//US_AND_NY_line_graph_coverage_by_agegrp_A_AIC_2010_2.png",
+       plot = v2_line2, bg = "white", width =10.0, height = 5.47)
+
+## Asian Alone
+v1_line2 <- agegrp_2010_NY_USA %>% filter(RACE == "A_A") %>%
+  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME, linetype = CTYNAME)) +
+  geom_hline(yintercept = 0, linetype='dotted', col='grey')+
+  geom_line(aes(color=CTYNAME), size=.7, alpha=.8) +
+  scale_linetype_manual(values = c("solid",  "solid",  "dashed",
+                                   "solid", "solid",  "solid",
+                                   "dashed"),
+                        name = "Region") +
+  scale_color_manual(values = c("#916a92", "#f4c78d", "#CC5500", "#62929E", "#780116","#008148", "#0F1108"), 
+                     name = "Region") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "grey")) + 
+  xlab("Age Group") + 
+  ylab("Error of Closure (%)") + 
+  ggtitle("Coverage by Age Group for Asian (Alone) Populations - 2010")+
+  scale_x_discrete(labels = agegrp_labels) +
+  annotate("text",x=18.0, y=1.3, label="overcount", size=2.5, color='grey') +
+  annotate("text",x=18.0, y=-1.3, label="undercount", size=2.5, color='grey')
+
+# change age group labels 
+v1_line2 <- v1_line2 + theme(axis.text.x = element_text(angle=45)) 
+
+ggsave(filename = "../../AAJC Vis/case_studies/new_york_city//US_AND_NY_line_graph_coverage_by_agegrp_A_A_2010_2.png",
+       plot = v1_line2, bg = "white", width =10.0, height = 5.47)
 
 # To-Dos: 11/2 # 
 #   1. Cannot reorder legend so that NYC and US are both on the bottom. Alysha might have to do this part 
@@ -207,6 +263,21 @@ scatter_response <- sr_2020_NY %>% filter(RACE == 'A_A') %>%
 
 ggsave(filename = "../../AAJC Vis/case_studies/new_york_city/resp_by_tract_pop_scatter_AA_2020_SIZE.png",
        plot = scatter_response, bg = "white", width =9.07, height = 5.47)
+
+# updated without grid lines
+scatter_response2 <- sr_2020_NY %>% filter(RACE == 'A_A') %>%
+  ggplot(aes(x = pop_percentage, y = CRRALL, size = total_tract_pop)) + 
+  geom_point(color = "#e49d48", alpha = 0.7) + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "grey")) +   xlab("Asian (Alone) Population (%)") + 
+  ylab("Cumulative Self-Response\nRate - Overall (%)") + 
+  ggtitle("Response Rate by Percentage of Asian Population by Census Tract - 2020")
+
+ggsave(filename = "../../AAJC Vis/case_studies/new_york_city/resp_by_tract_pop_scatter_AA_2020_SIZE_2.png",
+       plot = scatter_response2, bg = "white", width =9.07, height = 5.47)
+
 
 # light or - e49d48
 # dark or - ac550f
@@ -547,6 +618,26 @@ scatter_response_color
 ggsave(filename = "../../AAJC Vis/case_studies/new_york_city/resp_by_citizenship_A_A_2020_SCATTER.png",
        plot = scatter_response_color, bg = "white")
 
+# updated without grid lines
+scatter_response_color2 <- sr_2020_NY %>% filter(RACE == 'A_A') %>%
+  ggplot(aes(x = pop_percentage, y = CRRALL, size = total_tract_pop, color = citizenship_perc_fctr)) + 
+  geom_point(alpha = .8) + 
+  scale_color_brewer(palette = "PuOr") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "grey")) + 
+  xlab("Asian (alone) Population (%)") + 
+  ylab("Cumulative Self-Response\nRate - Overall (%)") + 
+  ggtitle("Response Rate by Percentage of Asian Population and Citizenship Status",
+          subtitle =  "Census Tract - 2020") + 
+  labs(color = "Citizenship of Asian\n(alone) Population (%)", size = 'Total Tract Population', size=2) + 
+  theme(legend.title = element_text(size = 10), axis.title.y=element_text(size=10), axis.title.x=element_text(size=10))
+
+scatter_response_color2
+
+ggsave(filename = "../../AAJC Vis/case_studies/new_york_city/resp_by_citizenship_A_A_2020_SCATTER_2.png",
+       plot = scatter_response_color2, bg = "white")
 
 
 
@@ -577,7 +668,7 @@ ggsave(filename = "../../AAJC Vis/case_studies/new_york_city/resp_by_citizenship
 esmr_2020 <- read.csv("../../Transformed Data/2020/ES_MR_comparison_2020.csv")
 
 
-# all 5 (counties) in HI 
+# all 5 (boroughs) in NYC
 ny_boroughs
 
 # total population of Hawaii
@@ -665,6 +756,35 @@ subethnicity_aa_20_NATIONAL <- subethnicity_aa_20_NATIONAL %>%
 subethnicity_aa_20$label <- sub(".*Estimate!!Total Groups Tallied:!!", "", subethnicity_aa_20$label) 
 subethnicity_aa_20_NATIONAL$label <- sub(".*Estimate!!Total Groups Tallied:!!", "", subethnicity_aa_20_NATIONAL$label) 
 
+# keep top subethnicities and arrange in descending order (for v2)
+subethnicity_aa_20_2 <- subethnicity_aa_20 %>% top_n(11, wt=estimate) %>% arrange(desc(estimate))
+subethnicity_aa_20_NATIONAL_2 <- subethnicity_aa_20_NATIONAL %>% arrange(desc(estimate))
+
+# save total estimates count
+subethnicity_aa_20_total <- subethnicity_aa_20_2[grep("Total",subethnicity_aa_20$label), ]
+subethnicity_aa_20_total <- subethnicity_aa_20_total$estimate
+
+subethnicity_aa_20_NATIONAL_total <- subethnicity_aa_20_NATIONAL_2[grep("Total",subethnicity_aa_20_NATIONAL$label), ]
+subethnicity_aa_20_NATIONAL_total <- subethnicity_aa_20_NATIONAL_total$estimate
+
+# add total estimates as column
+subethnicity_aa_20_2$total_asn_pop <- c(subethnicity_aa_20_total)
+
+subethnicity_aa_20_NATIONAL_2$total_asn_pop <- c(subethnicity_aa_20_NATIONAL_total)
+
+# add percentage of total asian population column
+subethnicity_aa_20_2 <- subethnicity_aa_20_2 %>% mutate(percent_region=estimate/total_asn_pop,
+                                                        percent_region=percent_region*100)
+subethnicity_aa_20_NATIONAL_2 <- subethnicity_aa_20_NATIONAL_2 %>% mutate(percent_us=estimate/total_asn_pop,
+                                                                          percent_us=percent_us*100)
+# merge data into 1 df
+subethnicity_aa_full <- merge(
+  subethnicity_aa_20_2, subethnicity_aa_20_NATIONAL_2, by="label")
+
+# Save for Alysha
+write.csv(subethnicity_aa_full, "././Transformed Data/data for viz_alysha/case_studies/aa_subethnicities_nyc.csv")
+
+
 # remove total asian population count 
 subethnicity_aa_20 <- subethnicity_aa_20[subethnicity_aa_20$variable != 'B02018_001',]
 subethnicity_aa_20_NATIONAL <- subethnicity_aa_20_NATIONAL[subethnicity_aa_20_NATIONAL$variable != 'B02018_001',]
@@ -747,7 +867,7 @@ ggsave(filename = "../../AAJC Vis/case_studies/new_york_city/sub_ethn_AA_FACET_2
 
 
 # ------
-# plot - king county
+# plot - nyc 
 # ------
 
 # US - #f4c78d
