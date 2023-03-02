@@ -839,6 +839,22 @@ citizenship <- get_acs(geography = "county",
                        variables = asian_citizen_vars, 
                        year = 2020)
 
+# total pop asian - B05003D_001
+
+# Pulling this data to add % data to citizenship_english_ability_tables
+# total population of NHPI
+totPop <- get_acs(geography = "state",
+                  state = "Washington",
+                  # county = "King County",
+                  variables = "B05003D_001", 
+                  year = 2020)
+
+# total population of NHPI- US
+totPopUS <- get_acs(geography = "us",
+                    variables = "B05003D_001", 
+                    year = 2020)
+
+
 
 # ------
 # citizenship calculation 

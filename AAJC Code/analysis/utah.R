@@ -855,6 +855,19 @@ citizenship <- get_acs(geography = "county",
                        year = 2020)
 
 
+# Pulling this data to add % data to citizenship_english_ability_tables
+# total population of NHPI
+totPop <- get_acs(geography = "state",
+                  state = "Utah",
+                  variables = "B05003E_001", 
+                  year = 2020)
+
+# total population of NHPI- US
+totPopUS <- get_acs(geography = "us",
+                    variables = "B05003E_001", 
+                    year = 2020)
+
+
 # ------
 # citizenship calculation 
 # ------

@@ -54,7 +54,7 @@ agegrp_2010_UNITED_STATES <- agegrp_2010_UNITED_STATES %>% select(CTYNAME, AGEGR
 #   Richmond County - Staten Island 
 #   Queens County - Queens
 
-# all 5 boroughs (counties) in NY 
+# all 5 boroughs (counties) in NY  
 ny_boroughs <- c("New York County", "Kings County", "Bronx County", "Richmond County", "Queens County")
 agegrp_2010_NY_boroughs <- agegrp_2010 %>% filter(CTYNAME %in% ny_boroughs & STNAME == "New York")  %>%
   select(CTYNAME, AGEGRP, RACE, ESTIM, MR, PERC_DIFF, COVERAGE)
@@ -958,6 +958,22 @@ citizenship <- get_acs(geography = "county",
                        state = "NY",
                        variables = asian_citizen_vars, 
                        year = 2020)
+
+
+# total pop asian - B05003D_001
+
+# Pulling this data to add % data to citizenship_english_ability_tables
+# total population of NHPI
+totPop <- get_acs(geography = "state",
+                  state = "New York",
+                  # county = ny_boroughs,
+                  variables = "B05003D_001",
+                  year = 2020)
+
+# total population of NHPI- US
+totPopUS <- get_acs(geography = "us",
+                    variables = "B05003D_001", 
+                    year = 2020)
 
 
 # ------

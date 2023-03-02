@@ -138,7 +138,7 @@ v1_line2 <- agegrp_2010_AK_USA %>% filter(RACE == "NHPI_A") %>%
   annotate("text",x=17.7, y=-7, label="undercount", size=2.5, color='grey')
 
 # change age group labels 
-v1_line2 <- v1_line2 + theme(axis.text.x = element_text(angle=45))
+v1_line2 <- v1_line2 + theme(axis.text.x = element_text(angle=25))
 v1_line2
 ggsave(filename = "../../AAJC Vis/case_studies/arkansas/US_AND_AK_line_graph_coverage_by_agegrp_NHPI_A_2010_BENTON_2.png",
        plot = v1_line2, bg = "white", width =9.07, height = 5.47)
@@ -838,6 +838,20 @@ citizenship <- get_acs(geography = "county",
                        county = "Benton County",
                        variables = nhpi_citizen_vars, 
                        year = 2020)
+
+
+# Pulling this data to add % data to citizenship_english_ability_tables
+# total population of NHPI
+totPop <- get_acs(geography = "county",
+                  state = "Arkansas",
+                  county = "Benton County",
+                  variables = "B05003E_001", 
+                  year = 2020)
+
+# total population of NHPI- US
+totPopUS <- get_acs(geography = "us",
+                    variables = "B05003E_001", 
+                    year = 2020)
 
 
 # ------

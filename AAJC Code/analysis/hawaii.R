@@ -916,6 +916,7 @@ ggsave(filename = "../../AAJC Vis/case_studies/hawaii/sub_ethn_NHPI_NATIONAL_202
 
 # Table - SEX BY AGE BY NATIVITY AND CITIZENSHIP STATUS (NHPI ALONE)
 # Table ID - B05003E
+# Total population of a geography - B01003_001
 
 # Native = Under 18 & Native (F) + Under 18 & Native (M) + Over 18 and Native (F) + Over 18 and Native (M)
 # Foreign born (naturalized citizen) = Under 18 & Foreign born (Naturalized citizen M + F) + Over 18 & Foreign born (Naturalized citizen M +F)
@@ -923,7 +924,7 @@ ggsave(filename = "../../AAJC Vis/case_studies/hawaii/sub_ethn_NHPI_NATIONAL_202
 
 nhpi_citizen_vars <- c("B05003E_004", "B05003E_009", 'B05003E_015', 'B05003E_020', # native vars
                        "B05003E_006", "B05003E_011", "B05003E_017", "B05003E_022", # fborn - naturalized vars
-                       "B05003E_007", "B05003E_012", "B05003E_018", "B05003E_023")
+                       "B05003E_007", "B05003E_012", "B05003E_018", "B05003E_023") 
 
 
 # ------
@@ -933,7 +934,18 @@ nhpi_citizen_vars <- c("B05003E_004", "B05003E_009", 'B05003E_015', 'B05003E_020
 citizenship <- get_acs(geography = "county",
                        state = "Hawaii",
                        variables = nhpi_citizen_vars, 
+# Pulling this data to add % data to citizenship_english_ability_tables
+# total population of NHPI
+totPop <- get_acs(geography = "county",
+                       state = "Hawaii",
+                       variables = "B05003E_001", 
                        year = 2020)
+
+# total population of NHPI- US
+totPopUS <- get_acs(geography = "us",
+                  variables = "B05003E_001", 
+                  year = 2020)
+
 
 
 # ------

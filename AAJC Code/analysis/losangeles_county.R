@@ -1002,6 +1002,8 @@ nhpi_citizen_vars <- c("B05003E_004", "B05003E_009", 'B05003E_0015', 'B05003E_02
                        "B05003E_006", "B05003E_011", "B05003E_017", "B05003E_022", # fborn - naturalized vars
                        "B05003E_007", "B05003E_012", "B05003E_018", "B05003E_023")
 
+# total pop asian - B05003D_001
+# total pop nhpi - B05003E_001
 
 # ------
 # pull 5 year acs data 
@@ -1011,6 +1013,19 @@ citizenship <- get_acs(geography = "county",
                        state = "CA",
                        variables = asian_citizen_vars, 
                        year = 2020)
+
+# Pulling this data to add % data to citizenship_english_ability_tables
+# total population of NHPI
+totPop <- get_acs(geography = "state",
+                  state = "California",
+                  # county = "Los Angeles County",
+                  variables = "B05003E_001", 
+                  year = 2020)
+
+# total population of NHPI- US
+totPopUS <- get_acs(geography = "us",
+                    variables = "B05003E_001", 
+                    year = 2020)
 
 
 # ------
