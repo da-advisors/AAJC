@@ -642,6 +642,18 @@ popBy_age_2010 %>% ggplot(aes(x = AGEGRP, y=EOC, group = RACE)) +
   ylab("Error of Closure (%)") + 
   ggtitle("Coverage by Age Group in 2010 for NHPI Alone and NHPI Alone and in\nCombination Populations")
 
+# Line graph without grid lines
+popBy_age_2010 %>% ggplot(aes(x = AGEGRP, y=EOC, group = RACE)) + 
+  geom_line(aes(color = RACE), size = 1) + 
+  scale_color_manual(values = c("#916a92", "#f4c78d")) + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "grey")) + 
+  xlab("Age Group") + 
+  ylab("Error of Closure (%)") + 
+  ggtitle("Coverage by Age Group in 2010 for NHPI Alone and NHPI Alone and in\nCombination Populations")
+
 # 2. 
 # Age Groups with the top Error of Closure (tables)
 top5_agegrp_A <- popBy_age_2010 %>% filter(RACE == 'A') %>% arrange(desc(abs(EOC)))
@@ -653,7 +665,7 @@ top5_agegrp_AIC <- top5_agegrp_AIC[1:6, ]
 # display table 
 #   note - it will display pixelated in R viewer. Use png from AAJC Vis foder
 library("png")
-tbl1 <- readPNG("../AAJC Vis/top5_agegrps_EOC_2010.png")
+tbl1 <- readPNG("./AAJC Vis/top5_agegrps_EOC_2010.png")
 plot.new() 
 rasterImage(tbl1, 0,0,1,1)
 
