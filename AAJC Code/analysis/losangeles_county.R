@@ -131,30 +131,7 @@ ggsave(filename = "../../AAJC Vis/case_studies/los_angeles/US_AND_LA_line_graph_
 
 # update plot without grid lines
 ## AIC
-v2_line2 <- agegrp_2010_LA_USA %>% filter(RACE == "NHPI_AIC") %>%
-  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME)) +
-  geom_hline(yintercept = 0, linetype='dotted', col='grey')+
-  geom_line(aes(color=CTYNAME), size=1) +
-  scale_color_manual(values = c("#916a92", "#f4c78d"), name = "Region") +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        axis.line = element_line(colour = "grey")) + 
-  xlab("Age Group") + 
-  ylab("Error of Closure (%)") + 
-  ggtitle("Coverage by Age Group for NHPI (Alone or in Combination) Populations - 2010")+
-  scale_x_discrete(labels = agegrp_labels) +
-  annotate("text",x=17.7, y=1.3, label="overcount", size=2.5, color='grey') +
-  annotate("text",x=17.7, y=-1.3, label="undercount", size=2.5, color='grey')
-
-# change age group labels 
-v2_line2 <- v2_line2 + theme(axis.text.x = element_text(angle=45))
-
-ggsave(filename = "../../AAJC Vis/case_studies/los_angeles/US_AND_LA_line_graph_coverage_by_agegrp_NHPI_AIC_2010_2.png",
-       plot = v2_line2, bg = "white", width =9.07, height = 5.47)
-
-## Asian Alone
-v1_line2 <- agegrp_2010_LA_USA %>% filter(RACE == "NHPI_A") %>%
+v2_line2 <- agegrp_2010_LA_USA %>% filter(RACE == "NHPI_A") %>%
   ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME)) +
   geom_hline(yintercept = 0, linetype='dotted', col='grey')+
   geom_line(aes(color=CTYNAME), size=1) +
@@ -166,14 +143,41 @@ v1_line2 <- agegrp_2010_LA_USA %>% filter(RACE == "NHPI_A") %>%
   xlab("Age Group") + 
   ylab("Error of Closure (%)") + 
   ggtitle("Coverage by Age Group for NHPI (Alone) Populations - 2010")+
-  scale_x_discrete(labels = agegrp_labels) +
-  annotate("text",x=17.7, y=1.3, label="overcount", size=2.5, color='grey') +
-  annotate("text",x=17.7, y=-1.3, label="undercount", size=2.5, color='grey')
+  scale_x_discrete(labels = agegrp_labels)
+  # annotate("text",x=17.7, y=1.3, label="overcount", size=2.5, color='grey') +
+  # annotate("text",x=17.7, y=-1.3, label="undercount", size=2.5, color='grey')
 
 # change age group labels 
-v1_line2 <- v1_line2 + theme(axis.text.x = element_text(angle=45))
+v2_line2 <- v2_line2 + theme(axis.text.x = element_text(angle=35, vjust = -.05, size = 7),
+                             axis.title.x = element_text(vjust = -1))
+v2_line2
 
 ggsave(filename = "../../AAJC Vis/case_studies/los_angeles/US_AND_LA_line_graph_coverage_by_agegrp_NHPI_A_2010_2.png",
+       plot = v2_line2, bg = "white", width =9.07, height = 5.47)
+
+## Asian Alone
+v1_line2 <- agegrp_2010_LA_USA %>% filter(RACE == "A_AIC") %>%
+  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME)) +
+  geom_hline(yintercept = 0, linetype='dotted', col='grey')+
+  geom_line(aes(color=CTYNAME), size=1) +
+  scale_color_manual(values = c("#916a92", "#f4c78d"), name = "Region") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "grey")) + 
+  xlab("Age Group") + 
+  ylab("Error of Closure (%)") + 
+  ggtitle("Coverage by Age Group for Asian (Alone or in Combination) Populations - 2010")+
+  scale_x_discrete(labels = agegrp_labels)
+  # annotate("text",x=17.7, y=1.3, label="overcount", size=2.5, color='grey') +
+  # annotate("text",x=17.7, y=-1.3, label="undercount", size=2.5, color='grey')
+
+# change age group labels 
+v1_line2 <- v1_line2 + theme(axis.text.x = element_text(angle=35, vjust = -.05, size = 7),
+                             axis.title.x = element_text(vjust = -1))
+v1_line2
+
+ggsave(filename = "../../AAJC Vis/case_studies/los_angeles/US_AND_LA_line_graph_coverage_by_agegrp_A_AIC_2010_2.png",
        plot = v1_line2, bg = "white", width =9.07, height = 5.47)
 
 # ==========================

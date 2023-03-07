@@ -93,12 +93,14 @@ v2_line2 <- agegrp_2010_HC_USA %>% filter(RACE == "A_AIC") %>%
   xlab("Age Group") + 
   ylab("Error of Closure (%)") + 
   ggtitle("Coverage by Age Group for Asian (Alone or in Combination) Populations - 2010")+
-  scale_x_discrete(labels = agegrp_labels) +
-  annotate("text",x=17.7, y=1, label="overcount", size=2.5, color='grey') +
-  annotate("text",x=17.7, y=-1, label="undercount", size=2.5, color='grey')
+  scale_x_discrete(labels = agegrp_labels)
+  # annotate("text",x=17.7, y=1, label="overcount", size=2.5, color='grey') +
+  # annotate("text",x=17.7, y=-1, label="undercount", size=2.5, color='grey')
 
 # change age group labels 
-v2_line2 <- v2_line2 + theme(axis.text.x = element_text(angle=45))
+v2_line2 <- v2_line2 + theme(axis.text.x = element_text(angle=35, vjust = -.05, size = 7),
+                             axis.title.x = element_text(vjust = -1))
+v2_line2
 
 ggsave(filename = "../../AAJC Vis/case_studies/harris_county_texas/US_AND_HC_line_graph_coverage_by_agegrp_A_AIC_2010_2.png",
        plot = v2_line2, bg = "white", width =9.07, height = 5.47)

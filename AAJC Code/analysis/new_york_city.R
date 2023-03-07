@@ -102,7 +102,7 @@ ggsave(filename = "../../AAJC Vis/case_studies/new_york_city//US_AND_NY_line_gra
 
 # updated plot without grid lines and line type + color change
 ## AIC
-v2_line2 <- agegrp_2010_NY_USA %>% filter(RACE == "A_AIC") %>%
+v2_line2 <- agegrp_2010_NY_USA %>% filter(RACE == "A_A") %>%
   ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME, linetype = CTYNAME)) +
   geom_hline(yintercept = 0, linetype='dotted', col='grey')+
   geom_line(aes(color=CTYNAME), size=.7, alpha=.8) +
@@ -118,15 +118,18 @@ v2_line2 <- agegrp_2010_NY_USA %>% filter(RACE == "A_AIC") %>%
         axis.line = element_line(colour = "grey")) + 
   xlab("Age Group") + 
   ylab("Error of Closure (%)") + 
-  ggtitle("Coverage by Age Group for Asian (Alone or in Combination) Populations - 2010")+
-  scale_x_discrete(labels = agegrp_labels) +
-  annotate("text",x=18.0, y=1.3, label="overcount", size=2.5, color='grey') +
-  annotate("text",x=18.0, y=-1.3, label="undercount", size=2.5, color='grey')
+  ggtitle("Coverage by Age Group for Asian (Alone) Populations - 2010")+
+  scale_x_discrete(labels = agegrp_labels)
+  # annotate("text",x=18.0, y=1.3, label="overcount", size=2.5, color='grey') +
+  # annotate("text",x=18.0, y=-1.3, label="undercount", size=2.5, color='grey')
 
 # change age group labels 
-v2_line2 <- v2_line2 + theme(axis.text.x = element_text(angle=45)) 
+v2_line2 <- v2_line2 + theme(axis.text.x = element_text(angle=35, vjust = -.05, size = 7),
+                             axis.title.x = element_text(vjust = -1))
 
-ggsave(filename = "../../AAJC Vis/case_studies/new_york_city//US_AND_NY_line_graph_coverage_by_agegrp_A_AIC_2010_2.png",
+v2_line2
+
+ggsave(filename = "../../AAJC Vis/case_studies/new_york_city//US_AND_NY_line_graph_coverage_by_agegrp_A_A_2010_2.png",
        plot = v2_line2, bg = "white", width =10.0, height = 5.47)
 
 ## Asian Alone
