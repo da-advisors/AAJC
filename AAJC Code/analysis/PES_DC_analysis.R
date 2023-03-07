@@ -413,7 +413,7 @@ estim_state_2010_A_raw <- read.csv('../../Raw Data/2010/sc-est2010-alldata6.csv'
 # estim_state_2010
 es2010_AIC <- estim_state_2010_AIC_raw %>% 
   select(STATE, STNAME, SEX, ORIGIN, RACE, AGE, POPESTIMATE72010) %>%
-  filter(RACE == 5) %>% # 5 = Native Hawaiian and Other Pacific Islander Alone or in Combination  
+  filter(RACE == 5) %>% # 5 = Native Hawaiian and Other Pacific Islander Alone or in Combination 4 = Asian Alone or in Combination 
   filter(SEX == 0, ORIGIN == 0) %>% 
   group_by(STATE, STNAME, AGE) %>%
   summarise(AIC = sum(POPESTIMATE72010))
@@ -433,14 +433,14 @@ estim_state_2010 <- left_join(es2010_AIC, es2010_A, by=c("STATE","STNAME", "AGE"
 # estim_nat_2010
 estim_state_2010_AIC <- estim_state_2010_AIC_raw %>%
   select(STATE, STNAME, SEX, ORIGIN, RACE, AGE, POPESTIMATE72010) %>%
-  filter(RACE == 5) %>% # 5 = Native Hawaiian and Other Pacific Islander Alone or in Combination  
+  filter(RACE == 5) %>% # 5 = Native Hawaiian and Other Pacific Islander Alone or in Combination  4 = Asian Alone or in Combination
   filter(SEX == 0, ORIGIN == 0) %>% 
   group_by(AGE) %>%
   summarise(AIC = sum(POPESTIMATE72010)) # get the total population by each age 
 
 estim_state_2010_A <- estim_state_2010_A_raw %>%
   select(STATE, STNAME, SEX, ORIGIN, RACE, AGE, POPESTIMATE72010) %>%
-  filter(RACE == 5) %>% # 5 = Native Hawaiian and Other Pacific Islander Alone
+  filter(RACE == 5) %>% # 5 = Native Hawaiian and Other Pacific Islander Alone  4 = Asian Alone or in Combination
   filter(SEX == 0, ORIGIN == 0) %>% 
   group_by(AGE) %>%
   summarise(A = sum(POPESTIMATE72010)) # get the total population by each age 
@@ -496,7 +496,7 @@ mr_mt_wy_2010 <- read.csv("../../Raw Data/2010/modified_race_2010_mt_wy.csv")
 
 
 # list of race groups which contain Asian + another race
-keep_imprace_aic <- c(8,11,13,15,17,19,21,22,24,25,26,28,29,30,31)
+keep_imprace_asian <- c(8,11,13,15,17,19,21,22,24,25,26,28,29,30,31)
 keep_imprace_nhpi <- c(9,12,14,15,18,20,21,23,24,25,27,28,29,30,31)
 
 # Subset Relevant data 
@@ -505,11 +505,11 @@ keep_imprace_nhpi <- c(9,12,14,15,18,20,21,23,24,25,27,28,29,30,31)
 # 1. 
 # State level 
 mr_al_mo_2010_STATE <- mr_al_mo_2010 %>%
-  filter(IMPRACE == 5 | IMPRACE %in% keep_imprace_nhpi) %>% # get all Asian/nhpi race groups 
+  filter(IMPRACE == 5 | IMPRACE %in% keep_imprace_nhpi) %>% # 5 = Native Hawaiian and Other Pacific Islander Alone or in Combination  4 = Asian Alone or in Combination
   
   # create race group col to define A and AIC
   mutate(RACE_GROUP = case_when(
-    IMPRACE == 5 ~ 'A', #alone
+    IMPRACE == 5 ~ 'A', # 5 = Native Hawaiian and Other Pacific Islander Alone or in Combination  4 = Asian Alone or in Combination
     IMPRACE %in% keep_imprace_nhpi ~ 'AIC' #alone or in combo
   )) %>%
   
@@ -518,11 +518,11 @@ mr_al_mo_2010_STATE <- mr_al_mo_2010 %>%
   summarise(MR = sum(RESPOP))
 
 mr_mt_wy_2010_STATE <- mr_mt_wy_2010 %>%
-  filter(IMPRACE == 5 | IMPRACE %in% keep_imprace_nhpi) %>% # get all Asian/nhpi race groups 
+  filter(IMPRACE == 5 | IMPRACE %in% keep_imprace_nhpi) %>% # 5 = Native Hawaiian and Other Pacific Islander Alone or in Combination  4 = Asian Alone or in Combination
   
   # create race group col to define A and AIC
   mutate(RACE_GROUP = case_when(
-    IMPRACE == 5 ~ 'A',
+    IMPRACE == 5 ~ 'A',    # 5 = Native Hawaiian and Other Pacific Islander Alone or in Combination  4 = Asian Alone or in Combination
     IMPRACE %in% keep_imprace_nhpi ~ 'AIC'
   )) %>%
   
@@ -534,7 +534,7 @@ mr_mt_wy_2010_STATE <- mr_mt_wy_2010 %>%
 # 2. 
 # National level 
 mr_al_mo_2010 <- mr_al_mo_2010 %>%
-  filter(IMPRACE == 5 | IMPRACE %in% keep_imprace_nhpi) %>% # get all Asian race groups 
+  filter(IMPRACE == 5 | IMPRACE %in% keep_imprace_nhpi) %>% # 5 = Native Hawaiian and Other Pacific Islander Alone or in Combination  4 = Asian Alone or in Combination
   
   # create race group col to define A and AIC
   mutate(RACE_GROUP = case_when(
@@ -547,7 +547,7 @@ mr_al_mo_2010 <- mr_al_mo_2010 %>%
   summarise(MR = sum(RESPOP))
 
 mr_mt_wy_2010 <- mr_mt_wy_2010 %>%
-  filter(IMPRACE == 5 | IMPRACE %in% keep_imprace_nhpi) %>% # get all Asian race groups 
+  filter(IMPRACE == 5 | IMPRACE %in% keep_imprace_nhpi) %>% # 5 = Native Hawaiian and Other Pacific Islander Alone or in Combination  4 = Asian Alone or in Combination
   
   # create race group col to define A and AIC
   mutate(RACE_GROUP = case_when(
@@ -634,13 +634,33 @@ write.csv(state_EOC_2010, "../../Transformed Data/2010/state_level_comparisons_2
 
 # 1. 
 # Line Graph 
-popBy_age_2010 %>% ggplot(aes(x = AGEGRP, y=EOC, group = RACE)) + 
+age_cov_line <- popBy_age_2010 %>% ggplot(aes(x = AGEGRP, y=EOC, group = RACE)) + 
   geom_line(aes(color = RACE), size = 1) + 
   scale_color_manual(values = c("#916a92", "#f4c78d")) + 
   theme_minimal() + 
   xlab("Age Group") + 
   ylab("Error of Closure (%)") + 
   ggtitle("Coverage by Age Group in 2010 for NHPI Alone and NHPI Alone and in\nCombination Populations")
+
+ggsave(filename = "../../AAJC Vis/age_coverage_nhpipop_line_2010.png",
+       plot = age_cov_line, bg = "white", width =7.0, height = 5.47)
+
+
+# Line graph without grid lines
+age_cov_line_2 <- popBy_age_2010 %>% ggplot(aes(x = AGEGRP, y=EOC, group = RACE)) + 
+  geom_line(aes(color = RACE), size = 1) + 
+  scale_color_manual(values = c("#916a92", "#f4c78d")) + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "grey")) + 
+  xlab("Age Group") + 
+  ylab("Error of Closure (%)") + 
+  ggtitle("Coverage by Age Group in 2010 for NHPI Alone and NHPI Alone and in\nCombination Populations")
+
+ggsave(filename = "../../AAJC Vis/age_coverage_nhpipop_line_2010_2.png",
+       plot = age_cov_line_2, bg = "white", width =7, height = 5.47)
+
 
 # 2. 
 # Age Groups with the top Error of Closure (tables)
@@ -653,7 +673,7 @@ top5_agegrp_AIC <- top5_agegrp_AIC[1:6, ]
 # display table 
 #   note - it will display pixelated in R viewer. Use png from AAJC Vis foder
 library("png")
-tbl1 <- readPNG("../AAJC Vis/top5_agegrps_EOC_2010.png")
+tbl1 <- readPNG("./AAJC Vis/top5_agegrps_EOC_2010.png")
 plot.new() 
 rasterImage(tbl1, 0,0,1,1)
 
