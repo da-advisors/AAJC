@@ -790,7 +790,7 @@ subethnicity_aa_full <- merge(
   subethnicity_aa_20_2, subethnicity_aa_20_NATIONAL_2, by="label")
 
 # Save for Alysha
-#write.csv(subethnicity_aa_full, "././Transformed Data/data for viz_alysha/case_studies/aa_subethnicities_nyc.csv")
+write.csv(subethnicity_aa_full, "././Transformed Data/data for viz_alysha/case_studies/aa_subethnicities_nyc.csv")
 
 
 # remove total asian population count 
