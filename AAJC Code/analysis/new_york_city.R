@@ -759,12 +759,16 @@ subethnicity_aa_20_NATIONAL <- subethnicity_aa_20_NATIONAL %>%
 subethnicity_aa_20$label <- sub(".*Estimate!!Total Groups Tallied:!!", "", subethnicity_aa_20$label) 
 subethnicity_aa_20_NATIONAL$label <- sub(".*Estimate!!Total Groups Tallied:!!", "", subethnicity_aa_20_NATIONAL$label) 
 
+# aggregate all boroughs for percentage file
+subethnicity_aa_20_2 <- subethnicity_aa_20 %>% group_by(label) %>% summarise(estimate = sum(estimate))
+
 # keep top subethnicities and arrange in descending order (for v2)
-subethnicity_aa_20_2 <- subethnicity_aa_20 %>% top_n(11, wt=estimate) %>% arrange(desc(estimate))
+subethnicity_aa_20_2 <- subethnicity_aa_20_2 %>% top_n(11, wt=estimate) %>% arrange(desc(estimate))
 subethnicity_aa_20_NATIONAL_2 <- subethnicity_aa_20_NATIONAL %>% arrange(desc(estimate))
 
+
 # save total estimates count
-subethnicity_aa_20_total <- subethnicity_aa_20_2[grep("Total",subethnicity_aa_20$label), ]
+subethnicity_aa_20_total <- subethnicity_aa_20_2[grep("Total",subethnicity_aa_20_2$label), ]
 subethnicity_aa_20_total <- subethnicity_aa_20_total$estimate
 
 subethnicity_aa_20_NATIONAL_total <- subethnicity_aa_20_NATIONAL_2[grep("Total",subethnicity_aa_20_NATIONAL$label), ]
@@ -780,12 +784,13 @@ subethnicity_aa_20_2 <- subethnicity_aa_20_2 %>% mutate(percent_region=estimate/
                                                         percent_region=percent_region*100)
 subethnicity_aa_20_NATIONAL_2 <- subethnicity_aa_20_NATIONAL_2 %>% mutate(percent_us=estimate/total_asn_pop,
                                                                           percent_us=percent_us*100)
+
 # merge data into 1 df
 subethnicity_aa_full <- merge(
   subethnicity_aa_20_2, subethnicity_aa_20_NATIONAL_2, by="label")
 
 # Save for Alysha
-write.csv(subethnicity_aa_full, "././Transformed Data/data for viz_alysha/case_studies/aa_subethnicities_nyc.csv")
+#write.csv(subethnicity_aa_full, "././Transformed Data/data for viz_alysha/case_studies/aa_subethnicities_nyc.csv")
 
 
 # remove total asian population count 
