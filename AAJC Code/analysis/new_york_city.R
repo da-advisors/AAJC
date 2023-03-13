@@ -312,8 +312,10 @@ geo <- get_decennial(
   variables = 'P1_001N', # total pop. of a tract 
   year = 2020,
   geometry = TRUE,
-  cb = TRUE,
-  resolution = "20m")
+  cb = FALSE,
+  resolution = "20m") %>%
+  # st_transform(26918) %>%
+  erase_water(year = 2020)
 
 nyc_county_overlay <- get_decennial(
   geography = "county",
@@ -347,7 +349,7 @@ resp_NYC <- sr_2020_NY_geo %>%
   ggplot(aes(fill = CRRALL_fctr, geometry = geometry))+
   geom_sf(color = "black", size = 0.04) +
   # geom_sf(data = nyc_county_overlay, fill = NA, color='black', size=.3) +
-  scale_fill_brewer(palette = "PuOr",na.translate=FALSE) +
+  scale_fill_brewer(palette = "PuOr", na.translate=FALSE) + #na.value = "white"
   # scale_fill_viridis_c(option = "magma") +
   ggtitle("          Response Rate by Census Tract - 2020") +
   labs(fill = "Cumulative Self-Response\nRate - Overall (%)",
@@ -358,8 +360,9 @@ resp_NYC <- sr_2020_NY_geo %>%
   theme_void()
 # titles_upper()
 
+# resp_NYC <- resp_NYC + theme(panel.background = element_rect(fill = '#D5FFFF'))
 
-ggsave(filename = "../../AAJC Vis/case_studies/new_york_city/resp_by_tract_map_1.png",
+ggsave(filename = "../../AAJC Vis/case_studies/new_york_city/resp_by_tract_map_1_water.png",
        plot = resp_NYC, bg = "white")
 
 
@@ -462,7 +465,7 @@ fborn_map <- foreign_born_perc %>%
   theme_void()
   # titles_upper()
 
-ggsave(filename = "../../AAJC Vis/case_studies/new_york_city/foreign_born_A.png",
+ggsave(filename = "../../AAJC Vis/case_studies/new_york_city/foreign_born_A_water.png",
        plot = fborn_map, bg = "white")
 
 
@@ -572,12 +575,12 @@ non_citizen_map <- citizenship_plot %>%
   labs(fill = "Percentage Non-citizen ", size=1) +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 1)) +
-  theme_void() + 
-  titles_upper()
+  theme_void()
+  # titles_upper()
 
 
 # save 
-ggsave(filename = "../../AAJC Vis/case_studies/new_york_city/non_citizenship_map_AA_2020.png",
+ggsave(filename = "../../AAJC Vis/case_studies/new_york_city/non_citizenship_map_AA_2020_water.png",
        plot = non_citizen_map, bg = "white")
 
 
