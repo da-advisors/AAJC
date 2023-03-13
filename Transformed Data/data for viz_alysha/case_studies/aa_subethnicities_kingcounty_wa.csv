@@ -1,0 +1,12 @@
+"","label","GEOID.x","NAME.x","variable.x","estimate.x","moe.x","total_asn_pop.x","percent_region","GEOID.y","NAME.y","variable.y","estimate.y","moe.y","total_asn_pop.y","percent_us"
+"1","Asian Indian","53033","King County, Washington","B02018_002",101366,3732,508424,19.9372964297515,"1","United States","B02018_002",4505780,26148,23117134,19.4910839726066
+"2","Cambodian","53033","King County, Washington","B02018_006",11215,1660,508424,2.20583607382814,"1","United States","B02018_006",333529,8358,23117134,1.44277833056641
+"3","Chinese, except Taiwanese","53033","King County, Washington","B02018_007",132606,3741,508424,26.0817742671471,"1","United States","B02018_007",5121528,29900,23117134,22.1546840538278
+"4","Estimate!!Total Groups Tallied:","53033","King County, Washington","B02018_001",508424,2801,508424,100,"1","United States","B02018_001",23117134,31084,23117134,100
+"5","Filipino","53033","King County, Washington","B02018_008",72861,3745,508424,14.3307554324737,"1","United States","B02018_008",4133942,27141,23117134,17.882588732669
+"6","Japanese","53033","King County, Washington","B02018_011",43696,2667,508424,8.59440152313817,"1","United States","B02018_011",1550875,18238,23117134,6.70876848315193
+"7","Korean","53033","King County, Washington","B02018_012",43399,2455,508424,8.53598571271222,"1","United States","B02018_012",1926508,17066,23117134,8.33368011795926
+"8","Laotian","53033","King County, Washington","B02018_013",6368,1140,508424,1.25249791512596,"1","United States","B02018_013",257297,7827,23117134,1.11301426898334
+"9","Other Asian, not specified","53033","King County, Washington","B02018_024",9207,1304,508424,1.81089012320425,"1","United States","B02018_024",698168,11252,23117134,3.0201321669027
+"10","Taiwanese","53033","King County, Washington","B02018_020",9455,1271,508424,1.85966830834107,"1","United States","B02018_020",232406,6110,23117134,1.00534088698019
+"11","Vietnamese","53033","King County, Washington","B02018_022",51806,3026,508424,10.1895268516042,"1","United States","B02018_022",2167209,21371,23117134,9.37490348068234
