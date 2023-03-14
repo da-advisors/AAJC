@@ -78,9 +78,11 @@ agegrp_2010_AK_USA <- rbind(agegrp_2010_AK, agegrp_2010_benton, agegrp_2010_UNIT
 # 3. 
 # Plot
 v2_line <- agegrp_2010_AK_USA %>% filter(RACE == "NHPI_AIC") %>%
-  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME)) +
+  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME, linetype = CTYNAME)) +
   geom_hline(yintercept = 0, linetype='dotted', col='grey')+
-  geom_line(aes(color=CTYNAME), size=1) +
+  geom_line(aes(color=CTYNAME), size=1, alpha=.8) +
+  scale_linetype_manual(values = c("solid", "solid", "dashed"),
+                        name = "Region") +
   scale_color_manual(values = c("#916a92", "#f4c78d", "#e89251"), name = "Region") +
   theme_minimal() +
   xlab("Age Group") + 
@@ -99,9 +101,11 @@ ggsave(filename = "../../AAJC Vis/case_studies/arkansas/US_AND_AK_line_graph_cov
 # update plot without grid lines
 # AIC
 v2_line2 <- agegrp_2010_AK_USA %>% filter(RACE == "NHPI_AIC") %>%
-  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME)) +
+  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME, linetype = CTYNAME)) +
   geom_hline(yintercept = 0, linetype='dotted', col='grey')+
   geom_line(aes(color=CTYNAME), size=1) +
+  scale_linetype_manual(values = c("solid", "solid", "dashed"),
+                        name = "Region") +
   scale_color_manual(values = c("#916a92", "#f4c78d", "#e89251"), name = "Region") +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -110,7 +114,7 @@ v2_line2 <- agegrp_2010_AK_USA %>% filter(RACE == "NHPI_AIC") %>%
   xlab("Age Group") + 
   ylab("Error of Closure (%)") + 
   ggtitle("Coverage by Age Group for NHPI (Alone or in Combination) Populations - 2010")+
-  scale_x_discrete(labels = agegrp_labels) 
+  scale_x_discrete(labels = agegrp_labels)
   # annotate("text",x=17.7, y=7, label="overcount", size=2.5, color='grey') +
   # annotate("text",x=17.7, y=-7, label="undercount", size=2.5, color='grey')
 
@@ -123,9 +127,10 @@ ggsave(filename = "../../AAJC Vis/case_studies/arkansas/US_AND_AK_line_graph_cov
 
 # Asian Alone
 v1_line2 <- agegrp_2010_AK_USA %>% filter(RACE == "NHPI_A") %>%
-  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME)) +
+  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME, linetype = CTYNAME)) +
   geom_hline(yintercept = 0, linetype='dotted', col='grey')+
   geom_line(aes(color=CTYNAME), size=1) +
+  scale_linetype_manual(values = c("solid", "solid", "dashed"), name = "Region") +
   scale_color_manual(values = c("#916a92", "#f4c78d", "#e89251"), name = "Region") +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -134,9 +139,9 @@ v1_line2 <- agegrp_2010_AK_USA %>% filter(RACE == "NHPI_A") %>%
   xlab("Age Group") + 
   ylab("Error of Closure (%)") + 
   ggtitle("Coverage by Age Group for NHPI (Alone) Populations - 2010")+
-  scale_x_discrete(labels = agegrp_labels) +
-  annotate("text",x=17.7, y=7, label="overcount", size=2.5, color='grey') +
-  annotate("text",x=17.7, y=-7, label="undercount", size=2.5, color='grey')
+  scale_x_discrete(labels = agegrp_labels)
+  #annotate("text",x=17.7, y=7, label="overcount", size=2.5, color='grey') +
+  #annotate("text",x=17.7, y=-7, label="undercount", size=2.5, color='grey')
 
 # change age group labels 
 v1_line2 <- v1_line2 + theme(axis.text.x = element_text(angle=25))
