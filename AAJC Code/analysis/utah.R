@@ -21,7 +21,7 @@ theme_AAJC <- readRDS('../theme_AAJC.rds')
 agegrp_2010 <- read.csv("../../Transformed Data/2010/ES_MR_AGEGRP_comparison_2010.csv")
 
 agegrp_labels <- c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49",
-                   "50-54", "55-59", "60-64", "65-69", "70-74", "75+")
+                   "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85+")
 
 
 # -------
@@ -48,12 +48,31 @@ agegrp_2010_UNITED_STATES$CTYNAME <- "United States"
 agegrp_2010_UNITED_STATES <- agegrp_2010_UNITED_STATES %>% select(CTYNAME, AGEGRP, RACE, ESTIM, MR, PERC_DIFF, COVERAGE)
 
 
-# filter KC data 
+# filter County data 
 agegrp_2010_UT <- agegrp_2010 %>% filter(CTYNAME %in% c("Salt Lake County", "Utah County") & STNAME == "Utah") %>% 
   select(CTYNAME, AGEGRP, RACE, ESTIM, MR, PERC_DIFF, COVERAGE)
 
-# join US and KC data 
-agegrp_2010_UT_USA <- rbind(agegrp_2010_UT, agegrp_2010_UNITED_STATES)
+# filter state data 
+agegrp_2010_UT_state <- agegrp_2010 %>% filter(STNAME == "Utah") %>% 
+  select(CTYNAME, AGEGRP, RACE, ESTIM, MR, PERC_DIFF, COVERAGE)
+
+# aggregate data for entire UT
+agegrp_2010_UT_state <- agegrp_2010_UT_state %>% group_by(AGEGRP, RACE) %>% summarise(ESTIM = sum(ESTIM), MR = sum(MR)) %>%
+  mutate(NUM_DIFF = MR - ESTIM,   # numeric diff
+         PERC_DIFF = round(( (MR - ESTIM) / ( (MR + ESTIM)/2 ) * 100)  ,2),   # percent difference/error of closure (EOC)
+         COVERAGE = case_when(
+           NUM_DIFF < 0 ~ 'undercount',
+           NUM_DIFF > 0 ~ 'overcount',
+           NUM_DIFF == 0 ~ 'equal'
+         ))
+
+agegrp_2010_UT_state$CTYNAME <- "Utah"
+
+agegrp_2010_UT_state <- agegrp_2010_UT_state %>% select(CTYNAME, AGEGRP, RACE, ESTIM, MR, PERC_DIFF, COVERAGE)
+
+
+# join US and county data 
+agegrp_2010_UT_USA <- rbind(agegrp_2010_UT, agegrp_2010_UT_state, agegrp_2010_UNITED_STATES)
 
 # group together 75+ age groups 
 agegrp_2010_UT_USA_under_75 <- agegrp_2010_UT_USA %>% filter(AGEGRP < 16)
@@ -77,7 +96,7 @@ v2_line <- agegrp_2010_UT_USA_75_groups %>% filter(RACE == "NHPI_AIC") %>%
   ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME)) +
   geom_hline(yintercept = 0, linetype='dotted', col='grey')+
   geom_line(aes(color=CTYNAME), size=1) +
-  scale_color_manual(values = c("#916a92", "#f4c78d", "#e89251"), name = "Region") +
+  scale_color_manual(values = c("#916a92", "#f4c78d", "#e89251", "#b2abd2"), name = "Region") +
   theme_minimal() +
   xlab("Age Group") + 
   ylab("Error of Closure (%)") + 
@@ -96,10 +115,13 @@ ggsave(filename = "../../AAJC Vis/case_studies/utah//US_AND_UT_line_graph_covera
 # update plots without grid lines
 ## AIC
 v2_line2 <- agegrp_2010_UT_USA_75_groups %>% filter(RACE == "NHPI_AIC") %>%
-  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME)) +
+  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME, linetype = CTYNAME)) +
   geom_hline(yintercept = 0, linetype='dotted', col='grey')+
-  geom_line(aes(color=CTYNAME), size=1) +
-  scale_color_manual(values = c("#916a92", "#f4c78d", "#e89251"), name = "Region") +
+  geom_line(aes(color=CTYNAME), size=1, alpha=.8) +
+  scale_linetype_manual(values = c("solid", "dashed", "dashed",
+                                   "solid"),
+                        name = "Region") +
+  scale_color_manual(values = c("#916a92", "#f4c78d", "#e89251", "#b2abd2"), name = "Region") +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
@@ -115,15 +137,18 @@ v2_line2 <- agegrp_2010_UT_USA_75_groups %>% filter(RACE == "NHPI_AIC") %>%
 v2_line2 <- v2_line2 + theme(axis.text.x = element_text(angle=35, vjust = -.05, size = 7),
                              axis.title.x = element_text(vjust = -1))
 v2_line2
-ggsave(filename = "../../AAJC Vis/case_studies/utah//US_AND_UT_line_graph_coverage_by_agegrp_NHPI_AIC_2010_2.png",
+ggsave(filename = "././AAJC Vis/case_studies/utah//US_AND_UT_line_graph_coverage_by_agegrp_NHPI_AIC_2010_2.png",
        plot = v2_line2, bg = "white", width =9.07, height = 5.47)
 
-## Asian Alone
+## NHPI Alone
 v1_line2 <- agegrp_2010_UT_USA_75_groups %>% filter(RACE == "NHPI_A") %>%
-  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME)) +
+  ggplot(aes(x =as.factor(AGEGRP), y=PERC_DIFF, group = CTYNAME, linetype = CTYNAME)) +
   geom_hline(yintercept = 0, linetype='dotted', col='grey')+
-  geom_line(aes(color=CTYNAME), size=1) +
-  scale_color_manual(values = c("#916a92", "#f4c78d", "#e89251"), name = "Region") +
+  geom_line(aes(color=CTYNAME), size=1, alpha=.8) +
+  scale_linetype_manual(values = c("solid", "dashed", "dashed",
+                                   "solid"),
+                        name = "Region") +
+  scale_color_manual(values = c("#916a92", "#f4c78d", "#e89251", "#b2abd2"), name = "Region") +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
@@ -131,14 +156,14 @@ v1_line2 <- agegrp_2010_UT_USA_75_groups %>% filter(RACE == "NHPI_A") %>%
   xlab("Age Group") + 
   ylab("Error of Closure (%)") + 
   ggtitle("Coverage by Age Group for NHPI (Alone) Populations - 2010")+
-  scale_x_discrete(labels = agegrp_labels) +
-  annotate("text",x=16, y=1.5, label="overcount", size=2.5, color='grey') +
-  annotate("text",x=16, y=-1.5, label="undercount", size=2.5, color='grey')
+  scale_x_discrete(labels = agegrp_labels)
+  #annotate("text",x=16, y=1.5, label="overcount", size=2.5, color='grey') +
+  #annotate("text",x=16, y=-1.5, label="undercount", size=2.5, color='grey')
 
 # change age group labels 
 v1_line2 <- v1_line2 + theme(axis.text.x = element_text(angle=45))
 v1_line2
-ggsave(filename = "../../AAJC Vis/case_studies/utah//US_AND_UT_line_graph_coverage_by_agegrp_NHPI_A_2010_2.png",
+ggsave(filename = "././AAJC Vis/case_studies/utah/US_AND_UT_line_graph_coverage_by_agegrp_NHPI_A_2010_2.png",
        plot = v1_line2, bg = "white", width =9.07, height = 5.47)
 
 # ==========================
@@ -622,7 +647,7 @@ nhpi_groups_vars <- acs_vars[acs_vars$concept == "NATIVE HAWAIIAN AND OTHER PACI
 # ------
 # pull 5 year acs data 
 # ------
-target_county <- "Utah County" # "Salt Lake County"  # "Utah County"
+target_county <- "Salt Lake County" # "Salt Lake County"  # "Utah County"
 subethnicity_nhpi_20 <- get_acs(geography = "county",
                                 state = "Utah",
                                 county = target_county,
@@ -671,7 +696,7 @@ subethnicity_nhpi_full <- merge(
   subethnicity_nhpi_20_2, subethnicity_nhpi_20_NATIONAL_2, by="label")
 
 # Save for Alysha 
-write.csv(subethnicity_nhpi_full, "././Transformed Data/data for viz_alysha/case_studies/nhpi_subethnicities_utah.csv")
+write.csv(subethnicity_nhpi_full, "././Transformed Data/data for viz_alysha/case_studies/nhpi_subethnicities_saltlakecounty_utah.csv")
 
 
 # remove total asian population count 

@@ -609,7 +609,7 @@ nhpi_groups_vars <- acs_vars[acs_vars$concept == "NATIVE HAWAIIAN AND OTHER PACI
 
 subethnicity_nhpi_20 <- get_acs(geography = "county",
                                 state = "Arkansas",
-                                county = "Benton County",
+                                #county = "Benton County",
                                 table = 'B02019', 
                                 year = 2020)
 
@@ -629,13 +629,13 @@ subethnicity_nhpi_20$label <- sub(".*!!", "", subethnicity_nhpi_20$label)
 subethnicity_nhpi_20_NATIONAL$label <- sub(".*!!", "", subethnicity_nhpi_20_NATIONAL$label) 
 
 # aggregate all counties (if needed), limit to top 6 subethnicities, descending order for national
-subethnicity_nhpi_20_2 <- subethnicity_nhpi_20 %>% group_by(label) %>% summarise(estimate = sum(estimate))
+subethnicity_nhpi_20_2 <- subethnicity_nhpi_20 %>% group_by(label) %>% summarise(estimate = sum(estimate)) %>%
+  top_n(6, wt=estimate) %>% arrange(desc(estimate))
 
-subethnicity_nhpi_20_2 <- subethnicity_nhpi_20 %>% top_n(6, wt=estimate) %>% arrange(desc(estimate))
 subethnicity_nhpi_20_NATIONAL_2 <- subethnicity_nhpi_20_NATIONAL %>% arrange(desc(estimate))
 
 # save total estimates count
-subethnicity_nhpi_20_total <- subethnicity_nhpi_20_2[grep("Total",subethnicity_nhpi_20$label), ]
+subethnicity_nhpi_20_total <- subethnicity_nhpi_20_2[grep("Total",subethnicity_nhpi_20_2$label), ]
 subethnicity_nhpi_20_total <- subethnicity_nhpi_20_total$estimate
 
 subethnicity_nhpi_20_NATIONAL_total <- subethnicity_nhpi_20_NATIONAL_2[grep("Total",subethnicity_nhpi_20_NATIONAL$label), ]
@@ -657,7 +657,7 @@ subethnicity_nhpi_full <- merge(
   subethnicity_nhpi_20_2, subethnicity_nhpi_20_NATIONAL_2, by="label")
 
 # Save for Alysha 
-write.csv(subethnicity_nhpi_full, "././Transformed Data/data for viz_alysha/case_studies/nhpi_subethnicities_arkansas.csv")
+# write.csv(subethnicity_nhpi_full, "././Transformed Data/data for viz_alysha/case_studies/nhpi_subethnicities_arkansas.csv")
 
 
 # remove total nhpi population count 

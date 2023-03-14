@@ -1,0 +1,7 @@
+"","label","GEOID.x","NAME.x","variable.x","estimate.x","moe.x","total_asn_pop.x","percent_region","GEOID.y","NAME.y","variable.y","estimate.y","moe.y","total_asn_pop.y","percent_us"
+"1","Chamorro","05007","Benton County, Arkansas","B02019_006",22,30,1942,1.13285272914521,"1","United States","B02019_006",156083,5041,1500553,10.4016985737925
+"2","Marshallese","05007","Benton County, Arkansas","B02019_007",1662,154,1942,85.5818743563337,"1","United States","B02019_007",38193,2596,1500553,2.54526164687285
+"3","Native Hawaiian","05007","Benton County, Arkansas","B02019_002",96,64,1942,4.94335736354274,"1","United States","B02019_002",619855,9187,1500553,41.3084376226631
+"4","Other Pacific Islander, not specified","05007","Benton County, Arkansas","B02019_011",132,107,1942,6.79711637487127,"1","United States","B02019_011",258770,6243,1500553,17.2449756856306
+"5","Samoan","05007","Benton County, Arkansas","B02019_003",25,34,1942,1.28733264675592,"1","United States","B02019_003",211876,5878,1500553,14.1198611445247
+"6","Total Groups Tallied:","05007","Benton County, Arkansas","B02019_001",1942,105,1942,100,"1","United States","B02019_001",1500553,12290,1500553,100

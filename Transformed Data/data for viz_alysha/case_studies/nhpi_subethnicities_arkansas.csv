@@ -1,0 +1,7 @@
+"","label","estimate.x","total_asn_pop.x","percent_region","GEOID","NAME","variable","estimate.y","moe","total_asn_pop.y","percent_us"
+"1","Marshallese",8393,12766,65.7449475168416,"1","United States","B02019_007",38193,2596,1500553,2.54526164687285
+"2","Native Hawaiian",1220,12766,9.5566348112173,"1","United States","B02019_002",619855,9187,1500553,41.3084376226631
+"3","Other Micronesian",385,12766,3.01582328058906,"1","United States","B02019_008",75220,4005,1500553,5.01281860754002
+"4","Other Pacific Islander, not specified",1425,12766,11.1624627917907,"1","United States","B02019_011",258770,6243,1500553,17.2449756856306
+"5","Samoan",1072,12766,8.39730534231552,"1","United States","B02019_003",211876,5878,1500553,14.1198611445247
+"6","Total Groups Tallied:",12766,12766,100,"1","United States","B02019_001",1500553,12290,1500553,100

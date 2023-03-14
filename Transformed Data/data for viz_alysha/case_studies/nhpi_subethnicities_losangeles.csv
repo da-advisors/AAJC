@@ -1,0 +1,7 @@
+"","label","GEOID.x","NAME.x","variable.x","estimate.x","moe.x","total_asn_pop.x","percent_region","GEOID.y","NAME.y","variable.y","estimate.y","moe.y","total_asn_pop.y","percent_us"
+"1","Chamorro","06037","Los Angeles County, California","B02019_006",5729,905,59821,9.57690443155414,"1","United States","B02019_006",156083,5041,1500553,10.4016985737925
+"2","Native Hawaiian","06037","Los Angeles County, California","B02019_002",15826,1351,59821,26.4555925176777,"1","United States","B02019_002",619855,9187,1500553,41.3084376226631
+"3","Other Pacific Islander, not specified","06037","Los Angeles County, California","B02019_011",16794,1614,59821,28.0737533642032,"1","United States","B02019_011",258770,6243,1500553,17.2449756856306
+"4","Samoan","06037","Los Angeles County, California","B02019_003",12886,1321,59821,21.5409304424868,"1","United States","B02019_003",211876,5878,1500553,14.1198611445247
+"5","Tongan","06037","Los Angeles County, California","B02019_004",3632,771,59821,6.07144648200465,"1","United States","B02019_004",65037,3457,1500553,4.33420212415023
+"6","Total Groups Tallied:","06037","Los Angeles County, California","B02019_001",59821,2207,59821,100,"1","United States","B02019_001",1500553,12290,1500553,100

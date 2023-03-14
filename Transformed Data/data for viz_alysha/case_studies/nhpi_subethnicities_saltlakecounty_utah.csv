@@ -1,0 +1,7 @@
+"","label","GEOID.x","NAME.x","variable.x","estimate.x","moe.x","total_asn_pop.x","percent_region","GEOID.y","NAME.y","variable.y","estimate.y","moe.y","total_asn_pop.y","percent_us"
+"1","Native Hawaiian","49035","Salt Lake County, Utah","B02019_002",3151,597,28123,11.2043523094976,"1","United States","B02019_002",619855,9187,1500553,41.3084376226631
+"2","Other Micronesian","49035","Salt Lake County, Utah","B02019_008",997,746,28123,3.54514098780358,"1","United States","B02019_008",75220,4005,1500553,5.01281860754002
+"3","Other Pacific Islander, not specified","49035","Salt Lake County, Utah","B02019_011",1454,521,28123,5.17014543256409,"1","United States","B02019_011",258770,6243,1500553,17.2449756856306
+"4","Samoan","49035","Salt Lake County, Utah","B02019_003",8595,1172,28123,30.5621733101021,"1","United States","B02019_003",211876,5878,1500553,14.1198611445247
+"5","Tongan","49035","Salt Lake County, Utah","B02019_004",11923,1355,28123,42.3959037087082,"1","United States","B02019_004",65037,3457,1500553,4.33420212415023
+"6","Total Groups Tallied:","49035","Salt Lake County, Utah","B02019_001",28123,955,28123,100,"1","United States","B02019_001",1500553,12290,1500553,100

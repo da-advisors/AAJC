@@ -1,0 +1,7 @@
+"","label","GEOID.x","NAME.x","variable.x","estimate.x","moe.x","total_asn_pop.x","percent_region","GEOID.y","NAME.y","variable.y","estimate.y","moe.y","total_asn_pop.y","percent_us"
+"1","Native Hawaiian","49049","Utah County, Utah","B02019_002",3406,604,12460,27.3354735152488,"1","United States","B02019_002",619855,9187,1500553,41.3084376226631
+"2","Other Pacific Islander, not specified","49049","Utah County, Utah","B02019_011",646,342,12460,5.18459069020867,"1","United States","B02019_011",258770,6243,1500553,17.2449756856306
+"3","Other Polynesian","49049","Utah County, Utah","B02019_005",634,209,12460,5.08828250401284,"1","United States","B02019_005",23152,1707,1500553,1.54289785165869
+"4","Samoan","49049","Utah County, Utah","B02019_003",4001,691,12460,32.1107544141252,"1","United States","B02019_003",211876,5878,1500553,14.1198611445247
+"5","Tongan","49049","Utah County, Utah","B02019_004",3098,632,12460,24.8635634028892,"1","United States","B02019_004",65037,3457,1500553,4.33420212415023
+"6","Total Groups Tallied:","49049","Utah County, Utah","B02019_001",12460,832,12460,100,"1","United States","B02019_001",1500553,12290,1500553,100
